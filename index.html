@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2f5f3">
+<script>
+(function () {
+  try {
+    var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
+    if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|white)$/.test(a)) r.setAttribute('data-accent', a);
+    if (m === 'light' || m === 'dark') r.setAttribute('data-theme', m);
+  } catch (e) { /* storage blocked: defaults are used */ }
+})();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -198,6 +207,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .notice.warn { border-color: var(--danger, var(--muted)); color: var(--fg); }
 .etag { display: block; margin-top: 4px; font-size: .72rem; opacity: .7; text-align: right; }
 .unofficial { margin: 10px 0 0; font-size: .78rem; color: var(--muted); text-align: center; }
+.hint { margin: 8px 0 0; font-size: .82rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -251,6 +261,10 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="dark">Dark</button>
       </div>
     </div>
+    <div>
+      <button class="btn" id="resetPrefs" type="button">Reset to default</button>
+      <p class="hint">Your style and mode are remembered on this device only. Nothing is sent anywhere.</p>
+    </div>
   </section>
   <section id="info" class="panel" hidden aria-label="How it works">
     <h2>The flow</h2>
@@ -271,7 +285,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>Step 2 above is separate: uploading your export to Claude sends it to Claude. This reader never does.</li>
-      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Your style choices are not saved either.</li>
+      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your style and mode choice is remembered, on this device.</li>
       <li>After your first visit the app's own files (the page, icons and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>If the speakers do not split</h2>
@@ -748,6 +762,7 @@ document.querySelectorAll('#accentGroup button').forEach(function (b) {
   b.addEventListener('click', function () {
     var a = b.getAttribute('data-accent');
     if (a === 'green') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
+    savePref('cr-accent', a === 'green' ? null : a);
     setChecked($('accentGroup'), 'data-accent', a);
     syncThemeColor();
   });
@@ -756,6 +771,7 @@ document.querySelectorAll('#modeGroup button').forEach(function (b) {
   b.addEventListener('click', function () {
     var m = b.getAttribute('data-mode');
     if (m === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', m);
+    savePref('cr-mode', m === 'auto' ? null : m);
     setChecked($('modeGroup'), 'data-mode', m);
     syncThemeColor();
   });
@@ -765,6 +781,18 @@ if (window.matchMedia) {
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
   if (mq.addEventListener) mq.addEventListener('change', syncThemeColor);
 }
+function savePref(k, v) {
+  try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) { /* storage blocked */ }
+}
+setChecked($('accentGroup'), 'data-accent', root.getAttribute('data-accent') || 'green');
+setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
+$('resetPrefs').addEventListener('click', function () {
+  root.removeAttribute('data-accent'); root.removeAttribute('data-theme');
+  savePref('cr-accent', null); savePref('cr-mode', null);
+  setChecked($('accentGroup'), 'data-accent', 'green');
+  setChecked($('modeGroup'), 'data-mode', 'auto');
+  syncThemeColor();
+});
 syncThemeColor();
 
 /* ---- copy buttons on code blocks ---- */
