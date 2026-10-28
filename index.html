@@ -9,6 +9,7 @@
 <style>
 /* Layout: one centered column like a phone chat. Sticky top bar holds title, file open and paste. You on the right, AI on the left. */
 :root {
+  color-scheme: light;
   --bg: #f2f5f3;
   --bar: #f2f5f3;
   --fg: #18211e;
@@ -106,6 +107,36 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
   .row { animation: rise .18s ease-out both; }
   @keyframes rise { from { transform: translateY(4px); opacity: .001; } to { transform: none; opacity: 1; } }
 }
+[hidden] { display: none !important; }
+.btn[aria-expanded="true"] { border-color: var(--fg); }
+.panel { margin-top: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 14px; font-size: .95rem; }
+.panel h2 { margin: 0 0 4px; font-size: 1rem; }
+.panel p, .panel ol, .panel ul { margin: 0; }
+.panel ol, .panel ul { padding-left: 1.3em; display: grid; gap: 4px; }
+.panel code { font: 400 .85em var(--mono); background: var(--code); padding: .1em .35em; border-radius: 5px; overflow-wrap: anywhere; }
+.lbl { display: block; margin-bottom: 6px; font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 14px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+.choice i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
+.choice[aria-checked="true"] { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.choice:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.foot { margin: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: .82rem; color: var(--muted); }
+@supports (color: light-dark(red, blue)) {
+  :root[data-accent="blue"] { --user: light-dark(#1d62c9, #2f6fd0); --user-fg: #ffffff; }
+  :root[data-accent="pink"] { --user: light-dark(#c2185b, #c2306f); --user-fg: #ffffff; }
+  :root[data-accent="classic"] {
+    --bg: light-dark(#ffffff, #212121); --bar: light-dark(#ffffff, #212121);
+    --fg: light-dark(#0d0d0d, #ececec); --muted: light-dark(#6b6b6b, #9b9b9b);
+    --surface: light-dark(#ffffff, #2a2a2a); --line: light-dark(#e5e5e5, #3a3a3a);
+    --code: light-dark(#f4f4f4, #171717);
+    --user: light-dark(#f4f4f4, #303030); --user-fg: light-dark(#0d0d0d, #ececec);
+  }
+  :root[data-accent="classic"] .user .bubble { border-radius: 20px; max-width: 80%; }
+  :root[data-accent="classic"] .ai .bubble { background: none; border: 0; border-radius: 0; padding-inline: 0; max-width: 100%; }
+  :root[data-accent="classic"] .user .bubble code,
+  :root[data-accent="classic"] .user .bubble pre { background: var(--code); }
+  :root[data-accent="classic"] .user .bubble a { color: var(--link); }
+}
 </style>
 </head>
 <body>
@@ -117,18 +148,55 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
       <p class="meta" id="meta"></p>
     </div>
     <div class="actions">
-      <label class="btn primary" for="file" tabindex="0" id="fileLabel">Open .md file</label>
+      <label class="btn primary" for="file" tabindex="0" id="fileLabel" title="Choose a .md file from your device. It is read in your browser and never uploaded.">Open .md file</label>
       <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
-      <button class="btn" id="pasteBtn" type="button">Paste text</button>
-      <button class="btn" id="themeBtn" type="button" aria-label="Switch theme">Theme</button>
+      <button class="btn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" title="Paste exported text. It stays in this tab.">Paste text</button>
+      <button class="btn" type="button" data-panel="appearance" aria-expanded="false" title="Change chat colors and light or dark mode">Appearance</button>
+      <button class="btn" type="button" data-panel="info" aria-expanded="false" title="How this reader works and what it does with your file">How it works</button>
     </div>
   </header>
+  <section id="appearance" class="panel" hidden aria-label="Appearance">
+    <div id="styleRow">
+      <span class="lbl">Chat style</span>
+      <div class="choices" id="accentGroup" role="radiogroup" aria-label="Chat style">
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="classic" title="Grey bubble for you, plain text for the AI, like the official app"><i style="background:#ececec"></i>Classic</button>
+        <button class="choice" type="button" role="radio" aria-checked="true" data-accent="green"><i style="background:#23705d"></i>Green</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="blue"><i style="background:#1d62c9"></i>Blue</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="pink"><i style="background:#c2185b"></i>Pink</button>
+      </div>
+    </div>
+    <div>
+      <span class="lbl">Mode</span>
+      <div class="choices" id="modeGroup" role="radiogroup" aria-label="Light or dark mode">
+        <button class="choice" type="button" role="radio" aria-checked="true" data-mode="auto" title="Follow your phone or browser setting">Auto</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-mode="light">Light</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-mode="dark">Dark</button>
+      </div>
+    </div>
+  </section>
+  <section id="info" class="panel" hidden aria-label="How it works">
+    <h2>How it works</h2>
+    <ol>
+      <li>Export or copy your ChatGPT conversation as a Markdown (.md) file.</li>
+      <li>Tap <strong>Open .md file</strong>, drop the file on this page, or use <strong>Paste text</strong>.</li>
+      <li>Your messages appear on the right and the AI's on the left.</li>
+    </ol>
+    <h2>Your chat stays with you</h2>
+    <ul>
+      <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
+      <li>Nothing is saved, stored or tracked. Reload or close the tab and the chat is gone. Your style choices are not saved either.</li>
+      <li>When the page opens it downloads fonts and two small reading libraries from public CDNs. Your chat is never part of those requests.</li>
+    </ul>
+    <h2>If the speakers do not split</h2>
+    <p>The reader looks for lines such as <code>**You:**</code>, <code>**ChatGPT:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
+  </section>
   <section id="paste" hidden>
     <textarea id="pasteText" placeholder="Paste the exported chat here" aria-label="Chat markdown"></textarea>
     <button class="btn primary" id="pasteGo" type="button">Show chat</button>
   </section>
   <p class="notice" id="notice" hidden></p>
   <main class="chat" id="chat" aria-live="polite"></main>
+  <p class="foot">Runs in your browser. Nothing is uploaded or saved.</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
@@ -367,19 +435,55 @@ function loadFile(file) {
 
 $('file').addEventListener('change', function (e) { loadFile(e.target.files && e.target.files[0]); e.target.value = ''; });
 $('fileLabel').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
-$('pasteBtn').addEventListener('click', function () { var p = $('paste'); p.hidden = !p.hidden; if (!p.hidden) $('pasteText').focus(); });
 $('pasteGo').addEventListener('click', function () {
   var v = $('pasteText').value;
-  if (v.trim()) { show(v, 'Pasted chat'); $('paste').hidden = true; }
+  if (v.trim()) { show(v, 'Pasted chat'); togglePanel('paste'); }
 });
 
-var themeStates = ['system', 'light', 'dark'], themeIdx = 0;
-$('themeBtn').addEventListener('click', function () {
-  themeIdx = (themeIdx + 1) % 3;
-  var s = themeStates[themeIdx], root = document.documentElement;
-  if (s === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', s);
-  $('themeBtn').textContent = 'Theme: ' + s;
+var root = document.documentElement;
+function setChecked(group, attr, val) {
+  group.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-checked', String(b.getAttribute(attr) === val)); });
+}
+function syncThemeColor() {
+  var meta = document.querySelector('meta[name="theme-color"]');
+  var c = getComputedStyle(root).getPropertyValue('--bg').trim();
+  if (meta && c) meta.setAttribute('content', c);
+}
+var PANELS = ['info', 'appearance', 'paste'];
+function togglePanel(id) {
+  PANELS.forEach(function (p) {
+    var el = $(p), open = p === id && el.hidden;
+    el.hidden = !open;
+    var btn = document.querySelector('[data-panel="' + p + '"]');
+    if (btn) btn.setAttribute('aria-expanded', String(open));
+  });
+  if (id === 'paste' && !$('paste').hidden) $('pasteText').focus();
+}
+document.querySelectorAll('[data-panel]').forEach(function (b) {
+  b.addEventListener('click', function () { togglePanel(b.getAttribute('data-panel')); });
 });
+document.querySelectorAll('#accentGroup button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var a = b.getAttribute('data-accent');
+    if (a === 'green') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
+    setChecked($('accentGroup'), 'data-accent', a);
+    syncThemeColor();
+  });
+});
+document.querySelectorAll('#modeGroup button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var m = b.getAttribute('data-mode');
+    if (m === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', m);
+    setChecked($('modeGroup'), 'data-mode', m);
+    syncThemeColor();
+  });
+});
+if (!(window.CSS && CSS.supports && CSS.supports('color', 'light-dark(red, blue)'))) $('styleRow').hidden = true;
+if (window.matchMedia) {
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', syncThemeColor);
+}
+syncThemeColor();
 
 ['dragenter', 'dragover'].forEach(function (t) {
   window.addEventListener(t, function (e) { e.preventDefault(); document.body.classList.add('drag'); });
@@ -391,7 +495,7 @@ window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.data
 
 show(SAMPLE, 'Sourdough starter help (sample)');
 notice.hidden = false;
-notice.textContent = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own.';
+notice.textContent = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own. Nothing is uploaded or saved.';
 </script>
 </body>
 </html>
