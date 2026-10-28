@@ -13,12 +13,16 @@
   } catch (e) { /* storage blocked: defaults are used */ }
 })();
 </script>
+<link rel="preload" href="fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Markdown Chat Reader</title>
 <style>
 /* Layout: one centered column like a phone chat. Sticky top bar holds title, file open and paste. You on the right, AI on the left. */
+/* Bundled fonts (SIL Open Font License; see fonts/). Other scripts fall back to the system font. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300 900; font-display: swap; src: url(fonts/figtree-latin-wght-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 100 800; font-display: swap; src: url(fonts/jetbrains-mono-latin-wght-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 :root {
   color-scheme: light;
   --bg: #f2f5f3;
@@ -36,8 +40,8 @@
   --hit: #ffe27a;
   --hit-fg: #1a1a1a;
   --hit-cur: #ff9f45;
-  --ff: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', 'Courier New', monospace;
+  --ff: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', 'Courier New', monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -286,7 +290,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>Step 2 above is separate: uploading your export to Claude sends it to Claude. This reader never does.</li>
       <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your style and mode choice is remembered, on this device.</li>
-      <li>After your first visit the app's own files (the page, icons and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
+      <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>If the speakers do not split</h2>
     <p>The reader looks for lines such as <code>**You:**</code>, <code>**ChatGPT:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
