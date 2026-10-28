@@ -1,5 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f5f3">
 <title>Markdown Chat Reader</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 /* Layout: one centered column like a phone chat. Sticky top bar holds title, file open and paste. You on the right, AI on the left. */
@@ -32,6 +37,7 @@
   --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
   color-scheme: dark;
 }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { min-height: 100%; }
 body {
   margin: 0;
@@ -40,25 +46,21 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   background: var(--bg);
   color: var(--fg);
-  font: 400 16px/1.55 var(--ff);
-}
-body::before {
-  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
-  z-index: 10; background: var(--bar);
+  font: 400 17px/1.55 var(--ff);
 }
 .wrap { max-width: 720px; margin: 0 auto; }
 .bar {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  position: sticky; top: 0; z-index: 5;
   background: var(--bar); border-bottom: 1px solid var(--line);
-  padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
 }
 .heading { flex: 1 1 200px; min-width: 0; }
-h1 { margin: 0; font-size: 1.1rem; line-height: 1.25; font-weight: 700; text-wrap: balance; overflow-wrap: anywhere; }
-.meta { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
+h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wrap: balance; overflow-wrap: anywhere; }
+.meta { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn {
-  font: 500 .88rem var(--ff); color: var(--fg); background: var(--surface);
-  border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer;
+  font: 500 .95rem var(--ff); min-height: 44px; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; box-sizing: border-box;
 }
 .btn:hover { border-color: var(--muted); }
 .btn:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -71,12 +73,12 @@ h1 { margin: 0; font-size: 1.1rem; line-height: 1.25; font-weight: 700; text-wra
   border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
 }
 #paste .btn { margin-top: 8px; }
-.chat { display: flex; flex-direction: column; gap: 10px; padding-block: 16px 48px; }
+.chat { display: flex; flex-direction: column; gap: 10px; padding-block: 16px calc(48px + env(safe-area-inset-bottom, 0px)); }
 .row { display: flex; min-width: 0; }
 .row.user { justify-content: flex-end; }
 .row.ai { justify-content: flex-start; }
 .row.sys { justify-content: center; }
-.bubble { min-width: 0; max-width: 86%; padding: 10px 14px; overflow-wrap: anywhere; }
+.bubble { min-width: 0; max-width: 88%; padding: 11px 15px; overflow-wrap: anywhere; }
 .row.ai .bubble { max-width: 94%; }
 .user .bubble { background: var(--user); color: var(--user-fg); border-radius: 18px 18px 4px 18px; }
 .ai .bubble { background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; }
@@ -105,6 +107,8 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
   @keyframes rise { from { transform: translateY(4px); opacity: .001; } to { transform: none; opacity: 1; } }
 }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="bar">
@@ -131,23 +135,89 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <script>
 //#parser-start
-var NAMES_A = 'You|User|Human|ChatGPT|Assistant|GPT-?\\d[\\w.-]*|Claude|System';
-var NAMES_B = 'You|User|Human|Me|ChatGPT|Assistant|AI|Claude';
-var SYM = '(?:[^\\w\\s*_#:]{1,4}\\s*)?';
-var RE_A = new RegExp('^\\s{0,3}(?:#{1,6}\\s*)?(?:[*_]{1,2})?\\s*' + SYM + '(' + NAMES_A + ')(?:\\s+said)?\\s*:?\\s*(?:[*_]{1,2})?\\s*:?\\s*$', 'i');
-var RE_B = new RegExp('^\\s{0,3}(?:#{1,6}\\s*)?(?:\\*\\*|__)\\s*' + SYM + '(' + NAMES_B + ')(?:\\s+said)?\\s*:?\\s*(?:\\*\\*|__)\\s*:?\\s+(\\S.*)$', 'i');
-var RE_C = /^(You|User|Human|ChatGPT|Assistant)\s*:\s+(\S.*)$/i;
+var NAMES = 'You|User|Human|Me|ChatGPT|Assistant|AI|Claude|System|Prompt|Response|Question|Answer|Bot|Model|Gemini|Copilot|GPT-?\\d[\\w.-]*';
+var BASE_RE = new RegExp('^(' + NAMES + ')(?![\\w])', 'i');
+var AMBIG = /^(me|ai|prompt|response|question|answer|bot|model)$/i;
+var USER_NAMES = /^(you|user|human|me|prompt|question)$/i;
 var RE_HR = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
+var SKIP_LEAD = /^[^\w\s*_#:\[(]{1,8}\s*/;
+var META = /^(?:[-–—|·@,(\[]|\d)|^[\w.-]{1,24}[*_:\s]*$/;
 
-function roleOf(name) {
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function roleOf(name, custom) {
   var n = name.toLowerCase();
-  if (/^(you|user|human|me)$/.test(n)) return 'user';
+  if (custom && custom[n]) return custom[n];
+  if (USER_NAMES.test(n)) return 'user';
   if (n === 'system') return 'system';
   return 'assistant';
 }
 
-function parseChat(text, loose) {
+function matchMarker(line, nameRe, custom, loose) {
+  var dec = line.match(/^\s{0,3}(?:(#{1,6})[ \t]*)?(?:(\*\*|__)[ \t]*)?(.+)$/);
+  if (!dec) return null;
+  var decorated = !!(dec[1] || dec[2]);
+  var cands = [dec[3], dec[3].replace(SKIP_LEAD, '')];
+  for (var ci = 0; ci < cands.length; ci++) {
+    var body = cands[ci];
+    var nm = body.match(nameRe);
+    if (!nm) continue;
+    var after = body.slice(nm[0].length);
+    var am = after.match(/^\s*(?:said\b)?\s*(?:[(\[][^)\]]{0,60}[)\]])?\s*(\*\*|__)?\s*(:|：)?\s*(\*\*|__)?\s*(.*)$/i);
+    if (!am) continue;
+    var colon = !!am[2];
+    var said = /^\s*said\b/i.test(after);
+    var rest = am[4].replace(/\s+$/, '');
+    var name = nm[1];
+    var text = '';
+    if (!decorated) {
+      if (AMBIG.test(name) && !colon) continue;
+      if (rest && (!colon || !loose)) continue;
+      if (!colon && !said && rest) continue;
+      text = rest;
+    } else if (colon) {
+      text = rest;
+    } else if (rest && !META.test(rest)) {
+      continue;
+    }
+    return { role: roleOf(name, custom), label: name, text: text };
+  }
+  return null;
+}
+
+function autoDetect(lines) {
+  var counts = {}, first = {}, inFence = false, mark = '';
+  for (var i = 0; i < lines.length; i++) {
+    var fm = lines[i].match(/^\s{0,3}(`{3,}|~{3,})/);
+    if (fm) {
+      if (!inFence) { inFence = true; mark = fm[1].charAt(0); }
+      else if (fm[1].charAt(0) === mark) { inFence = false; }
+      continue;
+    }
+    if (inFence) continue;
+    var m = lines[i].match(/^\s{0,3}(?:#{1,6}\s+)?(?:\*\*|__)\s*([^*_\n]{1,40}?)\s*(?:\*\*|__)\s*[:：]?\s*$/) ||
+            lines[i].match(/^\s{0,3}#{1,6}\s+([^\n]{1,40}?)\s*[:：]?\s*$/);
+    if (!m) continue;
+    var lab = m[1].replace(/[:：]\s*$/, '').trim().toLowerCase();
+    if (!lab) continue;
+    counts[lab] = (counts[lab] || 0) + 1;
+    if (first[lab] === undefined) first[lab] = i;
+  }
+  var labs = Object.keys(counts).filter(function (k) { return counts[k] >= 2; })
+    .sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 2);
+  if (labs.length < 2 || Math.abs(counts[labs[0]] - counts[labs[1]]) > 1) return null;
+  labs.sort(function (a, b) { return first[a] - first[b]; });
+  var map = {};
+  map[labs[0]] = 'user';
+  map[labs[1]] = 'assistant';
+  return map;
+}
+
+function parseChat(text, mode, custom) {
   var lines = String(text).replace(/\r\n?/g, '\n').split('\n');
+  var nameRe = custom
+    ? new RegExp('^(' + Object.keys(custom).map(escapeRe).join('|') + ')(?![\\w])', 'i')
+    : BASE_RE;
   var msgs = [], cur = null, pre = [], inFence = false, mark = '';
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
@@ -156,17 +226,11 @@ function parseChat(text, loose) {
       if (!inFence) { inFence = true; mark = fm[1].charAt(0); }
       else if (fm[1].charAt(0) === mark) { inFence = false; }
     }
-    var m = null, rest = null;
-    if (!inFence && !fm) {
-      m = line.match(RE_B);
-      if (m) { rest = m[2]; }
-      else if (loose && (m = line.match(RE_C))) { rest = m[2]; }
-      else { m = line.match(RE_A); }
-    }
+    var m = (!inFence && !fm) ? matchMarker(line, nameRe, custom, mode === 'loose') : null;
     if (m) {
-      cur = { role: roleOf(m[1]), label: m[1], lines: [] };
+      cur = { role: m.role, label: m.label, lines: [] };
       msgs.push(cur);
-      if (rest) cur.lines.push(rest);
+      if (m.text) cur.lines.push(m.text);
     } else if (cur) {
       cur.lines.push(line);
     } else {
@@ -185,8 +249,22 @@ function parseChat(text, loose) {
     while (L.length && (/^\s*$/.test(L[L.length - 1]) || RE_HR.test(L[L.length - 1]))) L.pop();
     if (L.length) out.push({ role: msg.role, label: msg.label, text: L.join('\n') });
   });
-  if (!out.length && !loose) return parseChat(text, true);
-  return { title: title, msgs: out, pre: pre.join('\n').trim() };
+  var res = { title: title, msgs: out, pre: pre.join('\n').trim() };
+  var roles = {};
+  out.forEach(function (x) { roles[x.role] = 1; });
+  if (Object.keys(roles).length < 2) {
+    if (!mode) {
+      var r2 = parseChat(text, 'loose');
+      if (r2.msgs.length > out.length) return r2;
+    } else if (mode === 'loose') {
+      var c = autoDetect(lines);
+      if (c) {
+        var r3 = parseChat(text, 'auto', c);
+        if (r3.msgs.length) return r3;
+      }
+    }
+  }
+  return res;
 }
 //#parser-end
 
@@ -257,7 +335,7 @@ function show(text, fallbackTitle) {
   if (!parsed.msgs.length) {
     metaEl.textContent = 'No messages found';
     notice.hidden = false;
-    notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**ChatGPT:**", "### User", "### Assistant", or "You said:". The whole file is shown below as one message.';
+    notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**ChatGPT:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
     var row = document.createElement('div');
     row.className = 'row ai';
     row.innerHTML = '<div class="bubble">' + md(String(text), false) + '</div>';
@@ -315,3 +393,5 @@ show(SAMPLE, 'Sourdough starter help (sample)');
 notice.hidden = false;
 notice.textContent = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own.';
 </script>
+</body>
+</html>
