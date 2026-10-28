@@ -8,7 +8,6 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Markdown Chat Reader</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 /* Layout: one centered column like a phone chat. Sticky top bar holds title, file open and paste. You on the right, AI on the left. */
 :root {
@@ -28,8 +27,8 @@
   --hit: #ffe27a;
   --hit-fg: #1a1a1a;
   --hit-cur: #ff9f45;
-  --ff: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ff: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', 'Courier New', monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -111,7 +110,7 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 .notice { margin: 16px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: .88rem; color: var(--muted); }
 body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 @media (prefers-reduced-motion: no-preference) {
-  .row { animation: rise .18s ease-out both; }
+  .chat.anim .row { animation: rise .18s ease-out both; }
   @keyframes rise { from { transform: translateY(4px); opacity: .001; } to { transform: none; opacity: 1; } }
 }
 [hidden] { display: none !important; }
@@ -173,6 +172,32 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 :root[data-accent="white"] .user .bubble { border: 1px solid var(--line); }
 .panel { grid-template-columns: minmax(0, 1fr); }
 .panel > * { min-width: 0; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn[aria-pressed="true"] { background: var(--user); color: var(--user-fg); border-color: var(--user); }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
+.tools.user { justify-content: flex-end; }
+.tools.ai { justify-content: flex-start; }
+.tools.sys { justify-content: center; }
+.tbtn { font: 500 .8rem var(--ff); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.tbtn:hover { color: var(--fg); border-color: var(--muted); }
+.tbtn.danger { color: var(--danger, var(--muted)); }
+.tbtn:focus-visible, .toastbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.row.editing .bubble { width: 100%; max-width: 100%; box-sizing: border-box; }
+.editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 16px/1.5 var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.editactions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
+.editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bar); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.editbar .inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; }
+.editbar .btn { flex: 1 1 auto; justify-content: center; padding-inline: 8px; }
+body.editing .chat { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
+body.editing .foot { display: none; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: min(92vw, 420px); display: flex; align-items: center; gap: 12px; background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: .92rem; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.toastbtn { font: 600 .9rem var(--ff); color: inherit; background: none; border: 0; text-decoration: underline; padding: 6px 4px; min-height: 36px; cursor: pointer; }
+@supports (color: light-dark(red, blue)) { :root { --danger: light-dark(#b3261e, #ff8a80); } }
+.notice strong { font-weight: 700; }
+.notice.warn { border-color: var(--danger, var(--muted)); color: var(--fg); }
+.etag { display: block; margin-top: 4px; font-size: .72rem; opacity: .7; text-align: right; }
+.unofficial { margin: 10px 0 0; font-size: .78rem; color: var(--muted); text-align: center; }
 </style>
 </head>
 <body>
@@ -187,6 +212,7 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
       <label class="btn primary" for="file" tabindex="0" id="fileLabel" title="Choose a .md file from your device. It is read in your browser and never uploaded.">Open .md file</label>
       <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
       <button class="btn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" title="Paste exported text. It stays in this tab.">Paste text</button>
+      <button class="btn" id="editBtn" type="button" aria-pressed="false" disabled title="Edit or delete messages, then download a new copy">Edit</button>
       <button class="btn" type="button" data-panel="search" aria-expanded="false" title="Find text in this chat">Search</button>
       <button class="btn" type="button" data-panel="appearance" aria-expanded="false" title="Change chat colors and light or dark mode">Appearance</button>
       <button class="btn" type="button" data-panel="info" aria-expanded="false" title="How this reader works and what it does with your file">How it works</button>
@@ -238,14 +264,15 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
     <ul>
       <li>Your messages appear on the right and the AI's on the left.</li>
       <li>Use <strong>Search</strong> to find text, and <strong>Copy</strong> on any code block.</li>
+      <li>Tap <strong>Edit</strong> to change, swap or delete messages. <strong>Download</strong> saves a new .md copy; your original file is never changed. Edits are labeled, and saved copies say they were edited. Please only edit your own chats.</li>
       <li>On Android, open this page in Chrome, then choose the menu (&#8942;) and <strong>Install app</strong> to add it to your home screen.</li>
     </ul>
     <h2>Your chat stays with you</h2>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>Step 2 above is separate: uploading your export to Claude sends it to Claude. This reader never does.</li>
-      <li>Nothing is saved, stored or tracked. Reload or close the tab and the chat is gone. Your style choices are not saved either.</li>
-      <li>When the page opens it downloads fonts and two small reading libraries from public CDNs. Your chat is never part of those requests.</li>
+      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Your style choices are not saved either.</li>
+      <li>After your first visit the app's own files (the page, icons and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>If the speakers do not split</h2>
     <p>The reader looks for lines such as <code>**You:**</code>, <code>**ChatGPT:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
@@ -255,12 +282,28 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
     <button class="btn primary" id="pasteGo" type="button">Show chat</button>
   </section>
   <p class="notice" id="notice" hidden></p>
+  <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages were changed or removed, so this may not match the original conversation.</p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="unofficial" id="unofficial">Unofficial viewer. Not an OpenAI export or an official ChatGPT screen.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
-  <p class="foot">Runs in your browser. Nothing is uploaded or saved.</p>
+  <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved.</p>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<div class="editbar" id="editbar" hidden>
+  <div class="inner">
+    <button class="btn" id="undoBtn" type="button" disabled title="Undo the last change">Undo</button>
+    <button class="btn" id="copyMdBtn" type="button" title="Copy the whole chat as Markdown">Copy</button>
+    <button class="btn primary" id="dlBtn" type="button" title="Download a new .md file. Your original is not changed.">Download</button>
+    <button class="btn" id="doneBtn" type="button" title="Leave edit mode">Done</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastMsg"></span>
+  <button class="toastbtn" id="toastUndo" type="button">Undo</button>
+</div>
+
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
 <script>
 //#parser-start
 var NAMES = 'You|User|Human|Me|ChatGPT|Assistant|AI|Claude|System|Prompt|Response|Question|Answer|Bot|Model|Gemini|Copilot|GPT-?\\d[\\w.-]*';
@@ -455,43 +498,210 @@ function md(s, breaks) {
   return '<p>' + esc(s).replace(/\n/g, '<br>') + '</p>';
 }
 
+/* ---- document model: the chat lives in memory only; nothing is stored ---- */
+var doc = null; // { title, msgs: [{role, label, text}], names: {user, assistant}, editable }
+var editMode = false, editingIdx = -1, dirty = false, undoStack = [], toastTimer = null;
+
 function show(text, fallbackTitle) {
   var parsed = parseChat(text);
   state = 'chat';
+  dirty = false; undoStack = [];
+  setEdit(false, true);
   resetSearch();
-  chat.innerHTML = '';
   notice.hidden = true;
-  titleEl.textContent = parsed.title || fallbackTitle || 'Chat export';
+  $('unofficial').hidden = false;
+  $('editedBanner').hidden = true;
   document.title = 'Markdown Chat Reader';
-  if (!parsed.msgs.length) {
+  var names = { user: 'You', assistant: 'ChatGPT' }, gotU = false, gotA = false;
+  parsed.msgs.forEach(function (m) {
+    if (m.role === 'user' && !gotU) { names.user = m.label; gotU = true; }
+    if (m.role === 'assistant' && !gotA) { names.assistant = m.label; gotA = true; }
+  });
+  doc = {
+    title: parsed.title || fallbackTitle || 'Chat export',
+    msgs: parsed.msgs.map(function (m) { return { role: m.role, label: m.label, text: m.text, edited: false }; }),
+    names: names,
+    editable: parsed.msgs.length > 0,
+    loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
+  };
+  if (!doc.editable) {
+    titleEl.textContent = doc.title;
     metaEl.textContent = 'No messages found';
     notice.hidden = false;
     notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**ChatGPT:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
+    chat.innerHTML = '';
     var row = document.createElement('div');
     row.className = 'row ai';
     row.innerHTML = '<div class="bubble">' + md(String(text), false) + '</div>';
     chat.appendChild(row);
     decorateCode(row);
+    syncEditUI();
     return;
   }
+  chat.classList.add('anim');
+  setTimeout(function () { chat.classList.remove('anim'); }, 400);
+  render();
+  window.scrollTo(0, 0);
+  syncEditUI();
+}
+
+function render() {
+  var q = $('searchInput').value;
+  clearMarks();
+  chat.innerHTML = '';
+  titleEl.textContent = doc.title;
   var u = 0, a = 0;
-  parsed.msgs.forEach(function (m) {
-    var row = document.createElement('div');
-    var b = document.createElement('div');
+  doc.msgs.forEach(function (m, i) {
+    var row = document.createElement('div'), b = document.createElement('div');
     b.className = 'bubble';
-    if (m.role === 'user') { row.className = 'row user'; u++; b.innerHTML = md(m.text, true); }
-    else if (m.role === 'system') { row.className = 'row sys'; b.innerHTML = md(m.text, false); }
-    else { row.className = 'row ai'; a++; b.innerHTML = md(m.text, false); }
+    row.className = 'row ' + (m.role === 'user' ? 'user' : m.role === 'system' ? 'sys' : 'ai');
+    if (m.role === 'user') u++; else if (m.role === 'assistant') a++;
+    if (editMode && i === editingIdx) { row.className += ' editing'; buildEditor(b, i); }
+    else {
+      b.innerHTML = md(m.text, m.role === 'user');
+      if (m.edited) { var tg = document.createElement('span'); tg.className = 'etag'; tg.textContent = 'edited'; b.appendChild(tg); }
+    }
     row.appendChild(b);
     chat.appendChild(row);
+    if (editMode && i !== editingIdx) chat.appendChild(buildTools(i, m.role));
   });
-  metaEl.textContent = parsed.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI';
+  if (!doc.msgs.length) {
+    var d = document.createElement('p');
+    d.className = 'empty';
+    d.textContent = 'All messages were deleted. Tap Undo to bring them back.';
+    chat.appendChild(d);
+  }
+  metaEl.textContent = doc.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI' + (dirty ? ' · edited' : '');
   decorateCode(chat);
-  window.scrollTo(0, 0);
+  $('editedBanner').hidden = !isModified();
+  $('undoBtn').disabled = !undoStack.length;
+  if (q) runSearch();
+}
+
+/* ---- editing ---- */
+function setEdit(on, quiet) {
+  editMode = on; editingIdx = -1;
+  document.body.classList.toggle('editing', on);
+  $('editbar').hidden = !on;
+  $('editCaution').hidden = !on;
+  $('editBtn').setAttribute('aria-pressed', String(on));
+  $('editBtn').textContent = on ? 'Editing' : 'Edit';
+  if (!quiet && doc) render();
+}
+function syncEditUI() {
+  var can = state === 'chat' && !!doc && doc.editable;
+  $('editBtn').disabled = !can;
+  if (!can && editMode) setEdit(false, true);
+}
+function buildTools(i, role) {
+  var t = document.createElement('div');
+  t.className = 'tools ' + (role === 'user' ? 'user' : role === 'system' ? 'sys' : 'ai');
+  var defs = [['edit', 'Edit', 'Edit message ' + (i + 1)]];
+  if (role !== 'system') defs.push(['swap', 'Swap', 'Switch message ' + (i + 1) + ' to the other speaker']);
+  defs.push(['del', 'Delete', 'Delete message ' + (i + 1)]);
+  defs.forEach(function (d) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'tbtn' + (d[0] === 'del' ? ' danger' : '');
+    b.setAttribute('data-act', d[0]); b.setAttribute('data-i', String(i));
+    b.setAttribute('aria-label', d[2]); b.title = d[2];
+    b.textContent = d[1];
+    t.appendChild(b);
+  });
+  return t;
+}
+function buildEditor(b, i) {
+  var ta = document.createElement('textarea');
+  ta.className = 'editarea'; ta.id = 'editArea';
+  ta.value = doc.msgs[i].text;
+  ta.setAttribute('aria-label', 'Edit message ' + (i + 1));
+  function grow() { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, Math.round(window.innerHeight * 0.6)) + 'px'; }
+  ta.addEventListener('input', grow);
+  ta.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { editingIdx = -1; render(); }
+    else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveEdit(i); }
+  });
+  var bar = document.createElement('div');
+  bar.className = 'editactions';
+  bar.innerHTML = '<button class="btn" type="button" data-act="cancel">Cancel</button><button class="btn primary" type="button" data-act="save" data-i="' + i + '">Save</button>';
+  b.appendChild(ta); b.appendChild(bar);
+  setTimeout(function () { grow(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+}
+function pushHistory() { undoStack.push(JSON.stringify(doc.msgs)); if (undoStack.length > 50) undoStack.shift(); }
+function mutate(fn, msg) {
+  pushHistory(); fn(); dirty = true; editingIdx = -1; render();
+  if (msg) toast(msg, true);
+}
+function saveEdit(i) {
+  var v = $('editArea').value.replace(/\s+$/, '');
+  if (!v.trim()) { toast('A message cannot be empty. Use Delete to remove it.', false); return; }
+  if (v === doc.msgs[i].text) { editingIdx = -1; render(); return; }
+  mutate(function () { doc.msgs[i].text = v; doc.msgs[i].edited = true; });
+}
+function undo() {
+  if (!undoStack.length) return;
+  doc.msgs = JSON.parse(undoStack.pop());
+  dirty = undoStack.length > 0; editingIdx = -1;
+  render();
+  $('toast').hidden = true;
+}
+function toast(msg, withUndo) {
+  var t = $('toast');
+  $('toastMsg').textContent = msg;
+  $('toastUndo').hidden = !withUndo;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.hidden = true; }, withUndo ? 7000 : 3500);
+}
+function isModified() { return !!doc && (doc.loadedEdited || undoStack.length > 0); }
+function guardDirty() { return !dirty || window.confirm('You have unsaved edits. Replace them with the new chat?'); }
+
+chat.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('[data-act]') : null;
+  if (!b || !doc) return;
+  var act = b.getAttribute('data-act'), i = parseInt(b.getAttribute('data-i'), 10);
+  if (act === 'edit') { editingIdx = i; render(); }
+  else if (act === 'cancel') { editingIdx = -1; render(); }
+  else if (act === 'save') { saveEdit(i); }
+  else if (act === 'swap') { mutate(function () { doc.msgs[i].role = doc.msgs[i].role === 'user' ? 'assistant' : 'user'; doc.msgs[i].edited = true; }); }
+  else if (act === 'del') { mutate(function () { doc.msgs.splice(i, 1); }, 'Message deleted'); }
+});
+$('editBtn').addEventListener('click', function () { if (!this.disabled) setEdit(!editMode); });
+$('doneBtn').addEventListener('click', function () { setEdit(false); });
+$('undoBtn').addEventListener('click', undo);
+$('toastUndo').addEventListener('click', undo);
+$('copyMdBtn').addEventListener('click', function () { copyText(toMarkdown(), this); });
+$('dlBtn').addEventListener('click', downloadMd);
+window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---- save a new copy (always a new file; the original is never changed) ---- */
+function toMarkdown() {
+  var out = ['# ' + (doc.title || 'Chat export'), ''];
+  if (isModified()) out.push('> **Edited copy.** Made with Markdown Chat Reader. Some messages were changed or removed, so this may not match the original conversation.', '');
+  doc.msgs.forEach(function (m, i) {
+    if (i) out.push('---', '');
+    var lab = m.role === 'user' ? doc.names.user : m.role === 'system' ? 'System' : doc.names.assistant;
+    out.push('**' + lab + ':**', m.text.replace(/\s+$/, ''), '');
+  });
+  return out.join('\n');
+}
+function fileName() {
+  var s = (doc.title || 'chat').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  return (s || 'chat') + '-edited.md';
+}
+function downloadMd() {
+  var name = fileName();
+  var url = URL.createObjectURL(new Blob([toMarkdown()], { type: 'text/markdown;charset=utf-8' }));
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  dirty = false;
+  toast('Downloading ' + name + (isModified() ? ' (marked as an edited copy)' : ''), false);
+  render();
 }
 
 function loadFile(file) {
-  if (!file) return;
+  if (!file || !guardDirty()) return;
   var reader = new FileReader();
   reader.onload = function () { show(String(reader.result), file.name.replace(/\.[^.]+$/, '')); };
   reader.onerror = function () { notice.hidden = false; notice.textContent = 'That file could not be read. Try opening it again.'; };
@@ -502,7 +712,7 @@ $('file').addEventListener('change', function (e) { loadFile(e.target.files && e
 $('fileLabel').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
 $('pasteGo').addEventListener('click', function () {
   var v = $('pasteText').value;
-  if (v.trim()) { show(v, 'Pasted chat'); togglePanel('paste'); }
+  if (v.trim() && guardDirty()) { show(v, 'Pasted chat'); togglePanel('paste'); }
 });
 
 var root = document.documentElement;
@@ -629,7 +839,7 @@ function runSearch() {
   var walker = document.createTreeWalker(chat, NodeFilter.SHOW_TEXT, {
     acceptNode: function (n) {
       var p = n.parentNode;
-      return (p && p.closest && p.closest('.codehead')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      return (p && p.closest && p.closest('.codehead, .etag')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
     }
   });
   var nodes = [];
@@ -668,12 +878,13 @@ $('searchPrev').addEventListener('click', function () { if (!hits.length) runSea
 });
 window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
 
-var SAMPLE_NOTE = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own. Nothing is uploaded or saved.';
+var SAMPLE_NOTE = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own. Your chat is never uploaded or saved.';
 function showSample() {
   show(SAMPLE, 'Sourdough starter help (sample)');
   notice.hidden = false;
   notice.textContent = SAMPLE_NOTE;
   state = 'sample';
+  syncEditUI();
 }
 function showEmpty() {
   resetSearch();
@@ -686,6 +897,10 @@ function showEmpty() {
   metaEl.textContent = '';
   notice.hidden = true;
   state = 'empty';
+  $('unofficial').hidden = true;
+  $('editedBanner').hidden = true;
+  doc = null; dirty = false; undoStack = [];
+  syncEditUI();
 }
 decorateCode($('info'));
 showSample();
