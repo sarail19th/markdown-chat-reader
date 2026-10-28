@@ -1,0 +1,317 @@
+<title>Markdown Chat Reader</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one centered column like a phone chat. Sticky top bar holds title, file open and paste. You on the right, AI on the left. */
+:root {
+  --bg: #f2f5f3;
+  --bar: #f2f5f3;
+  --fg: #18211e;
+  --muted: #62706a;
+  --surface: #ffffff;
+  --line: #dce3df;
+  --user: #23705d;
+  --user-fg: #ffffff;
+  --code: #e9efec;
+  --link: #1b6aa5;
+  --focus: #1b6aa5;
+  --ff: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
+    --surface: #1b2320; --line: #2b3632; --user: #277a66; --user-fg: #ffffff;
+    --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
+  --surface: #1b2320; --line: #2b3632; --user: #277a66; --user-fg: #ffffff;
+  --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  padding-block: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.55 var(--ff);
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bar);
+}
+.wrap { max-width: 720px; margin: 0 auto; }
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bar); border-bottom: 1px solid var(--line);
+  padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
+}
+.heading { flex: 1 1 200px; min-width: 0; }
+h1 { margin: 0; font-size: 1.1rem; line-height: 1.25; font-weight: 700; text-wrap: balance; overflow-wrap: anywhere; }
+.meta { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  font: 500 .88rem var(--ff); color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer;
+}
+.btn:hover { border-color: var(--muted); }
+.btn:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn.primary { background: var(--user); color: var(--user-fg); border-color: var(--user); }
+#file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+#paste { padding-block: 14px 0; }
+#pasteText {
+  box-sizing: border-box; width: 100%; min-height: 160px; resize: vertical;
+  font: 400 .85rem/1.5 var(--mono); color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+}
+#paste .btn { margin-top: 8px; }
+.chat { display: flex; flex-direction: column; gap: 10px; padding-block: 16px 48px; }
+.row { display: flex; min-width: 0; }
+.row.user { justify-content: flex-end; }
+.row.ai { justify-content: flex-start; }
+.row.sys { justify-content: center; }
+.bubble { min-width: 0; max-width: 86%; padding: 10px 14px; overflow-wrap: anywhere; }
+.row.ai .bubble { max-width: 94%; }
+.user .bubble { background: var(--user); color: var(--user-fg); border-radius: 18px 18px 4px 18px; }
+.ai .bubble { background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; }
+.sys .bubble { max-width: 100%; font-size: .8rem; color: var(--muted); padding: 4px 8px; text-align: center; }
+.bubble > :first-child { margin-top: 0; }
+.bubble > :last-child { margin-bottom: 0; }
+.bubble p, .bubble ul, .bubble ol, .bubble pre, .bubble blockquote, .bubble table { margin: 0 0 .65em; }
+.bubble ul, .bubble ol { padding-left: 1.3em; }
+.bubble li + li { margin-top: .2em; }
+.bubble h1, .bubble h2, .bubble h3, .bubble h4 { font-size: 1.02rem; line-height: 1.3; margin: .9em 0 .35em; }
+.bubble blockquote { border-left: 3px solid var(--line); padding-left: 10px; color: var(--muted); }
+.bubble a { color: var(--link); }
+.user .bubble a { color: inherit; text-decoration: underline; }
+.bubble code { font: 400 .85em var(--mono); background: var(--code); padding: .1em .35em; border-radius: 5px; }
+.bubble pre { background: var(--code); border-radius: 10px; padding: 10px 12px; overflow-x: auto; max-width: 100%; }
+.bubble pre code { background: none; padding: 0; font-size: .82rem; line-height: 1.5; }
+.user .bubble code, .user .bubble pre { background: rgba(0, 0, 0, .28); }
+.bubble table { display: block; overflow-x: auto; border-collapse: collapse; max-width: 100%; }
+.bubble th, .bubble td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+.bubble img { max-width: 100%; height: auto; }
+.bubble hr { border: 0; border-top: 1px solid var(--line); }
+.notice { margin: 16px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: .88rem; color: var(--muted); }
+body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
+@media (prefers-reduced-motion: no-preference) {
+  .row { animation: rise .18s ease-out both; }
+  @keyframes rise { from { transform: translateY(4px); opacity: .001; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="heading">
+      <h1 id="title">Chat export</h1>
+      <p class="meta" id="meta"></p>
+    </div>
+    <div class="actions">
+      <label class="btn primary" for="file" tabindex="0" id="fileLabel">Open .md file</label>
+      <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
+      <button class="btn" id="pasteBtn" type="button">Paste text</button>
+      <button class="btn" id="themeBtn" type="button" aria-label="Switch theme">Theme</button>
+    </div>
+  </header>
+  <section id="paste" hidden>
+    <textarea id="pasteText" placeholder="Paste the exported chat here" aria-label="Chat markdown"></textarea>
+    <button class="btn primary" id="pasteGo" type="button">Show chat</button>
+  </section>
+  <p class="notice" id="notice" hidden></p>
+  <main class="chat" id="chat" aria-live="polite"></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script>
+//#parser-start
+var NAMES_A = 'You|User|Human|ChatGPT|Assistant|GPT-?\\d[\\w.-]*|Claude|System';
+var NAMES_B = 'You|User|Human|Me|ChatGPT|Assistant|AI|Claude';
+var SYM = '(?:[^\\w\\s*_#:]{1,4}\\s*)?';
+var RE_A = new RegExp('^\\s{0,3}(?:#{1,6}\\s*)?(?:[*_]{1,2})?\\s*' + SYM + '(' + NAMES_A + ')(?:\\s+said)?\\s*:?\\s*(?:[*_]{1,2})?\\s*:?\\s*$', 'i');
+var RE_B = new RegExp('^\\s{0,3}(?:#{1,6}\\s*)?(?:\\*\\*|__)\\s*' + SYM + '(' + NAMES_B + ')(?:\\s+said)?\\s*:?\\s*(?:\\*\\*|__)\\s*:?\\s+(\\S.*)$', 'i');
+var RE_C = /^(You|User|Human|ChatGPT|Assistant)\s*:\s+(\S.*)$/i;
+var RE_HR = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
+
+function roleOf(name) {
+  var n = name.toLowerCase();
+  if (/^(you|user|human|me)$/.test(n)) return 'user';
+  if (n === 'system') return 'system';
+  return 'assistant';
+}
+
+function parseChat(text, loose) {
+  var lines = String(text).replace(/\r\n?/g, '\n').split('\n');
+  var msgs = [], cur = null, pre = [], inFence = false, mark = '';
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var fm = line.match(/^\s{0,3}(`{3,}|~{3,})/);
+    if (fm) {
+      if (!inFence) { inFence = true; mark = fm[1].charAt(0); }
+      else if (fm[1].charAt(0) === mark) { inFence = false; }
+    }
+    var m = null, rest = null;
+    if (!inFence && !fm) {
+      m = line.match(RE_B);
+      if (m) { rest = m[2]; }
+      else if (loose && (m = line.match(RE_C))) { rest = m[2]; }
+      else { m = line.match(RE_A); }
+    }
+    if (m) {
+      cur = { role: roleOf(m[1]), label: m[1], lines: [] };
+      msgs.push(cur);
+      if (rest) cur.lines.push(rest);
+    } else if (cur) {
+      cur.lines.push(line);
+    } else {
+      pre.push(line);
+    }
+  }
+  var title = '';
+  for (var p = 0; p < pre.length; p++) {
+    var t = pre[p].match(/^#\s+(.+?)\s*#*\s*$/);
+    if (t) { title = t[1].replace(/[*_`]/g, ''); break; }
+  }
+  var out = [];
+  msgs.forEach(function (msg) {
+    var L = msg.lines;
+    while (L.length && (/^\s*$/.test(L[0]) || RE_HR.test(L[0]))) L.shift();
+    while (L.length && (/^\s*$/.test(L[L.length - 1]) || RE_HR.test(L[L.length - 1]))) L.pop();
+    if (L.length) out.push({ role: msg.role, label: msg.label, text: L.join('\n') });
+  });
+  if (!out.length && !loose) return parseChat(text, true);
+  return { title: title, msgs: out, pre: pre.join('\n').trim() };
+}
+//#parser-end
+
+var SAMPLE = [
+  '# Sourdough starter help',
+  '',
+  '**You:**',
+  'My starter smells like nail polish remover. Is it dead?',
+  '',
+  '---',
+  '',
+  '**ChatGPT:**',
+  'Not dead. A sharp acetone smell usually means it is **hungry**. Try this:',
+  '',
+  '1. Discard all but 50 g of starter.',
+  '2. Feed it 50 g flour and 50 g water.',
+  '3. Keep it at about 24 °C and check again in 6 to 8 hours.',
+  '',
+  'If it doubles within 8 hours after two or three feedings, it is healthy.',
+  '',
+  '---',
+  '',
+  '**You:**',
+  'Can you give me a quick feeding log I can paste into my notes?',
+  '',
+  '---',
+  '',
+  '**ChatGPT:**',
+  'Here is a simple one:',
+  '',
+  '```text',
+  'Date    Time   Flour  Water  Ratio  Rise',
+  'Oct 27  08:00  50 g   50 g   1:1:1  2x in 7h',
+  '```',
+  '',
+  '| Ratio | Rise time |',
+  '|---|---|',
+  '| 1:1:1 | 4 to 8 h |',
+  '| 1:5:5 | 10 to 14 h |'
+].join('\n');
+
+var $ = function (id) { return document.getElementById(id); };
+var chat = $('chat'), titleEl = $('title'), metaEl = $('meta'), notice = $('notice');
+
+function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+if (window.DOMPurify) {
+  DOMPurify.addHook('afterSanitizeAttributes', function (n) {
+    if (n.tagName === 'A') { n.setAttribute('target', '_blank'); n.setAttribute('rel', 'noopener noreferrer'); }
+  });
+}
+
+function md(s, breaks) {
+  try {
+    if (window.marked && window.DOMPurify) {
+      return DOMPurify.sanitize(marked.parse(s, { breaks: breaks, gfm: true }));
+    }
+  } catch (e) { /* fall through to plain text */ }
+  return '<p>' + esc(s).replace(/\n/g, '<br>') + '</p>';
+}
+
+function show(text, fallbackTitle) {
+  var parsed = parseChat(text);
+  chat.innerHTML = '';
+  notice.hidden = true;
+  titleEl.textContent = parsed.title || fallbackTitle || 'Chat export';
+  document.title = 'Markdown Chat Reader';
+  if (!parsed.msgs.length) {
+    metaEl.textContent = 'No messages found';
+    notice.hidden = false;
+    notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**ChatGPT:**", "### User", "### Assistant", or "You said:". The whole file is shown below as one message.';
+    var row = document.createElement('div');
+    row.className = 'row ai';
+    row.innerHTML = '<div class="bubble">' + md(String(text), false) + '</div>';
+    chat.appendChild(row);
+    return;
+  }
+  var u = 0, a = 0;
+  parsed.msgs.forEach(function (m) {
+    var row = document.createElement('div');
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    if (m.role === 'user') { row.className = 'row user'; u++; b.innerHTML = md(m.text, true); }
+    else if (m.role === 'system') { row.className = 'row sys'; b.innerHTML = md(m.text, false); }
+    else { row.className = 'row ai'; a++; b.innerHTML = md(m.text, false); }
+    row.appendChild(b);
+    chat.appendChild(row);
+  });
+  metaEl.textContent = parsed.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI';
+  window.scrollTo(0, 0);
+}
+
+function loadFile(file) {
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function () { show(String(reader.result), file.name.replace(/\.[^.]+$/, '')); };
+  reader.onerror = function () { notice.hidden = false; notice.textContent = 'That file could not be read. Try opening it again.'; };
+  reader.readAsText(file);
+}
+
+$('file').addEventListener('change', function (e) { loadFile(e.target.files && e.target.files[0]); e.target.value = ''; });
+$('fileLabel').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
+$('pasteBtn').addEventListener('click', function () { var p = $('paste'); p.hidden = !p.hidden; if (!p.hidden) $('pasteText').focus(); });
+$('pasteGo').addEventListener('click', function () {
+  var v = $('pasteText').value;
+  if (v.trim()) { show(v, 'Pasted chat'); $('paste').hidden = true; }
+});
+
+var themeStates = ['system', 'light', 'dark'], themeIdx = 0;
+$('themeBtn').addEventListener('click', function () {
+  themeIdx = (themeIdx + 1) % 3;
+  var s = themeStates[themeIdx], root = document.documentElement;
+  if (s === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', s);
+  $('themeBtn').textContent = 'Theme: ' + s;
+});
+
+['dragenter', 'dragover'].forEach(function (t) {
+  window.addEventListener(t, function (e) { e.preventDefault(); document.body.classList.add('drag'); });
+});
+['dragleave', 'drop'].forEach(function (t) {
+  window.addEventListener(t, function (e) { e.preventDefault(); document.body.classList.remove('drag'); });
+});
+window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+
+show(SAMPLE, 'Sourdough starter help (sample)');
+notice.hidden = false;
+notice.textContent = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own.';
+</script>
