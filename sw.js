@@ -9,7 +9,12 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the host's HTTP cache so a new version never saves stale copies of its own files.
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => Promise.all(FILES.map((u) => c.add(new Request(u, { cache: 'reload' })))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -27,7 +32,8 @@ self.addEventListener('fetch', (e) => {
 
   if (req.mode === 'navigate') {
     // Online: always get the newest page. Offline or slow (4 s): use the saved copy.
-    const net = fetch(req).then((res) => {
+    // no-cache: always check with the server, so GitHub Pages' short HTTP cache cannot serve an old page.
+    const net = fetch(req, { cache: 'no-cache' }).then((res) => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put('./index.html', copy)); }
       return res;
     });
