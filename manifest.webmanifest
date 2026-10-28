@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Markdown Chat Reader",
+  "short_name": "Chat Reader",
+  "description": "Read a ChatGPT Markdown export as a mobile-style chat. Runs in your browser; nothing is uploaded or saved.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f5f3",
+  "theme_color": "#23705d",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

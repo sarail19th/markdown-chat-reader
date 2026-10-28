@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2f5f3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Markdown Chat Reader</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
@@ -16,25 +19,29 @@
   --muted: #62706a;
   --surface: #ffffff;
   --line: #dce3df;
-  --user: #23705d;
-  --user-fg: #ffffff;
+  --user: #04bb9f;
+  --user-fg: #111111;
+  --user-code: rgba(0, 0, 0, .12);
   --code: #e9efec;
   --link: #1b6aa5;
   --focus: #1b6aa5;
+  --hit: #ffe27a;
+  --hit-fg: #1a1a1a;
+  --hit-cur: #ff9f45;
   --ff: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
-    --surface: #1b2320; --line: #2b3632; --user: #277a66; --user-fg: #ffffff;
+    --surface: #1b2320; --line: #2b3632; --user: #04bb9f; --user-fg: #111111;
     --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
-  --surface: #1b2320; --line: #2b3632; --user: #277a66; --user-fg: #ffffff;
+  --surface: #1b2320; --line: #2b3632; --user: #04bb9f; --user-fg: #111111;
   --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
   color-scheme: dark;
 }
@@ -51,7 +58,7 @@ body {
 }
 .wrap { max-width: 720px; margin: 0 auto; }
 .bar {
-  position: sticky; top: 0; z-index: 5;
+  position: relative;
   background: var(--bar); border-bottom: 1px solid var(--line);
   padding: calc(12px + env(safe-area-inset-top, 0px)) 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
 }
@@ -70,7 +77,7 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 #paste { padding-block: 14px 0; }
 #pasteText {
   box-sizing: border-box; width: 100%; min-height: 160px; resize: vertical;
-  font: 400 .85rem/1.5 var(--mono); color: var(--fg); background: var(--surface);
+  font: 400 16px/1.5 var(--mono); color: var(--fg); background: var(--surface);
   border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
 }
 #paste .btn { margin-top: 8px; }
@@ -96,7 +103,7 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 .bubble code { font: 400 .85em var(--mono); background: var(--code); padding: .1em .35em; border-radius: 5px; }
 .bubble pre { background: var(--code); border-radius: 10px; padding: 10px 12px; overflow-x: auto; max-width: 100%; }
 .bubble pre code { background: none; padding: 0; font-size: .82rem; line-height: 1.5; }
-.user .bubble code, .user .bubble pre { background: rgba(0, 0, 0, .28); }
+.user .bubble code, .user .bubble pre { background: var(--user-code); }
 .bubble table { display: block; overflow-x: auto; border-collapse: collapse; max-width: 100%; }
 .bubble th, .bubble td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
 .bubble img { max-width: 100%; height: auto; }
@@ -122,8 +129,6 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .choice:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .foot { margin: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: .82rem; color: var(--muted); }
 @supports (color: light-dark(red, blue)) {
-  :root[data-accent="blue"] { --user: light-dark(#1d62c9, #2f6fd0); --user-fg: #ffffff; }
-  :root[data-accent="pink"] { --user: light-dark(#c2185b, #c2306f); --user-fg: #ffffff; }
   :root[data-accent="classic"] {
     --bg: light-dark(#ffffff, #212121); --bar: light-dark(#ffffff, #212121);
     --fg: light-dark(#0d0d0d, #ececec); --muted: light-dark(#6b6b6b, #9b9b9b);
@@ -137,6 +142,37 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
   :root[data-accent="classic"] .user .bubble pre { background: var(--code); }
   :root[data-accent="classic"] .user .bubble a { color: var(--link); }
 }
+.codewrap { margin: 0 0 .65em; }
+.codewrap pre { margin: 0; border-radius: 0 0 10px 10px; }
+.codehead { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--code); border-radius: 10px 10px 0 0; padding: 2px 4px 0 12px; font: 500 .75rem var(--mono); color: var(--muted); }
+.user .bubble .codehead { background: var(--user-code); color: inherit; }
+:root[data-accent="classic"] .user .bubble .codehead { background: var(--code); color: var(--muted); }
+#search { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 6; box-shadow: 0 6px 18px rgba(0, 0, 0, .14); }
+.copybtn { font: 500 .8rem var(--ff); color: inherit; background: none; border: 0; border-radius: 8px; padding: 6px 10px; min-height: 36px; cursor: pointer; }
+.copybtn:hover { background: rgba(128, 128, 128, .22); }
+.copybtn:focus-visible, #searchInput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.searchrow { display: flex; gap: 8px; }
+#searchInput { flex: 1 1 auto; min-width: 0; box-sizing: border-box; min-height: 44px; font: 400 16px var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+.searchrow .btn { padding-inline: 16px; }
+.count { min-height: 1.2em; font-size: .85rem; color: var(--muted); }
+mark.hit { background: var(--hit); color: var(--hit-fg); border-radius: 3px; padding: 0 1px; }
+mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
+.empty { margin: 24px 0; padding: 16px; text-align: center; color: var(--muted); }
+.panel pre { margin: 0; padding: 10px 12px; font: 400 .8rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--code); border-radius: 10px; }
+.panel .codewrap pre { border-radius: 0 0 10px 10px; }
+.panel pre code { background: none; padding: 0; font-size: inherit; }
+:root[data-accent="blue"] { --user: #3566ef; --user-fg: #ffffff; --user-code: rgba(0, 0, 0, .28); }
+:root[data-accent="cyan"] { --user: #00b1ff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="lime"] { --user: #b6d70a; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="yellow"] { --user: #ffcb37; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="orange"] { --user: #ff8067; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="pink"] { --user: #fa70ab; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="magenta"] { --user: #dc6adc; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="purple"] { --user: #a25bff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="white"] { --user: #ffffff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="white"] .user .bubble { border: 1px solid var(--line); }
+.panel { grid-template-columns: minmax(0, 1fr); }
+.panel > * { min-width: 0; }
 </style>
 </head>
 <body>
@@ -151,18 +187,34 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
       <label class="btn primary" for="file" tabindex="0" id="fileLabel" title="Choose a .md file from your device. It is read in your browser and never uploaded.">Open .md file</label>
       <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
       <button class="btn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" title="Paste exported text. It stays in this tab.">Paste text</button>
+      <button class="btn" type="button" data-panel="search" aria-expanded="false" title="Find text in this chat">Search</button>
       <button class="btn" type="button" data-panel="appearance" aria-expanded="false" title="Change chat colors and light or dark mode">Appearance</button>
       <button class="btn" type="button" data-panel="info" aria-expanded="false" title="How this reader works and what it does with your file">How it works</button>
     </div>
   </header>
+  <section id="search" class="panel" hidden aria-label="Search this chat">
+    <div class="searchrow">
+      <input id="searchInput" type="search" placeholder="Search this chat" aria-label="Search this chat" autocomplete="off" enterkeyhint="search">
+      <button class="btn" id="searchPrev" type="button" aria-label="Previous match">&uarr;</button>
+      <button class="btn" id="searchNext" type="button" aria-label="Next match">&darr;</button>
+    </div>
+    <p class="count" id="searchCount" aria-live="polite"></p>
+  </section>
   <section id="appearance" class="panel" hidden aria-label="Appearance">
     <div id="styleRow">
       <span class="lbl">Chat style</span>
       <div class="choices" id="accentGroup" role="radiogroup" aria-label="Chat style">
         <button class="choice" type="button" role="radio" aria-checked="false" data-accent="classic" title="Grey bubble for you, plain text for the AI, like the official app"><i style="background:#ececec"></i>Classic</button>
-        <button class="choice" type="button" role="radio" aria-checked="true" data-accent="green"><i style="background:#23705d"></i>Green</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="blue"><i style="background:#1d62c9"></i>Blue</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="pink"><i style="background:#c2185b"></i>Pink</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="blue"><i style="background:#3566ef"></i>Blue</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="cyan"><i style="background:#00b1ff"></i>Cyan</button>
+        <button class="choice" type="button" role="radio" aria-checked="true" data-accent="green"><i style="background:#04bb9f"></i>Green</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="lime"><i style="background:#b6d70a"></i>Lime</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="yellow"><i style="background:#ffcb37"></i>Yellow</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="orange"><i style="background:#ff8067"></i>Orange</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="pink"><i style="background:#fa70ab"></i>Pink</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="magenta"><i style="background:#dc6adc"></i>Magenta</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="purple"><i style="background:#a25bff"></i>Purple</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="white"><i style="background:#ffffff"></i>White</button>
       </div>
     </div>
     <div>
@@ -175,15 +227,23 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
     </div>
   </section>
   <section id="info" class="panel" hidden aria-label="How it works">
-    <h2>How it works</h2>
+    <h2>The flow</h2>
     <ol>
-      <li>Export or copy your ChatGPT conversation as a Markdown (.md) file.</li>
-      <li>Tap <strong>Open .md file</strong>, drop the file on this page, or use <strong>Paste text</strong>.</li>
-      <li>Your messages appear on the right and the AI's on the left.</li>
+      <li><strong>Export from ChatGPT.</strong> Open Settings, then Data controls, then Export data. ChatGPT emails you a download link that expires after about a day. Download the .zip. (Menu wording may differ slightly.)</li>
+      <li><strong>Convert with Claude.</strong> Upload the .zip, or the conversations.json inside it, to Claude and paste the prompt below. Claude gives you Markdown files, one per chat or per project, to download.</li>
+      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open .md file</strong>, and pick one to read it as a chat. Open one file at a time.</li>
     </ol>
+    <pre><code class="language-prompt">Convert this ChatGPT export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **ChatGPT:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
+    <h2>Using the reader</h2>
+    <ul>
+      <li>Your messages appear on the right and the AI's on the left.</li>
+      <li>Use <strong>Search</strong> to find text, and <strong>Copy</strong> on any code block.</li>
+      <li>On Android, open this page in Chrome, then choose the menu (&#8942;) and <strong>Install app</strong> to add it to your home screen.</li>
+    </ul>
     <h2>Your chat stays with you</h2>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
+      <li>Step 2 above is separate: uploading your export to Claude sends it to Claude. This reader never does.</li>
       <li>Nothing is saved, stored or tracked. Reload or close the tab and the chat is gone. Your style choices are not saved either.</li>
       <li>When the page opens it downloads fonts and two small reading libraries from public CDNs. Your chat is never part of those requests.</li>
     </ul>
@@ -376,6 +436,7 @@ var SAMPLE = [
 
 var $ = function (id) { return document.getElementById(id); };
 var chat = $('chat'), titleEl = $('title'), metaEl = $('meta'), notice = $('notice');
+var state = 'sample'; // 'sample' | 'empty' | 'chat'
 
 function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
@@ -396,6 +457,8 @@ function md(s, breaks) {
 
 function show(text, fallbackTitle) {
   var parsed = parseChat(text);
+  state = 'chat';
+  resetSearch();
   chat.innerHTML = '';
   notice.hidden = true;
   titleEl.textContent = parsed.title || fallbackTitle || 'Chat export';
@@ -408,6 +471,7 @@ function show(text, fallbackTitle) {
     row.className = 'row ai';
     row.innerHTML = '<div class="bubble">' + md(String(text), false) + '</div>';
     chat.appendChild(row);
+    decorateCode(row);
     return;
   }
   var u = 0, a = 0;
@@ -422,6 +486,7 @@ function show(text, fallbackTitle) {
     chat.appendChild(row);
   });
   metaEl.textContent = parsed.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI';
+  decorateCode(chat);
   window.scrollTo(0, 0);
 }
 
@@ -449,15 +514,22 @@ function syncThemeColor() {
   var c = getComputedStyle(root).getPropertyValue('--bg').trim();
   if (meta && c) meta.setAttribute('content', c);
 }
-var PANELS = ['info', 'appearance', 'paste'];
+var PANELS = ['info', 'appearance', 'paste', 'search'];
 function togglePanel(id) {
+  var willOpen = $(id).hidden;
   PANELS.forEach(function (p) {
     var el = $(p), open = p === id && el.hidden;
     el.hidden = !open;
     var btn = document.querySelector('[data-panel="' + p + '"]');
     if (btn) btn.setAttribute('aria-expanded', String(open));
   });
+  if (willOpen) {
+    if (state === 'sample' && id !== 'appearance') showEmpty();
+    else if (state === 'empty' && id === 'appearance') showSample();
+  }
   if (id === 'paste' && !$('paste').hidden) $('pasteText').focus();
+  if (id === 'search' && !$('search').hidden) $('searchInput').focus();
+  if ($('search').hidden) resetSearch();
 }
 document.querySelectorAll('[data-panel]').forEach(function (b) {
   b.addEventListener('click', function () { togglePanel(b.getAttribute('data-panel')); });
@@ -485,6 +557,109 @@ if (window.matchMedia) {
 }
 syncThemeColor();
 
+/* ---- copy buttons on code blocks ---- */
+function flash(btn, label) {
+  btn.textContent = label;
+  clearTimeout(btn._t);
+  btn._t = setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+}
+function copyText(t, btn) {
+  function fallback() {
+    var ta = document.createElement('textarea'), ok = false;
+    ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    flash(btn, ok ? 'Copied' : 'Copy failed');
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).then(function () { flash(btn, 'Copied'); }, fallback);
+  } else { fallback(); }
+}
+function decorateCode(root) {
+  root.querySelectorAll('pre').forEach(function (pre) {
+    if (pre.parentNode.classList && pre.parentNode.classList.contains('codewrap')) return;
+    var code = pre.querySelector('code');
+    var cm = code && code.className.match(/language-([\w+#.-]+)/);
+    var wrap = document.createElement('div'); wrap.className = 'codewrap';
+    var head = document.createElement('div'); head.className = 'codehead';
+    var lang = document.createElement('span'); lang.textContent = cm ? cm[1] : 'code';
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'copybtn'; btn.textContent = 'Copy'; btn.setAttribute('aria-label', 'Copy code');
+    btn.addEventListener('click', function () { copyText((code || pre).textContent.replace(/\n$/, ''), btn); });
+    head.appendChild(lang); head.appendChild(btn);
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(head); wrap.appendChild(pre);
+  });
+}
+
+/* ---- search in chat (runs in the page only; nothing is stored) ---- */
+var hits = [], hitIdx = -1, searchTimer = null;
+function updateCount() {
+  var q = $('searchInput').value.trim();
+  $('searchCount').textContent = !q ? '' : (hits.length ? (hitIdx + 1) + ' of ' + hits.length : 'No matches');
+}
+function clearMarks() {
+  chat.querySelectorAll('mark.hit').forEach(function (m) {
+    var p = m.parentNode;
+    p.replaceChild(document.createTextNode(m.textContent), m);
+    p.normalize();
+  });
+  hits = []; hitIdx = -1;
+}
+function resetSearch() {
+  clearTimeout(searchTimer);
+  clearMarks();
+  $('searchInput').value = '';
+  $('searchCount').textContent = '';
+}
+function goTo(i) {
+  if (!hits.length) { updateCount(); return; }
+  if (hits[hitIdx]) hits[hitIdx].classList.remove('cur');
+  hitIdx = (i + hits.length) % hits.length;
+  hits[hitIdx].classList.add('cur');
+  hits[hitIdx].scrollIntoView({ block: 'center' });
+  updateCount();
+}
+function runSearch() {
+  clearMarks();
+  var q = $('searchInput').value.trim();
+  if (!q) { updateCount(); return; }
+  var re = new RegExp(escapeRe(q), 'gi');
+  var walker = document.createTreeWalker(chat, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (n) {
+      var p = n.parentNode;
+      return (p && p.closest && p.closest('.codehead')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  var nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(function (node) {
+    var t = node.nodeValue, last = 0, m, frag = null;
+    re.lastIndex = 0;
+    while ((m = re.exec(t)) !== null) {
+      if (!m[0].length) { re.lastIndex++; continue; }
+      if (!frag) frag = document.createDocumentFragment();
+      if (m.index > last) frag.appendChild(document.createTextNode(t.slice(last, m.index)));
+      var mk = document.createElement('mark');
+      mk.className = 'hit'; mk.textContent = m[0];
+      frag.appendChild(mk); hits.push(mk);
+      last = m.index + m[0].length;
+    }
+    if (frag) {
+      if (last < t.length) frag.appendChild(document.createTextNode(t.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  });
+  if (hits.length) goTo(0); else updateCount();
+}
+$('searchInput').addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 150); });
+$('searchInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); if (!hits.length) runSearch(); else goTo(hitIdx + (e.shiftKey ? -1 : 1)); }
+});
+$('searchNext').addEventListener('click', function () { if (!hits.length) runSearch(); else goTo(hitIdx + 1); });
+$('searchPrev').addEventListener('click', function () { if (!hits.length) runSearch(); else goTo(hitIdx - 1); });
+
 ['dragenter', 'dragover'].forEach(function (t) {
   window.addEventListener(t, function (e) { e.preventDefault(); document.body.classList.add('drag'); });
 });
@@ -493,9 +668,30 @@ syncThemeColor();
 });
 window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
 
-show(SAMPLE, 'Sourdough starter help (sample)');
-notice.hidden = false;
-notice.textContent = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own. Nothing is uploaded or saved.';
+var SAMPLE_NOTE = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own. Nothing is uploaded or saved.';
+function showSample() {
+  show(SAMPLE, 'Sourdough starter help (sample)');
+  notice.hidden = false;
+  notice.textContent = SAMPLE_NOTE;
+  state = 'sample';
+}
+function showEmpty() {
+  resetSearch();
+  chat.innerHTML = '';
+  var d = document.createElement('p');
+  d.className = 'empty';
+  d.textContent = 'No chat loaded yet. Open a .md file, drop one on this page, or paste the text.';
+  chat.appendChild(d);
+  titleEl.textContent = 'Chat export';
+  metaEl.textContent = '';
+  notice.hidden = true;
+  state = 'empty';
+}
+decorateCode($('info'));
+showSample();
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
 </script>
 </body>
 </html>
