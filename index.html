@@ -156,10 +156,19 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 14px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
 .choice i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
 .choice[aria-checked="true"] { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
-.selectrow { display: flex; align-items: center; gap: 10px; max-width: 420px; }
-.selectrow i { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
-.selectrow select { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 6px 12px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
-.selectrow select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dd { position: relative; max-width: 420px; }
+.ddbtn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; box-sizing: border-box; padding: 6px 12px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; text-align: left; }
+.ddbtn span { flex: 1; }
+.ddbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; opacity: .7; }
+.ddbtn[aria-expanded="true"] { border-color: var(--fg); }
+.ddbtn:focus-visible, .ddlist:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dd i { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
+.ddlist { position: fixed; z-index: 40; margin: 0; padding: 4px; list-style: none; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 28px rgba(0, 0, 0, .25); }
+.ddlist li { display: flex; align-items: center; gap: 10px; min-height: 44px; box-sizing: border-box; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: .95rem; }
+.ddlist li small { color: var(--muted); font-size: .78rem; }
+.ddlist li.act, .ddlist li:hover { background: var(--code); }
+.ddlist li[aria-selected="true"] { font-weight: 700; }
+.ddlist li[aria-selected="true"]::after { content: '\2713'; margin-left: auto; }
 .choice:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 /* Mode buttons preview their own colours, whatever mode is active. */
 .choice[data-mode="light"] { background: #f2f5f3; color: #18211e; }
@@ -314,7 +323,7 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .jumpbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .jumpbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) {
-  .sheet:not([hidden]) { animation: sheetup .2s ease-out both; }
+  .sheet:not([hidden]) { animation: sheetup .2s ease-out backwards; }
   @keyframes sheetup { from { transform: translateY(24px); opacity: .001; } to { transform: none; opacity: 1; } }
 }
 /* Green Read: recycled-paper tones (warm, not white). Placed last so it wins over the Classic style and the default note colours. */
@@ -362,22 +371,10 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   <section id="appearance" class="panel sheet" hidden role="dialog" aria-label="Appearance" tabindex="-1">
     <div class="sheethead"><h2>Appearance</h2><button class="sheetx" type="button" data-close="appearance" aria-label="Close appearance settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div id="styleRow">
-      <span class="lbl">Chat style</span>
-      <div class="selectrow">
-        <i id="accentDot" aria-hidden="true"></i>
-        <select id="accentSelect" aria-label="Chat style and bubble color">
-          <option value="classic">Classic (grey bubble, plain AI text)</option>
-          <option value="blue">Blue</option>
-          <option value="cyan">Cyan</option>
-          <option value="green" selected>Green</option>
-          <option value="lime">Lime</option>
-          <option value="yellow">Yellow</option>
-          <option value="orange">Orange</option>
-          <option value="pink">Pink</option>
-          <option value="magenta">Magenta</option>
-          <option value="purple">Purple</option>
-          <option value="white">White</option>
-        </select>
+      <span class="lbl" id="accentLbl">Chat style</span>
+      <div class="dd" id="accentDd">
+        <button class="ddbtn" id="accentBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="accentList" aria-labelledby="accentLbl accentName"><i id="accentDot" aria-hidden="true"></i><span id="accentName">Green</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <ul class="ddlist" id="accentList" role="listbox" aria-labelledby="accentLbl" tabindex="-1" hidden></ul>
       </div>
     </div>
     <div>
@@ -1084,6 +1081,7 @@ function syncThemeColor() {
 }
 var PANELS = ['info', 'appearance', 'paste', 'search'];
 function syncSheets() {
+  closeAccent(false);
   $('scrim').hidden = $('info').hidden;
   document.body.classList.toggle('searching', !$('search').hidden);
   setTimeout(syncJump, 0);
@@ -1162,7 +1160,7 @@ function closeSheet(id, keepFocus) {
   if (btn && !keepFocus) btn.focus({ preventScroll: true });
 }
 document.addEventListener('click', function (e) {
-  if (!WIDE.matches) return;
+  if (!WIDE.matches || (accList && !accList.hidden)) return;
   ['appearance', 'info'].forEach(function (id) {
     if (!$(id).hidden && !$(id).contains(e.target) && !e.target.closest('[data-panel="' + id + '"]')) closeSheet(id, true);
   });
@@ -1184,18 +1182,89 @@ $('startOpen').addEventListener('click', function () { $('file').click(); });
 $('startPaste').addEventListener('click', function () {
   if ($('paste').hidden) togglePanel('paste'); else $('pasteText').focus();
 });
-var ACCENTS = { classic: '#ececec', blue: '#3566ef', cyan: '#00b1ff', green: '#04bb9f', lime: '#b6d70a', yellow: '#ffcb37', orange: '#ff8067', pink: '#fa70ab', magenta: '#dc6adc', purple: '#a25bff', white: '#ffffff' };
+var ACCENT_LIST = [
+  ['classic', 'Classic', '#ececec', 'Grey bubble, plain AI text'], ['blue', 'Blue', '#3566ef'], ['cyan', 'Cyan', '#00b1ff'],
+  ['green', 'Green', '#04bb9f'], ['lime', 'Lime', '#b6d70a'], ['yellow', 'Yellow', '#ffcb37'], ['orange', 'Orange', '#ff8067'],
+  ['pink', 'Pink', '#fa70ab'], ['magenta', 'Magenta', '#dc6adc'], ['purple', 'Purple', '#a25bff'], ['white', 'White', '#ffffff']
+];
+var ACC = {}, ACC_KEYS = ACCENT_LIST.map(function (a) { ACC[a[0]] = a; return a[0]; });
+var accBtn = $('accentBtn'), accList = $('accentList'), accActive = 'green';
+ACCENT_LIST.forEach(function (a) {
+  var li = document.createElement('li'), dot = document.createElement('i'), name = document.createElement('span');
+  li.id = 'acc-' + a[0]; li.setAttribute('role', 'option'); li.setAttribute('data-accent', a[0]);
+  dot.style.background = a[2]; name.textContent = a[1];
+  li.appendChild(dot); li.appendChild(name);
+  if (a[3]) { var sm = document.createElement('small'); sm.textContent = a[3]; li.appendChild(sm); }
+  accList.appendChild(li);
+});
 function setAccent(a) {
   if (a === 'green') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
-  $('accentSelect').value = a;
-  $('accentDot').style.background = ACCENTS[a];
+  $('accentDot').style.background = ACC[a][2];
+  $('accentName').textContent = ACC[a][1];
+  accList.querySelectorAll('[role="option"]').forEach(function (li) { li.setAttribute('aria-selected', String(li.getAttribute('data-accent') === a)); });
 }
-$('accentSelect').addEventListener('change', function () {
-  var a = $('accentSelect').value;
+function markActive(a) {
+  accActive = a;
+  accList.querySelectorAll('[role="option"]').forEach(function (li) { li.classList.toggle('act', li.getAttribute('data-accent') === a); });
+  accList.setAttribute('aria-activedescendant', 'acc-' + a);
+  var el = $('acc-' + a);
+  if (el.offsetTop < accList.scrollTop) accList.scrollTop = el.offsetTop;
+  else if (el.offsetTop + el.offsetHeight > accList.scrollTop + accList.clientHeight) accList.scrollTop = el.offsetTop + el.offsetHeight - accList.clientHeight;
+}
+function placeAccent() {
+  var r = accBtn.getBoundingClientRect(), below = window.innerHeight - r.bottom - 12, above = r.top - 12;
+  var up = below < 240 && above > below;
+  accList.style.left = r.left + 'px';
+  accList.style.width = r.width + 'px';
+  accList.style.maxHeight = Math.max(160, Math.min(480, up ? above : below)) + 'px';
+  if (up) { accList.style.top = 'auto'; accList.style.bottom = (window.innerHeight - r.top + 6) + 'px'; }
+  else { accList.style.bottom = 'auto'; accList.style.top = (r.bottom + 6) + 'px'; }
+}
+function openAccent() {
+  accList.hidden = false;
+  accBtn.setAttribute('aria-expanded', 'true');
+  placeAccent();
+  markActive(root.getAttribute('data-accent') || 'green');
+  accList.focus({ preventScroll: true });
+}
+function closeAccent(refocus) {
+  if (!accList || accList.hidden) return;
+  accList.hidden = true;
+  accBtn.setAttribute('aria-expanded', 'false');
+  if (refocus) accBtn.focus({ preventScroll: true });
+}
+function pickAccent(a) {
   setAccent(a);
   savePref('cr-accent', a === 'green' ? null : a);
   syncThemeColor();
+  closeAccent(true);
+}
+accBtn.addEventListener('click', function () { if (accList.hidden) openAccent(); else closeAccent(true); });
+accBtn.addEventListener('keydown', function (e) {
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && accList.hidden) { e.preventDefault(); openAccent(); }
 });
+accList.addEventListener('click', function (e) {
+  var li = e.target.closest('[role="option"]');
+  if (li) pickAccent(li.getAttribute('data-accent'));
+});
+accList.addEventListener('keydown', function (e) {
+  var i = ACC_KEYS.indexOf(accActive);
+  if (e.key === 'ArrowDown') i = Math.min(ACC_KEYS.length - 1, i + 1);
+  else if (e.key === 'ArrowUp') i = Math.max(0, i - 1);
+  else if (e.key === 'Home') i = 0;
+  else if (e.key === 'End') i = ACC_KEYS.length - 1;
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickAccent(accActive); return; }
+  else if (e.key === 'Escape') { e.preventDefault(); closeAccent(true); return; }
+  else if (e.key === 'Tab') { closeAccent(false); return; }
+  else return;
+  e.preventDefault();
+  markActive(ACC_KEYS[i]);
+});
+document.addEventListener('click', function (e) {
+  if (!accList.hidden && !accList.contains(e.target) && !accBtn.contains(e.target)) closeAccent(false);
+});
+window.addEventListener('scroll', function (e) { if (!accList.hidden && e.target !== accList) closeAccent(false); }, true);
+window.addEventListener('resize', function () { closeAccent(false); });
 document.querySelectorAll('#modeGroup button').forEach(function (b) {
   b.addEventListener('click', function () {
     var m = b.getAttribute('data-mode');
