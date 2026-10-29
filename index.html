@@ -245,6 +245,11 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .toastbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .row.editing .bubble { width: 100%; max-width: 100%; box-sizing: border-box; }
 .row.editing .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.styletools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.stylebtn { min-width: 44px; min-height: 40px; padding: 4px 12px; font: 600 .95rem var(--ff); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.stylebtn:hover { border-color: var(--muted); }
+.stylebtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stylebtn.clear { font-weight: 500; margin-left: auto; }
 .editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/var(--chat-lh) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
 .editactions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
 .editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bar); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
@@ -894,6 +899,106 @@ function selectRow(i) {
   row.parentNode.insertBefore(m, row.nextSibling);
   m.scrollIntoView({ block: 'nearest' });
 }
+/* ---- text style (bold / italic): pure helpers that work on the Markdown text ---- */
+//#style-start
+var CODE_SPAN_RE = /^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:\n[ \t]*\1[`~]*[ \t]*(?=\n|$)|$(?![\s\S]))|(`+)[^`\n]+?\2(?!`)|^[ \t]*([*_])(?:[ \t]*\3){2,}[ \t]*$/gm;
+function outsideCode(s, fn) {
+  var out = '', last = 0, m;
+  CODE_SPAN_RE.lastIndex = 0;
+  while ((m = CODE_SPAN_RE.exec(s))) {
+    out += fn(s.slice(last, m.index)) + m[0];
+    last = m.index + m[0].length;
+  }
+  return out + fn(s.slice(last));
+}
+function stripEmphasis(s) {
+  return outsideCode(s, function (t) {
+    var prev, body = '((?:(?!\\n[ \\t]*\\n)[\\s\\S])*?\\S)';
+    var strongStar = new RegExp('(^|[^\\\\])\\*\\*(?=\\S)' + body + '\\*\\*', 'g');
+    var strongUnder = new RegExp('(^|[^\\\\\\w])__(?=\\S)' + body + '__(?!\\w)', 'g');
+    var emStar = new RegExp('(^|[^\\\\*])\\*(?=[^\\s*])((?:(?!\\n[ \\t]*\\n)[^*])*?[^\\s*])\\*(?!\\*)', 'g');
+    var emUnder = new RegExp('(^|[^\\\\\\w_])_(?=[^\\s_])((?:(?!\\n[ \\t]*\\n)[^_])*?[^\\s_])_(?!\\w)', 'g');
+    do {
+      prev = t;
+      t = t.replace(strongStar, '$1$2').replace(strongUnder, '$1$2').replace(emStar, '$1$2').replace(emUnder, '$1$2');
+    } while (t !== prev);
+    return t;
+  });
+}
+// Clear bold and italic from the paragraphs touched by [s, e), or from the whole text when nothing is selected.
+function clearStyleRange(text, s, e) {
+  if (s === e) return { start: 0, end: text.length, out: stripEmphasis(text) };
+  var a = text.lastIndexOf('\n\n', s - 1);
+  a = a < 0 ? 0 : a + 2;
+  var b = text.indexOf('\n\n', e);
+  b = b < 0 ? text.length : b;
+  return { start: a, end: b, out: stripEmphasis(text.slice(a, b)) };
+}
+function markerRun(text, i, dir, ch) {
+  var n = 0;
+  while (n < 3 && text.charAt(dir < 0 ? i - 1 - n : i + n) === ch) n++;
+  return n;
+}
+// Bold/italic state of text[a, b): oa..ob is the range with its markers, a..b the text between them.
+function styleOf(text, a, b) {
+  while (a < b && /\s/.test(text.charAt(a))) a++;
+  while (b > a && /\s/.test(text.charAt(b - 1))) b--;
+  var chars = ['*', '_'];
+  for (var k = 0; k < 2; k++) {
+    var ch = chars[k], n = Math.min(markerRun(text, a, -1, ch), markerRun(text, b, 1, ch));
+    if (ch === '_' && n && (/\w/.test(text.charAt(a - n - 1)) || /\w/.test(text.charAt(b + n)))) n = 0;
+    if (n) { a -= n; b += n; break; }
+  }
+  var oa = a, ob = b, inner = 0;
+  for (var j = 0; j < 2; j++) {
+    var c = chars[j], l = 0, t = 0;
+    while (l < 3 && text.charAt(a + l) === c) l++;
+    while (t < 3 && b - 1 - t >= a + l && text.charAt(b - 1 - t) === c) t++;
+    inner = Math.min(l, t);
+    if (inner) { a += inner; b -= inner; break; }
+  }
+  return { oa: oa, ob: ob, a: a, b: b, bold: inner >= 2, italic: inner % 2 === 1 };
+}
+// kind is 'bold' or 'italic'. Returns the replacement for text[start, end) and where to put the selection (relative to start).
+function toggleStyleRange(text, s, e, kind) {
+  var segs = [], pos;
+  if (s === e) {
+    var ls = text.lastIndexOf('\n', s - 1) + 1, le = text.indexOf('\n', s);
+    if (le < 0) le = text.length;
+    var a = s, b = s;
+    while (a > ls && /[^\s*_]/.test(text.charAt(a - 1))) a--;
+    while (b < le && /[^\s*_]/.test(text.charAt(b))) b++;
+    if (a === b) {
+      var mk = kind === 'bold' ? '****' : '**';
+      return { start: s, end: e, out: mk, selStart: mk.length / 2, selEnd: mk.length / 2 };
+    }
+    segs.push([a, b]);
+  } else {
+    for (pos = s; pos < e;) {
+      var nl = text.indexOf('\n', pos);
+      var lineEnd = nl < 0 || nl > e ? e : nl;
+      var lineStart = text.lastIndexOf('\n', pos - 1) + 1;
+      var from = pos;
+      if (from === lineStart) from += (/^(?:[ \t]*(?:[-*+][ \t]+|\d+[.)][ \t]+|>[ \t]*|#{1,6}[ \t]+))*/.exec(text.slice(from, lineEnd)) || [''])[0].length;
+      if (from < lineEnd && /\S/.test(text.slice(from, lineEnd))) segs.push([from, lineEnd]);
+      pos = lineEnd + 1;
+    }
+    if (!segs.length) return { start: s, end: e, out: text.slice(s, e), selStart: 0, selEnd: e - s };
+  }
+  var infos = segs.map(function (g) { return styleOf(text, g[0], g[1]); });
+  var target = !infos[0][kind];
+  var start = infos[0].oa, end = infos[infos.length - 1].ob, out = '', at = start;
+  infos.forEach(function (info) {
+    var w = { bold: info.bold, italic: info.italic };
+    w[kind] = target;
+    var mark = '*'.repeat((w.bold ? 2 : 0) + (w.italic ? 1 : 0));
+    out += text.slice(at, info.oa) + mark + text.slice(info.a, info.b) + mark;
+    at = info.ob;
+  });
+  return { start: start, end: end, out: out, selStart: 0, selEnd: out.length };
+}
+//#style-end
+
 function buildEditor(b, i) {
   var ta = document.createElement('textarea');
   ta.className = 'editarea'; ta.id = 'editArea';
@@ -908,7 +1013,40 @@ function buildEditor(b, i) {
   var bar = document.createElement('div');
   bar.className = 'editactions';
   bar.innerHTML = '<button class="btn" type="button" data-act="cancel">Cancel</button><button class="btn primary" type="button" data-act="save" data-i="' + i + '">Save</button>';
-  b.appendChild(ta); b.appendChild(bar);
+  function applyStyle(r) {
+    ta.focus();
+    ta.setSelectionRange(r.start, r.end);
+    var ok = false;
+    try { ok = document.execCommand('insertText', false, r.out); } catch (err) { ok = false; }
+    if (!ok || ta.value.slice(r.start, r.start + r.out.length) !== r.out) ta.setRangeText(r.out, r.start, r.end, 'end');
+    ta.setSelectionRange(r.start + r.selStart, r.start + r.selEnd);
+    grow();
+  }
+  function doStyle(kind) {
+    if (kind === 'clear') {
+      var c = clearStyleRange(ta.value, ta.selectionStart, ta.selectionEnd);
+      if (c.out === ta.value.slice(c.start, c.end)) { toast('No bold or italic found here.', false); return; }
+      var keep = ta.selectionStart !== ta.selectionEnd;
+      applyStyle({ start: c.start, end: c.end, out: c.out, selStart: keep ? 0 : c.out.length, selEnd: c.out.length });
+    } else {
+      var r = toggleStyleRange(ta.value, ta.selectionStart, ta.selectionEnd, kind);
+      applyStyle(r);
+    }
+  }
+  ta.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'b' || e.key === 'i')) { e.preventDefault(); doStyle(e.key === 'b' ? 'bold' : 'italic'); }
+  });
+  var tools = document.createElement('div');
+  tools.className = 'styletools'; tools.setAttribute('role', 'toolbar'); tools.setAttribute('aria-label', 'Text style');
+  tools.innerHTML = '<button class="stylebtn" type="button" data-style="bold" aria-label="Bold" title="Bold the selected text (Ctrl+B)"><b>B</b></button>' +
+    '<button class="stylebtn" type="button" data-style="italic" aria-label="Italic" title="Italic the selected text (Ctrl+I)"><i>I</i></button>' +
+    '<button class="stylebtn clear" type="button" data-style="clear" title="Remove bold and italic from the selected paragraphs, or from the whole message if nothing is selected">Clear style</button>';
+  tools.addEventListener('mousedown', function (e) { e.preventDefault(); });
+  tools.addEventListener('click', function (e) {
+    var sb = e.target.closest && e.target.closest('[data-style]');
+    if (sb) doStyle(sb.getAttribute('data-style'));
+  });
+  b.appendChild(tools); b.appendChild(ta); b.appendChild(bar);
   setTimeout(function () { grow(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
 }
 function pushHistory() { undoStack.push(JSON.stringify(doc.msgs)); if (undoStack.length > 50) undoStack.shift(); }
