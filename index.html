@@ -156,7 +156,19 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 14px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
 .choice i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
 .choice[aria-checked="true"] { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.selectrow { display: flex; align-items: center; gap: 10px; max-width: 420px; }
+.selectrow i { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
+.selectrow select { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 6px 12px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+.selectrow select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .choice:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Mode buttons preview their own colours, whatever mode is active. */
+.choice[data-mode="light"] { background: #f2f5f3; color: #18211e; }
+.choice[data-mode="dark"] { background: #111715; color: #e6ece9; }
+.choice[data-mode="green"] { background: #e4dac0; color: #342d22; }
+.choice[data-mode="light"]:not([aria-checked="true"]) { border-color: #dce3df; }
+.choice[data-mode="dark"]:not([aria-checked="true"]) { border-color: #2b3632; }
+.choice[data-mode="green"]:not([aria-checked="true"]) { border-color: #cbbf9f; }
+.choice[data-mode="auto"] i { background: linear-gradient(135deg, #f2f5f3 50%, #111715 50%); }
 .foot { margin: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: .82rem; color: var(--muted); }
 @supports (color: light-dark(red, blue)) {
   :root[data-accent="classic"] {
@@ -351,24 +363,27 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <div class="sheethead"><h2>Appearance</h2><button class="sheetx" type="button" data-close="appearance" aria-label="Close appearance settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div id="styleRow">
       <span class="lbl">Chat style</span>
-      <div class="choices" id="accentGroup" role="radiogroup" aria-label="Chat style">
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="classic" title="Grey bubble for you, plain text for the AI, like the official app"><i style="background:#ececec"></i>Classic</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="blue"><i style="background:#3566ef"></i>Blue</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="cyan"><i style="background:#00b1ff"></i>Cyan</button>
-        <button class="choice" type="button" role="radio" aria-checked="true" data-accent="green"><i style="background:#04bb9f"></i>Green</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="lime"><i style="background:#b6d70a"></i>Lime</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="yellow"><i style="background:#ffcb37"></i>Yellow</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="orange"><i style="background:#ff8067"></i>Orange</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="pink"><i style="background:#fa70ab"></i>Pink</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="magenta"><i style="background:#dc6adc"></i>Magenta</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="purple"><i style="background:#a25bff"></i>Purple</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-accent="white"><i style="background:#ffffff"></i>White</button>
+      <div class="selectrow">
+        <i id="accentDot" aria-hidden="true"></i>
+        <select id="accentSelect" aria-label="Chat style and bubble color">
+          <option value="classic">Classic (grey bubble, plain AI text)</option>
+          <option value="blue">Blue</option>
+          <option value="cyan">Cyan</option>
+          <option value="green" selected>Green</option>
+          <option value="lime">Lime</option>
+          <option value="yellow">Yellow</option>
+          <option value="orange">Orange</option>
+          <option value="pink">Pink</option>
+          <option value="magenta">Magenta</option>
+          <option value="purple">Purple</option>
+          <option value="white">White</option>
+        </select>
       </div>
     </div>
     <div>
       <span class="lbl">Mode</span>
       <div class="choices" id="modeGroup" role="radiogroup" aria-label="Light or dark mode">
-        <button class="choice" type="button" role="radio" aria-checked="true" data-mode="auto" title="Follow your phone or browser setting">Auto</button>
+        <button class="choice" type="button" role="radio" aria-checked="true" data-mode="auto" title="Follow your phone or browser setting"><i></i>Auto</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="light">Light</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="dark">Dark</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="green" title="Recycled-paper tones that are easy on the eyes">Green Read</button>
@@ -1169,14 +1184,17 @@ $('startOpen').addEventListener('click', function () { $('file').click(); });
 $('startPaste').addEventListener('click', function () {
   if ($('paste').hidden) togglePanel('paste'); else $('pasteText').focus();
 });
-document.querySelectorAll('#accentGroup button').forEach(function (b) {
-  b.addEventListener('click', function () {
-    var a = b.getAttribute('data-accent');
-    if (a === 'green') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
-    savePref('cr-accent', a === 'green' ? null : a);
-    setChecked($('accentGroup'), 'data-accent', a);
-    syncThemeColor();
-  });
+var ACCENTS = { classic: '#ececec', blue: '#3566ef', cyan: '#00b1ff', green: '#04bb9f', lime: '#b6d70a', yellow: '#ffcb37', orange: '#ff8067', pink: '#fa70ab', magenta: '#dc6adc', purple: '#a25bff', white: '#ffffff' };
+function setAccent(a) {
+  if (a === 'green') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
+  $('accentSelect').value = a;
+  $('accentDot').style.background = ACCENTS[a];
+}
+$('accentSelect').addEventListener('change', function () {
+  var a = $('accentSelect').value;
+  setAccent(a);
+  savePref('cr-accent', a === 'green' ? null : a);
+  syncThemeColor();
 });
 document.querySelectorAll('#modeGroup button').forEach(function (b) {
   b.addEventListener('click', function () {
@@ -1303,14 +1321,14 @@ if (window.matchMedia) {
 function savePref(k, v) {
   try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) { /* storage blocked */ }
 }
-setChecked($('accentGroup'), 'data-accent', root.getAttribute('data-accent') || 'green');
+setAccent(root.getAttribute('data-accent') || 'green');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 $('resetPrefs').addEventListener('click', function () {
   root.removeAttribute('data-accent'); root.removeAttribute('data-theme');
   SLIDERS.forEach(function (c) { c.reset(); });
   setFont('d');
   savePref('cr-accent', null); savePref('cr-mode', null);
-  setChecked($('accentGroup'), 'data-accent', 'green');
+  setAccent('green');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();
 });
