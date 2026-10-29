@@ -80,6 +80,9 @@ html { scrollbar-width: auto; scrollbar-color: var(--muted) var(--line); }
 /* Touch screens: a Google Docs style fast scroller. A handle fades in on the right edge while you scroll; drag it to move through a long chat. */
 .rail { display: none; }
 @media (pointer: coarse) {
+  /* The handle replaces the phone's own scrollbar, so hide that one rather than show two. */
+  html { scrollbar-width: none; }
+  html::-webkit-scrollbar { display: none; width: 0; height: 0; }
   .rail { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: 0; z-index: 17; pointer-events: none; }
   .rail .thumb { position: absolute; top: 0; right: 3px; width: 7px; border-radius: 4px; background: var(--muted); box-shadow: 0 0 0 1px var(--bg); opacity: 0; transition: opacity .25s, width .12s; touch-action: none; }
   .rail .thumb::before { content: ''; position: absolute; top: 0; bottom: 0; left: -9px; right: -3px; }
