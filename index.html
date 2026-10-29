@@ -297,7 +297,9 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 #search .count { margin-top: 0; }
 .fabs { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; }
 .fabs.moved { right: auto; bottom: auto; }
-.fabmenu { position: absolute; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 10px; }
+.fabmenu { position: absolute; display: grid; justify-items: center; gap: 10px; }
+.fabs[data-h="right"] .fabmenu { right: 4px; }
+.fabs[data-h="left"] .fabmenu { left: 4px; }
 .fabs[data-v="up"] .fabmenu { bottom: calc(100% + 10px); }
 .fabs[data-v="down"] .fabmenu { top: calc(100% + 10px); }
 :root[data-menu="collapsed"] .fabmenu { display: none; }
@@ -314,6 +316,7 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .fabbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .fabbtn[aria-expanded="true"], .fabbtn[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 3px var(--user); }
 .fabbtn:disabled { opacity: .45; cursor: not-allowed; }
+#jumpBtn[data-dir="bottom"] .ic-up, #jumpBtn[data-dir="top"] .ic-down { display: none; }
 body.editing .fabs:not(.moved) { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 body.searching .fabs { display: none; }
 @media (prefers-reduced-motion: no-preference) {
@@ -447,8 +450,7 @@ body.searching .fabs { display: none; }
     <button class="fabbtn" id="openBtn" type="button" aria-label="Open a .md file" title="Open a .md file from your device. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
-    <button class="fabbtn" id="jumpTop" type="button" aria-label="Jump to the top" title="Jump to the top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
-    <button class="fabbtn" id="jumpBottom" type="button" aria-label="Jump to the bottom" title="Jump to the bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
+    <button class="fabbtn" id="jumpBtn" type="button" data-dir="bottom" aria-label="Jump to the bottom" title="Jump to the bottom"><svg class="ic-up" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg><svg class="ic-down" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
     <button class="fabbtn" id="editBtn" type="button" aria-pressed="false" aria-label="Edit messages" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
@@ -1055,9 +1057,16 @@ try {
   var saved = (localStorage.getItem('cr-fab') || '').split(',').map(parseFloat);
   if (saved.length === 2 && saved.every(function (n) { return n >= 0 && n <= 1; })) fabPos = { x: saved[0], y: saved[1] };
 } catch (e) { /* storage blocked: the default spot is used */ }
+function fitMenu() {
+  var menu = $('fabMenu'), n = menu.children.length, f = $('fabToggle').getBoundingClientRect();
+  var room = ($('fabs').dataset.v === 'up' ? f.top : window.innerHeight - f.bottom) - 18;
+  var rows = Math.max(2, Math.min(n, Math.floor((room + 10) / 54)));
+  menu.style.gridAutoFlow = rows < n ? 'column' : '';
+  menu.style.gridTemplateRows = rows < n ? 'repeat(' + rows + ', 44px)' : '';
+}
 function applyFabPos() {
   var el = $('fabs');
-  if (!fabPos) { el.classList.remove('moved'); el.style.left = el.style.top = ''; el.dataset.h = 'right'; el.dataset.v = 'up'; return; }
+  if (!fabPos) { el.classList.remove('moved'); el.style.left = el.style.top = ''; el.dataset.h = 'right'; el.dataset.v = 'up'; fitMenu(); return; }
   var w = window.innerWidth, h = window.innerHeight;
   var cx = Math.min(Math.max(fabPos.x * w, 34), w - 34);
   var cy = Math.min(Math.max(fabPos.y * h, 34), h - (document.body.classList.contains('editing') ? 84 : 8) - 26);
@@ -1066,6 +1075,7 @@ function applyFabPos() {
   el.style.top = (cy - 26) + 'px';
   el.dataset.h = cx < w / 2 ? 'left' : 'right';
   el.dataset.v = cy < h / 2 ? 'down' : 'up';
+  fitMenu();
 }
 function endDrag(e) {
   if (!drag || e.pointerId !== drag.id) return;
@@ -1162,11 +1172,24 @@ function jumpTo(top) {
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({ top: top, behavior: calm ? 'auto' : 'smooth' });
 }
+// One jump button: it points up once you are past the middle of a fully loaded chat, and down otherwise.
+function syncJump() {
+  var more = !!(doc && Math.min(shown, doc.msgs.length) < doc.msgs.length);
+  var dir = !more && window.scrollY > (document.documentElement.scrollHeight - window.innerHeight) / 2 ? 'top' : 'bottom';
+  var b = $('jumpBtn');
+  if (b.getAttribute('data-dir') === dir) return;
+  b.setAttribute('data-dir', dir);
+  b.setAttribute('aria-label', dir === 'top' ? 'Jump to the top' : 'Jump to the bottom');
+  b.title = b.getAttribute('aria-label');
+}
+window.addEventListener('scroll', syncJump, { passive: true });
+window.addEventListener('resize', syncJump);
+if (window.ResizeObserver) new ResizeObserver(syncJump).observe(document.body);
 // After a jump the menu folds so it does not cover the text you jumped to.
 function foldMenu() { document.documentElement.setAttribute('data-menu', 'collapsed'); syncFabToggle(); placeSheets(); }
-$('jumpTop').addEventListener('click', function () { foldMenu(); jumpTo(0); });
-$('jumpBottom').addEventListener('click', function () {
+$('jumpBtn').addEventListener('click', function () {
   foldMenu();
+  if (this.getAttribute('data-dir') === 'top') { jumpTo(0); return; }
   if (doc && Math.min(shown, doc.msgs.length) < doc.msgs.length) toast('Loading the whole chat…', false);
   loadAll(function () { jumpTo(document.documentElement.scrollHeight); });
 });
