@@ -192,7 +192,6 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .count { min-height: 1.2em; font-size: .85rem; color: var(--muted); }
 mark.hit { background: var(--hit); color: var(--hit-fg); border-radius: 3px; padding: 0 1px; }
 mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
-.empty { margin: 24px 0; padding: 16px; text-align: center; color: var(--muted); }
 .panel pre { margin: 0; padding: 10px 12px; font: 400 .8rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--code); border-radius: 10px; }
 .panel .codewrap pre { border-radius: 0 0 10px 10px; }
 .panel pre code { background: none; padding: 0; font-size: inherit; }
@@ -262,6 +261,31 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .tb:disabled { opacity: .45; cursor: not-allowed; }
 .tl { white-space: nowrap; }
 @media (max-width: 340px) { .tl { font-size: .64rem; } }
+/* Start screen and bottom sheets */
+.start { margin-top: 14px; display: grid; gap: 10px; }
+.start h2 { margin: 0; font-size: 1.05rem; }
+.startcards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.startcard { display: grid; gap: 4px; align-content: start; justify-items: start; text-align: left; min-height: 96px; box-sizing: border-box; padding: 14px; font: 600 1rem var(--ff); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+.startcard:hover { border-color: var(--muted); }
+.startcard:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.startcard svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.startcard span { font: 400 .85rem/1.35 var(--ff); color: var(--muted); }
+.startcard.primary { background: var(--user); color: var(--user-fg); border-color: var(--user); }
+.startcard.primary span { color: inherit; opacity: .8; }
+@media (max-width: 380px) { .startcards { grid-template-columns: 1fr; } }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; max-height: 80vh; max-height: 80dvh; overflow-y: auto; overscroll-behavior: contain; border-radius: 18px 18px 0 0; border-bottom: 0; padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 28px rgba(0, 0, 0, .22); }
+#appearance.sheet { max-height: 55vh; max-height: 55dvh; }
+.sheethead { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -14px; padding: 8px 8px 8px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.panel .sheethead h2 { margin: 0; font-size: 1.05rem; }
+.sheetx { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: none; border: 0; border-radius: 12px; cursor: pointer; }
+.sheetx svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.sheetx:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.scrim { position: fixed; inset: 0; z-index: 24; background: rgba(0, 0, 0, .4); }
+body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet:not([hidden]) { animation: sheetup .2s ease-out both; }
+  @keyframes sheetup { from { transform: translateY(24px); opacity: .001; } to { transform: none; opacity: 1; } }
+}
 /* Green Read: recycled-paper tones (warm, not white). Placed last so it wins over the Classic style and the default note colours. */
 :root[data-theme="green"], :root[data-theme="green"][data-accent="classic"] {
   color-scheme: light;
@@ -303,7 +327,8 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     </div>
     <p class="count" id="searchCount" aria-live="polite"></p>
   </section>
-  <section id="appearance" class="panel" hidden aria-label="Appearance">
+  <section id="appearance" class="panel sheet" hidden role="dialog" aria-label="Appearance" tabindex="-1">
+    <div class="sheethead"><h2>Appearance</h2><button class="sheetx" type="button" data-close="appearance" aria-label="Close appearance settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div id="styleRow">
       <span class="lbl">Chat style</span>
       <div class="choices" id="accentGroup" role="radiogroup" aria-label="Chat style">
@@ -372,7 +397,8 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       <p class="hint">Your style, mode, text size, spacing and font are remembered on this device only. Nothing is sent anywhere.</p>
     </div>
   </section>
-  <section id="info" class="panel" hidden aria-label="How it works">
+  <section id="info" class="panel sheet" hidden role="dialog" aria-label="How it works" tabindex="-1">
+    <div class="sheethead"><h2>How it works</h2><button class="sheetx" type="button" data-close="info" aria-label="Close help"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <h2>The flow</h2>
     <ol>
       <li><strong>Export from your AI app.</strong> Most apps have a data export in Settings (for example Data controls, then Export data). The app usually emails you a download link that expires after about a day. Download the file it gives you, a .zip or .json. (Menu wording differs between apps.)</li>
@@ -397,6 +423,14 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <h2>If the speakers do not split</h2>
     <p>The reader looks for lines such as <code>**You:**</code>, <code>**AI:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
   </section>
+  <section id="start" class="start" aria-label="Open a chat">
+    <h2>Read an exported chat</h2>
+    <div class="startcards">
+      <button class="startcard primary" id="startOpen" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Open a file<span>Pick a .md export from your device</span></button>
+      <button class="startcard" id="startPaste" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg>Paste text<span>Paste the exported chat</span></button>
+    </div>
+    <p class="hint">You can also drop a .md file anywhere on this page. Nothing is uploaded.</p>
+  </section>
   <section id="paste" hidden>
     <textarea id="pasteText" placeholder="Paste the exported chat here" aria-label="Chat markdown"></textarea>
     <button class="btn primary" id="pasteGo" type="button">Show chat</button>
@@ -409,6 +443,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved.</p>
 </div>
 
+<div class="scrim" id="scrim" hidden></div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
     <button class="btn" id="undoBtn" type="button" disabled title="Undo the last change">Undo</button>
@@ -655,6 +690,7 @@ var editMode = false, editingIdx = -1, selIdx = -1, dirty = false, undoStack = [
 function show(text, fallbackTitle) {
   var parsed = parseChat(text);
   state = 'chat';
+  syncStart();
   dirty = false; undoStack = [];
   setEdit(false, true);
   resetSearch();
@@ -956,13 +992,19 @@ function syncThemeColor() {
   if (meta && c) meta.setAttribute('content', c);
 }
 var PANELS = ['info', 'appearance', 'paste', 'search'];
+function syncSheets() {
+  $('scrim').hidden = $('info').hidden;
+  document.body.classList.toggle('sheet-open', !$('appearance').hidden);
+}
 function closePanels() {
   PANELS.forEach(function (p) {
     $(p).hidden = true;
     var btn = document.querySelector('[data-panel="' + p + '"]');
     if (btn) btn.setAttribute('aria-expanded', 'false');
   });
+  syncSheets();
 }
+function syncStart() { $('start').hidden = state === 'chat'; }
 function togglePanel(id) {
   var willOpen = $(id).hidden;
   PANELS.forEach(function (p) {
@@ -972,15 +1014,36 @@ function togglePanel(id) {
     if (btn) btn.setAttribute('aria-expanded', String(open));
   });
   if (willOpen) {
-    if (state === 'sample' && id !== 'appearance') showEmpty();
+    if (state === 'sample' && (id === 'paste' || id === 'search')) showEmpty();
     else if (state === 'empty' && id === 'appearance') showSample();
   }
+  syncSheets();
+  if (willOpen && (id === 'appearance' || id === 'info')) $(id).querySelector('.sheetx').focus({ preventScroll: true });
   if (id === 'paste' && !$('paste').hidden) $('pasteText').focus();
   if (id === 'search' && !$('search').hidden) $('searchInput').focus();
   if ($('search').hidden) resetSearch();
 }
 document.querySelectorAll('[data-panel]').forEach(function (b) {
   b.addEventListener('click', function () { togglePanel(b.getAttribute('data-panel')); });
+});
+function closeSheet(id) {
+  if ($(id).hidden) return;
+  togglePanel(id);
+  var btn = document.querySelector('[data-panel="' + id + '"]');
+  if (btn) btn.focus({ preventScroll: true });
+}
+document.querySelectorAll('[data-close]').forEach(function (b) {
+  b.addEventListener('click', function () { closeSheet(b.getAttribute('data-close')); });
+});
+$('scrim').addEventListener('click', function () { closeSheet('info'); });
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape' || e.defaultPrevented) return;
+  if (!$('info').hidden) closeSheet('info');
+  else if (!$('appearance').hidden && !(editMode && selIdx >= 0)) closeSheet('appearance');
+});
+$('startOpen').addEventListener('click', function () { $('file').click(); });
+$('startPaste').addEventListener('click', function () {
+  if ($('paste').hidden) togglePanel('paste'); else $('pasteText').focus();
 });
 document.querySelectorAll('#accentGroup button').forEach(function (b) {
   b.addEventListener('click', function () {
@@ -1238,25 +1301,23 @@ $('searchPrev').addEventListener('click', function () { if (!hits.length) runSea
 });
 window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
 
-var SAMPLE_NOTE = 'This is a sample chat. Open a .md export, drop one on the page, or paste text to read your own. Your chat is never uploaded or saved.';
+var SAMPLE_NOTE = 'Below is a sample chat so you can try the look and settings. Your own chat is never uploaded or saved.';
 function showSample() {
   show(SAMPLE, 'Sourdough starter help (sample)');
   notice.hidden = false;
   notice.textContent = SAMPLE_NOTE;
   state = 'sample';
+  syncStart();
   syncEditUI();
 }
 function showEmpty() {
   resetSearch();
   chat.innerHTML = '';
-  var d = document.createElement('p');
-  d.className = 'empty';
-  d.textContent = 'No chat loaded yet. Open a .md file, drop one on this page, or paste the text.';
-  chat.appendChild(d);
   titleEl.textContent = 'Chat export';
   metaEl.textContent = '';
   notice.hidden = true;
   state = 'empty';
+  syncStart();
   $('unofficial').hidden = true;
   $('editedBanner').hidden = true;
   doc = null; dirty = false; undoStack = [];
