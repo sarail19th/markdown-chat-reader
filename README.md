@@ -8,21 +8,21 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - The file is read inside your browser. It is never uploaded, and the page has no server that could receive it.
 - Chats are never saved or tracked. Reload or close the tab and the chat is gone.
-- The only things remembered on your device are your display choices (style, mode, text size, spacing and font). A font file you add stays on your device and is never uploaded.
+- The only things remembered on your device are your display choices (style, mode, text size, spacing, font and whether the menu is shown). A font file you add stays on your device and is never uploaded.
 - After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.
 
 ## How to use it
 
 1. **Export from your AI app.** Most apps have a data export in Settings. The app usually emails you a download link. The in-app Help panel lists the steps for ChatGPT, Grok and Copilot.
 2. **Convert to Markdown.** Upload the export to an AI assistant you trust and paste the prompt from the in-app Help panel. You get one `.md` file per chat. This step is separate: it sends your export to that assistant. The reader itself never sends anything.
-3. **Read here.** Tap **Open**, pick a `.md` file, and read it as a chat. You can also drop a file on the page or use **Paste**.
+3. **Read here.** Tap the **Open** button in the floating menu, pick a `.md` file, and read it as a chat. You can also drop a file on the page or use **Paste**.
 
 ## Features
 
 - Detects speakers in many export formats, including custom names. If it finds no speakers, it shows the whole file as one message with a notice.
 - Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and four text sizes.
-- Floating buttons at the bottom left for Search, Edit, Style and Help, and a copy button on every code block.
-- Tap-to-edit: turn on the **Edit** button, tap a message, then edit its text, swap its speaker or delete it. Undo, then download or copy a new `.md` file. Your original file is never changed.
+- A floating menu at the bottom left with Open, Paste, Search, Edit, Style and Help. The round button at the bottom of it hides or shows the rest. A copy button on every code block.
+- Tap-to-edit: turn on **Edit**, tap a message, then edit its text, swap its speaker or delete it. Undo, then download or copy a new `.md` file. Your original file is never changed.
 - Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**.
 
 ## Edited chats are labeled

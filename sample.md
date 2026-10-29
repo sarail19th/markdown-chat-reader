@@ -70,12 +70,15 @@ What can I do once a chat is open?
 **AI:**
 | Floating button | What it does |
 |---|---|
-| **Search** (bottom left) | Finds text in the chat. Use the arrows to jump between matches. |
-| **Edit** (above it) | Tap a message to change it, delete it or swap its side. |
-| **Style** (above that) | Chat colours, light or dark mode, text size, spacing and font. |
-| **Help** (top of the stack) | The full steps and what happens to your file. |
+| **Open** and **Paste** | Load your own chat from a file or from pasted text. |
+| **Search** | Finds text in the chat. Use the arrows to jump between matches. |
+| **Edit** | Tap a message to change it, delete it or swap its side. |
+| **Style** | Chat colours, light or dark mode, text size, spacing and font. |
+| **Help** | The full steps and what happens to your file. |
 
-**Open** and **Paste** stay at the top of the page. Every code block has a **Copy** button. In long chats, the floating buttons on the right jump to the top or bottom.
+The buttons sit in a stack at the bottom left. Tap the round button at the bottom of the stack to hide or show the rest, and the reader remembers your choice.
+
+Every code block has a **Copy** button. In long chats, the floating buttons on the right jump to the top or bottom.
 
 ---
 
