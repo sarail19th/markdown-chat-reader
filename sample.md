@@ -74,6 +74,7 @@ What can I do once a chat is open?
 | **Open** | Opens a .md file from your device. |
 | **Paste** | Opens a box for pasted text. On a computer, pressing Ctrl+V anywhere on the page does the same. |
 | **Search** | Finds text in the chat. Use the arrows to jump between matches. |
+| **Previous / next message** | The two single arrows move up or down exactly one message per tap. |
 | **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
 | **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it or swap its side. |
 | **Style** | Chat colours, light or dark mode, text size, spacing and font. |

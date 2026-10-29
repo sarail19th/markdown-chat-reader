@@ -70,6 +70,13 @@
   color-scheme: dark;
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; --chat-fs: 17px; --chat-lh: 1.55; --chat-ps: .65em; }
+/* A thick, high-contrast scrollbar for desktop browsers. Phones draw their own thin one that pages cannot restyle; the message arrows in the floating menu cover them. */
+html { scrollbar-width: auto; scrollbar-color: var(--muted) var(--line); }
+@supports not (scrollbar-color: auto) {
+  html::-webkit-scrollbar { width: 16px; }
+  html::-webkit-scrollbar-track { background: var(--line); }
+  html::-webkit-scrollbar-thumb { background: var(--muted); border: 3px solid var(--line); border-radius: 8px; min-height: 48px; }
+}
 html[data-font="system"] { --ff: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 html[data-font="custom"] { --ff: 'CR Custom', 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 html, body { min-height: 100%; }
@@ -465,6 +472,8 @@ body.searching .fabs { display: none; }
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
     <button class="fabbtn" id="jumpBtn" type="button" data-dir="bottom" aria-label="Jump to the bottom" title="Jump to the bottom"><svg class="ic-up" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg><svg class="ic-down" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
+    <button class="fabbtn" id="prevMsgBtn" type="button" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+    <button class="fabbtn" id="nextMsgBtn" type="button" aria-label="Next message" title="Next message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
     <button class="fabbtn" id="editBtn" type="button" aria-pressed="false" aria-label="Edit messages" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
@@ -1407,6 +1416,17 @@ $('jumpBtn').addEventListener('click', function () {
   if (doc && Math.min(shown, doc.msgs.length) < doc.msgs.length) toast('Loading the whole chat…', false);
   loadAll(function () { jumpTo(document.documentElement.scrollHeight); });
 });
+// Previous / next message: the message whose top edge is nearest above or below the top of the screen, so each tap moves one message.
+function stepMessage(dir) {
+  var rows = chat.querySelectorAll('.row'), target = null, i;
+  if (dir > 0) { for (i = 0; i < rows.length; i++) if (rows[i].getBoundingClientRect().top > 24) { target = rows[i]; break; } }
+  else { for (i = rows.length - 1; i >= 0; i--) if (rows[i].getBoundingClientRect().top < 0) { target = rows[i]; break; } }
+  if (target) { window.scrollTo(0, window.scrollY + target.getBoundingClientRect().top - 12); return; }
+  if (dir > 0 && doc && Math.min(shown, doc.msgs.length) < doc.msgs.length) { loadMore(CHUNK); stepMessage(dir); return; }
+  toast(dir > 0 ? 'This is the last message' : 'This is the first message', false);
+}
+$('prevMsgBtn').addEventListener('click', function () { stepMessage(-1); });
+$('nextMsgBtn').addEventListener('click', function () { stepMessage(1); });
 if (window.visualViewport) {
   var vv = window.visualViewport;
   var syncKeyboard = function () {
