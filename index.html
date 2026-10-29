@@ -10,11 +10,13 @@
     var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
     if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
-    var z = localStorage.getItem('cr-size');
-    if (z && /^(s|l|xl)$/.test(z)) r.setAttribute('data-size', z);
-    var lh = localStorage.getItem('cr-lh'), ps = localStorage.getItem('cr-ps');
-    if (lh && /^(t|r|l)$/.test(lh)) r.setAttribute('data-lh', lh);
-    if (ps && /^(c|r|a)$/.test(ps)) r.setAttribute('data-ps', ps);
+    var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
+    [['cr-size', '--chat-fs', 14, 28, 'px'], ['cr-lh', '--chat-lh', 1.2, 2.2, ''], ['cr-ps', '--chat-ps', .2, 2, 'em']].forEach(function (d) {
+      var v = localStorage.getItem(d[0]);
+      if (v === null) return;
+      var n = OLD[d[0]].hasOwnProperty(v) ? OLD[d[0]][v] : parseFloat(v);
+      if (isFinite(n) && n >= d[2] && n <= d[3]) r.style.setProperty(d[1], n + d[4]);
+    });
     var ft = localStorage.getItem('cr-font');
     if (ft === 'system' || ft === 'custom') r.setAttribute('data-font', ft);
   } catch (e) { /* storage blocked: defaults are used */ }
@@ -67,17 +69,8 @@
   color-scheme: dark;
 }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; --chat-fs: 17px; --chat-lh: 1.55; --chat-ps: .65em; }
-html[data-size="s"] { --chat-fs: 15px; }
-html[data-size="l"] { --chat-fs: 20px; }
-html[data-size="xl"] { --chat-fs: 24px; }
 html[data-font="system"] { --ff: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 html[data-font="custom"] { --ff: 'CR Custom', 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
-html[data-lh="t"] { --chat-lh: 1.35; }
-html[data-lh="r"] { --chat-lh: 1.75; }
-html[data-lh="l"] { --chat-lh: 1.95; }
-html[data-ps="c"] { --chat-ps: .4em; }
-html[data-ps="r"] { --chat-ps: 1em; }
-html[data-ps="a"] { --chat-ps: 1.4em; }
 html, body { min-height: 100%; }
 body {
   margin: 0;
@@ -157,6 +150,8 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .panel ol, .panel ul { padding-left: 1.3em; display: grid; gap: 4px; }
 .panel code { font: 400 .85em var(--mono); background: var(--code); padding: .1em .35em; border-radius: 5px; overflow-wrap: anywhere; }
 .lbl { display: block; margin-bottom: 6px; font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.slider input[type="range"] { display: block; width: 100%; height: 36px; margin: 0; accent-color: var(--fg); cursor: pointer; }
+.lbl output { float: right; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--fg); }
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 14px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
 .choice i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
@@ -379,32 +374,17 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="green" title="Recycled-paper tones that are easy on the eyes">Green Read</button>
       </div>
     </div>
-    <div>
-      <span class="lbl">Text size</span>
-      <div class="choices" id="sizeGroup" role="radiogroup" aria-label="Chat text size">
-        <button class="choice" type="button" role="radio" aria-checked="false" data-size="s">Small</button>
-        <button class="choice" type="button" role="radio" aria-checked="true" data-size="m">Medium</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-size="l">Large</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-size="xl">Extra large</button>
-      </div>
+    <div class="slider">
+      <label class="lbl" for="fsRange">Text size <output id="fsVal">17 px</output></label>
+      <input type="range" id="fsRange" min="14" max="28" step="1" value="17">
     </div>
-    <div>
-      <span class="lbl">Line spacing</span>
-      <div class="choices" id="lhGroup" role="radiogroup" aria-label="Line spacing">
-        <button class="choice" type="button" role="radio" aria-checked="false" data-lh="t">Tight</button>
-        <button class="choice" type="button" role="radio" aria-checked="true" data-lh="m">Normal</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-lh="r">Relaxed</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-lh="l">Loose</button>
-      </div>
+    <div class="slider">
+      <label class="lbl" for="lhRange">Line spacing <output id="lhVal">1.55</output></label>
+      <input type="range" id="lhRange" min="1.2" max="2.2" step="0.05" value="1.55">
     </div>
-    <div>
-      <span class="lbl">Paragraph spacing</span>
-      <div class="choices" id="psGroup" role="radiogroup" aria-label="Paragraph spacing">
-        <button class="choice" type="button" role="radio" aria-checked="false" data-ps="c">Compact</button>
-        <button class="choice" type="button" role="radio" aria-checked="true" data-ps="m">Normal</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-ps="r">Roomy</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-ps="a">Airy</button>
-      </div>
+    <div class="slider">
+      <label class="lbl" for="psRange">Paragraph spacing <output id="psVal">0.65 em</output></label>
+      <input type="range" id="psRange" min="0.2" max="2" step="0.05" value="0.65">
     </div>
     <div>
       <span class="lbl">Font</span>
@@ -1207,24 +1187,27 @@ document.querySelectorAll('#modeGroup button').forEach(function (b) {
     syncThemeColor();
   });
 });
-document.querySelectorAll('#sizeGroup button').forEach(function (b) {
-  b.addEventListener('click', function () {
-    var z = b.getAttribute('data-size');
-    if (z === 'm') root.removeAttribute('data-size'); else root.setAttribute('data-size', z);
-    savePref('cr-size', z === 'm' ? null : z);
-    setChecked($('sizeGroup'), 'data-size', z);
+// Text size, line spacing and paragraph spacing are sliders that set CSS variables on the page.
+var SLIDERS = [
+  { id: 'fsRange', out: 'fsVal', prop: '--chat-fs', key: 'cr-size', def: 17, unit: 'px', fmt: function (v) { return v + ' px'; } },
+  { id: 'lhRange', out: 'lhVal', prop: '--chat-lh', key: 'cr-lh', def: 1.55, unit: '', fmt: function (v) { return v.toFixed(2); } },
+  { id: 'psRange', out: 'psVal', prop: '--chat-ps', key: 'cr-ps', def: 0.65, unit: 'em', fmt: function (v) { return v.toFixed(2) + ' em'; } }
+];
+SLIDERS.forEach(function (c) {
+  var el = $(c.id);
+  function paint(v) { $(c.out).textContent = c.fmt(v); el.setAttribute('aria-valuetext', c.fmt(v)); }
+  c.set = function (v) {
+    v = Number(v);
+    if (v === c.def) root.style.removeProperty(c.prop); else root.style.setProperty(c.prop, v + c.unit);
+    el.value = String(v); paint(v);
+  };
+  c.reset = function () { c.set(c.def); savePref(c.key, null); };
+  var cur = parseFloat(root.style.getPropertyValue(c.prop));
+  c.set(isFinite(cur) ? cur : c.def);
+  el.addEventListener('input', function () {
+    c.set(el.value);
+    savePref(c.key, Number(el.value) === c.def ? null : el.value);
   });
-});
-[['lh', 'lhGroup'], ['ps', 'psGroup']].forEach(function (g) {
-  document.querySelectorAll('#' + g[1] + ' button').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var v = b.getAttribute('data-' + g[0]);
-      if (v === 'm') root.removeAttribute('data-' + g[0]); else root.setAttribute('data-' + g[0], v);
-      savePref('cr-' + g[0], v === 'm' ? null : v);
-      setChecked($(g[1]), 'data-' + g[0], v);
-    });
-  });
-  setChecked($(g[1]), 'data-' + g[0], root.getAttribute('data-' + g[0]) || 'm');
 });
 // Font choice. "My font" is a file kept in this browser (IndexedDB), never uploaded.
 var customFace = null, customName = '';
@@ -1322,16 +1305,11 @@ function savePref(k, v) {
 }
 setChecked($('accentGroup'), 'data-accent', root.getAttribute('data-accent') || 'green');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
-setChecked($('sizeGroup'), 'data-size', root.getAttribute('data-size') || 'm');
 $('resetPrefs').addEventListener('click', function () {
-  root.removeAttribute('data-accent'); root.removeAttribute('data-theme'); root.removeAttribute('data-size');
-  root.removeAttribute('data-lh'); root.removeAttribute('data-ps');
+  root.removeAttribute('data-accent'); root.removeAttribute('data-theme');
+  SLIDERS.forEach(function (c) { c.reset(); });
   setFont('d');
-  savePref('cr-accent', null); savePref('cr-mode', null); savePref('cr-size', null);
-  savePref('cr-lh', null); savePref('cr-ps', null);
-  setChecked($('sizeGroup'), 'data-size', 'm');
-  setChecked($('lhGroup'), 'data-lh', 'm');
-  setChecked($('psGroup'), 'data-ps', 'm');
+  savePref('cr-accent', null); savePref('cr-mode', null);
   setChecked($('accentGroup'), 'data-accent', 'green');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();
