@@ -430,16 +430,9 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
         </ul>
       </li>
       <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat or per project, to download.</li>
-      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open .md file</strong>, and pick one to read it as a chat. Open one file at a time.</li>
+      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. Open one file at a time.</li>
     </ol>
     <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
-    <h2>Using the reader</h2>
-    <ul>
-      <li>Your messages appear on the right and the AI's on the left.</li>
-      <li>Use <strong>Search</strong> to find text, and <strong>Copy</strong> on any code block.</li>
-      <li>Tap <strong>Edit</strong>, then tap a message to change it, delete it or <strong>Swap side</strong> (moves a message to the other speaker, for when a speaker was mixed up). <strong>Download</strong> saves a new .md copy; your original file is never changed. Edits are labeled, and saved copies say they were edited. Please only edit your own chats.</li>
-      <li>On Android, open this page in Chrome, then choose the menu (&#8942;) and <strong>Install app</strong> to add it to your home screen.</li>
-    </ul>
     <h2>Your chat stays with you</h2>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
@@ -447,8 +440,9 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing and font) are remembered, on this device. A font file you add stays on this device too.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
-    <h2>If the speakers do not split</h2>
-    <p>The reader looks for lines such as <code>**You:**</code>, <code>**AI:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
+    <h2>New here?</h2>
+    <p>The guide chat walks through search, editing, styles, installing the app and what to do if the speakers do not split.</p>
+    <button class="btn" id="showGuide" type="button">Show the guide chat</button>
   </section>
   <section id="start" class="start" aria-label="Open a chat">
     <h2>Read an exported chat</h2>
@@ -1528,10 +1522,17 @@ function showSample(text) {
 }
 decorateCode($('info'));
 // sample.md is one of the app's own files (cached for offline use). If you open a chat before it arrives, yours stays.
-fetch('sample.md')
-  .then(function (r) { if (!r.ok) throw new Error('sample'); return r.text(); })
-  .catch(function () { return SAMPLE; })
-  .then(function (t) { if (!doc) showSample(t); });
+function fetchSample() {
+  return fetch('sample.md')
+    .then(function (r) { if (!r.ok) throw new Error('sample'); return r.text(); })
+    .catch(function () { return SAMPLE; });
+}
+fetchSample().then(function (t) { if (!doc) showSample(t); });
+$('showGuide').addEventListener('click', function () {
+  if ((state === 'chat' || dirty) && !window.confirm('Replace the chat you are reading with the guide? Chats are not saved, so open your file again to get it back.')) return;
+  closePanels();
+  fetchSample().then(showSample);
+});
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   navigator.serviceWorker.register('sw.js').catch(function () {});
 }
