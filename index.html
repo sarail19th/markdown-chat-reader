@@ -270,7 +270,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .logo { width: 36px; height: 36px; flex: none; color: var(--muted); }
 .heading { min-width: 0; }
 .bchanges { display: block; margin-top: 6px; font-size: .9rem; color: var(--muted); overflow-wrap: anywhere; }
-.toolbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .tb { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-sizing: border-box; min-height: 58px; padding: 6px 2px; font: 500 .72rem/1.1 var(--ff); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; text-align: center; }
 .tb svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .tb:hover { border-color: var(--muted); }
@@ -301,7 +301,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .sheetx:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .scrim { position: fixed; inset: 0; z-index: 24; background: rgba(0, 0, 0, .4); }
 body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
-/* Wide screens: Appearance and Help drop down from the toolbar instead of docking at the bottom. */
+/* Wide screens: Appearance and Help pop up beside the floating buttons and Paste drops down from the toolbar, instead of docking at the bottom. */
 @media (min-width: 760px) {
   .sheet { right: auto; bottom: auto; margin: 0; max-width: none; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
   #appearance.sheet { width: 640px; max-height: none; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
@@ -316,11 +316,18 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .more { display: grid; justify-items: center; gap: 6px; margin: 16px 0 8px; color: var(--muted); font-size: .85rem; }
 #search.panel { position: fixed; top: 0; left: 0; right: 0; z-index: 26; box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; gap: 4px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 12px; border-top: 0; border-radius: 0 0 14px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); }
 #search .count { margin-top: 0; }
-.fab { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--user-fg); background: var(--user); border: 1px solid rgba(128, 128, 128, .35); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
+.fabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: grid; justify-items: center; gap: 10px; pointer-events: none; }
+.fab { pointer-events: auto; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--user-fg); background: var(--user); border: 1px solid rgba(128, 128, 128, .35); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
 .fab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-body.editing .fab { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
-body.searching .fab { display: none; }
+.fabbtn { pointer-events: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
+.fabbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fabbtn:hover { border-color: var(--muted); }
+.fabbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.fabbtn[aria-expanded="true"], .fabbtn[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 3px var(--user); }
+.fabbtn:disabled { opacity: .45; cursor: not-allowed; }
+body.editing .fabs { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+body.searching .fabs { display: none; }
 .jump { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: grid; gap: 8px; pointer-events: none; }
 body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .jumpbtn { pointer-events: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
@@ -357,10 +364,6 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       <label class="tb primary" for="file" tabindex="0" id="fileLabel" title="Choose a .md file from your device. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="tl">Open</span></label>
       <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
       <button class="tb" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" title="Paste exported text. It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span class="tl">Paste</span></button>
-      <button class="tb" id="editBtn" type="button" aria-pressed="false" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span class="tl">Edit</span></button>
-      <button class="tb" type="button" data-panel="search" aria-expanded="false" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tl">Search</span></button>
-      <button class="tb" type="button" data-panel="appearance" aria-expanded="false" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg><span class="tl">Style</span></button>
-      <button class="tb" type="button" data-panel="info" aria-expanded="false" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span class="tl">Help</span></button>
     </nav>
   </header>
   <section id="search" class="panel" hidden aria-label="Search this chat">
@@ -467,7 +470,12 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
-<button class="fab" id="searchFab" type="button" aria-label="Search this chat" title="Search this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
+<div class="fabs" id="fabs">
+  <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
+  <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
+  <button class="fabbtn" id="editBtn" type="button" aria-pressed="false" aria-label="Edit messages" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
+  <button class="fab" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
+</div>
 <div class="jump" id="jump">
   <button class="jumpbtn" id="jumpTop" type="button" hidden aria-label="Jump to the top" title="Top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
   <button class="jumpbtn" id="jumpBottom" type="button" hidden aria-label="Jump to the bottom" title="Bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
@@ -854,7 +862,6 @@ function setEdit(on, quiet) {
   $('editbar').hidden = !on;
   $('editCaution').hidden = !on;
   $('editBtn').setAttribute('aria-pressed', String(on));
-  $('editBtn').querySelector('.tl').textContent = on ? 'Editing' : 'Edit';
   if (!quiet && doc) render();
 }
 function syncEditUI() {
@@ -1086,12 +1093,20 @@ var WIDE = window.matchMedia ? window.matchMedia('(min-width: 760px)') : { match
 function placeSheets() {
   ['appearance', 'info', 'paste'].forEach(function (id) {
     var el = $(id);
-    if (el.hidden || !WIDE.matches) { el.style.top = el.style.left = el.style.maxHeight = ''; return; }
-    var w = document.querySelector('.wrap').getBoundingClientRect(), t = document.querySelector('.toolbar').getBoundingClientRect();
-    var top = Math.max(8, t.bottom + 8);
-    el.style.top = top + 'px';
-    el.style.left = Math.max(8, id === 'paste' ? w.left : w.right - el.offsetWidth) + 'px';
-    el.style.maxHeight = Math.max(240, window.innerHeight - top - 16) + 'px';
+    if (el.hidden || !WIDE.matches) { el.style.top = el.style.bottom = el.style.left = el.style.maxHeight = ''; return; }
+    var w = document.querySelector('.wrap').getBoundingClientRect();
+    if (id === 'paste') {
+      var t = document.querySelector('.toolbar').getBoundingClientRect(), top = Math.max(8, t.bottom + 8);
+      el.style.top = top + 'px';
+      el.style.left = Math.max(8, w.left) + 'px';
+      el.style.maxHeight = Math.max(240, window.innerHeight - top - 16) + 'px';
+      return;
+    }
+    var f = $('fabs').getBoundingClientRect();
+    el.style.top = 'auto';
+    el.style.bottom = Math.max(8, window.innerHeight - f.bottom) + 'px';
+    el.style.left = Math.max(8, f.right + 12) + 'px';
+    el.style.maxHeight = Math.max(240, f.bottom - 16) + 'px';
   });
 }
 window.addEventListener('scroll', placeSheets, { passive: true });
@@ -1161,9 +1176,6 @@ document.querySelectorAll('[data-close]').forEach(function (b) {
   b.addEventListener('click', function () { closeSheet(b.getAttribute('data-close')); });
 });
 $('scrim').addEventListener('click', function () { closeSheet('info'); closeSheet('paste'); });
-$('searchFab').addEventListener('click', function () {
-  if ($('search').hidden) togglePanel('search'); else $('searchInput').focus();
-});
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape' || e.defaultPrevented) return;
   if (!$('search').hidden) closeSheet('search');

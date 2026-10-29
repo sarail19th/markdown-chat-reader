@@ -21,8 +21,8 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - Detects speakers in many export formats, including custom names. If it finds no speakers, it shows the whole file as one message with a notice.
 - Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and four text sizes.
-- Search inside the chat, and a copy button on every code block.
-- Tap-to-edit: turn on **Edit**, tap a message, then edit its text, swap its speaker or delete it. Undo, then download or copy a new `.md` file. Your original file is never changed.
+- Floating buttons at the bottom left for Search, Edit, Style and Help, and a copy button on every code block.
+- Tap-to-edit: turn on the **Edit** button, tap a message, then edit its text, swap its speaker or delete it. Undo, then download or copy a new `.md` file. Your original file is never changed.
 - Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**.
 
 ## Edited chats are labeled
