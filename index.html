@@ -348,6 +348,11 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .fabbtn:hover { border-color: var(--muted); }
 .fabbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .fabbtn[aria-expanded="true"], .fabbtn[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 3px var(--user); }
+.fabpair { grid-row: span 2; box-sizing: border-box; display: flex; flex-direction: column; width: 44px; min-height: 88px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); }
+.fabpair .fabbtn { flex: 1; width: 100%; height: auto; min-height: 43px; background: none; border: 0; border-radius: 0; box-shadow: none; }
+.fabpair .fabbtn:first-child { border-radius: 22px 22px 0 0; }
+.fabpair .fabbtn:last-child { border-radius: 0 0 22px 22px; border-top: 1px solid var(--line); }
+.fabpair .fabbtn:hover { background: var(--code); }
 .fabbtn:disabled { opacity: .45; cursor: not-allowed; }
 #jumpBtn[data-dir="bottom"] .ic-up, #jumpBtn[data-dir="top"] .ic-down { display: none; }
 body.editing .fabs:not(.moved) { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
@@ -492,8 +497,10 @@ body.searching .fabs { display: none; }
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
     <button class="fabbtn" id="jumpBtn" type="button" data-dir="bottom" aria-label="Jump to the bottom" title="Jump to the bottom"><svg class="ic-up" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg><svg class="ic-down" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
-    <button class="fabbtn" id="prevMsgBtn" type="button" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
-    <button class="fabbtn" id="nextMsgBtn" type="button" aria-label="Next message" title="Next message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
+    <div class="fabpair" role="group" aria-label="Previous or next message">
+      <button class="fabbtn" id="prevMsgBtn" type="button" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l4-4 4 4"/><path d="M6 10h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V19H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/></svg></button>
+      <button class="fabbtn" id="nextMsgBtn" type="button" aria-label="Next message" title="Next message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V11.5H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/><path d="M8 17l4 4 4-4"/></svg></button>
+    </div>
     <button class="fabbtn" id="editBtn" type="button" aria-pressed="false" aria-label="Edit messages" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
@@ -1313,7 +1320,7 @@ try {
   if (saved.length === 2 && saved.every(function (n) { return n >= 0 && n <= 1; })) fabPos = { x: saved[0], y: saved[1] };
 } catch (e) { /* storage blocked: the default spot is used */ }
 function fitMenu() {
-  var menu = $('fabMenu'), n = menu.children.length, f = $('fabToggle').getBoundingClientRect();
+  var menu = $('fabMenu'), n = menu.children.length + menu.querySelectorAll('.fabpair').length, f = $('fabToggle').getBoundingClientRect();
   var room = ($('fabs').dataset.v === 'up' ? f.top : window.innerHeight - f.bottom) - 18;
   var rows = Math.max(2, Math.min(n, Math.floor((room + 10) / 54)));
   menu.style.gridAutoFlow = rows < n ? 'column' : '';
