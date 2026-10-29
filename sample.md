@@ -70,13 +70,14 @@ What can I do once a chat is open?
 **AI:**
 | Floating button | What it does |
 |---|---|
-| **Open** and **Paste** | Load your own chat from a file or from pasted text. |
+| **Open** | Opens a .md file from your device. |
+| **Paste** | Opens a box for pasted text. On a computer, pressing Ctrl+V anywhere on the page does the same. |
 | **Search** | Finds text in the chat. Use the arrows to jump between matches. |
 | **Edit** | Tap a message to change it, delete it or swap its side. |
 | **Style** | Chat colours, light or dark mode, text size, spacing and font. |
 | **Help** | The full steps and what happens to your file. |
 
-The buttons sit in a stack at the bottom left. Tap the round button at the bottom of the stack to hide or show the rest, and the reader remembers your choice.
+The buttons start folded into one round button at the bottom left. Tap it to show the rest, and tap it again to fold them.
 
 Every code block has a **Copy** button. In long chats, the floating buttons on the right jump to the top or bottom.
 
