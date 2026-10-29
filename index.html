@@ -292,6 +292,15 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
   body.sheet-open { padding-bottom: 0; }
   .scrim { display: none !important; }
 }
+.empty { margin: 24px 0; padding: 16px; text-align: center; color: var(--muted); }
+.more { display: grid; justify-items: center; gap: 6px; margin: 16px 0 8px; color: var(--muted); font-size: .85rem; }
+#search.panel { position: fixed; top: 0; left: 0; right: 0; z-index: 26; box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; gap: 4px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 12px; border-top: 0; border-radius: 0 0 14px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); }
+#search .count { margin-top: 0; }
+.fab { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--user-fg); background: var(--user); border: 1px solid rgba(128, 128, 128, .35); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
+.fab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+body.editing .fab { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+body.searching .fab { display: none; }
 .jump { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: grid; gap: 8px; pointer-events: none; }
 body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .jumpbtn { pointer-events: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
@@ -339,6 +348,7 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       <input id="searchInput" type="search" placeholder="Search this chat" aria-label="Search this chat" autocomplete="off" enterkeyhint="search">
       <button class="btn" id="searchPrev" type="button" aria-label="Previous match">&uarr;</button>
       <button class="btn" id="searchNext" type="button" aria-label="Next match">&darr;</button>
+      <button class="sheetx" type="button" data-close="search" aria-label="Close search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <p class="count" id="searchCount" aria-live="polite"></p>
   </section>
@@ -459,6 +469,7 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
+<button class="fab" id="searchFab" type="button" hidden aria-label="Search this chat" title="Search this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
 <div class="jump" id="jump">
   <button class="jumpbtn" id="jumpTop" type="button" hidden aria-label="Jump to the top" title="Top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
   <button class="jumpbtn" id="jumpBottom" type="button" hidden aria-label="Jump to the bottom" title="Bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
@@ -747,40 +758,105 @@ function show(text, fallbackTitle) {
   }
   chat.classList.add('anim');
   setTimeout(function () { chat.classList.remove('anim'); }, 400);
+  shown = 0;
   render();
   window.scrollTo(0, 0);
   syncEditUI();
 }
 
+var INITIAL = 60, CHUNK = 60, shown = 0, moreEl = null, renderGen = 0, loadingAll = false, loadWaiters = [];
+function buildRow(i) {
+  var m = doc.msgs[i], row = document.createElement('div'), b = document.createElement('div');
+  b.className = 'bubble';
+  row.className = 'row ' + (m.role === 'user' ? 'user' : m.role === 'system' ? 'sys' : 'ai');
+  row.setAttribute('data-i', String(i));
+  if (editMode && i === editingIdx) { row.className += ' editing'; buildEditor(b, i); }
+  else {
+    if (editMode) { row.className += ' tap'; b.tabIndex = 0; }
+    b.innerHTML = md(m.text, m.role === 'user');
+    var cl = changeLabel(m);
+    if (cl) { var tg = document.createElement('span'); tg.className = 'etag'; tg.textContent = cl; b.appendChild(tg); }
+  }
+  row.appendChild(b);
+  return row;
+}
+// Long chats are drawn in chunks: the first screens fast, the rest as you scroll, or all at once for search and jump to bottom.
+function syncMore() {
+  var total = doc ? doc.msgs.length : 0, n = Math.min(shown, total);
+  if (n >= total) {
+    if (moreEl && moreEl.parentNode) moreEl.parentNode.removeChild(moreEl);
+    moreEl = null;
+    return;
+  }
+  if (!moreEl) {
+    moreEl = document.createElement('div');
+    moreEl.className = 'more';
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'btn'; btn.textContent = 'Load more messages';
+    btn.addEventListener('click', function () { loadMore(CHUNK); });
+    moreEl.appendChild(btn);
+    moreEl.appendChild(document.createElement('span'));
+  }
+  moreEl.lastChild.textContent = 'Showing ' + n + ' of ' + total;
+  chat.appendChild(moreEl);
+}
+function loadMore(count) {
+  if (!doc) return;
+  var total = doc.msgs.length, from = Math.min(shown, total);
+  if (from >= total) return;
+  shown = Math.min(total, from + count);
+  var frag = document.createDocumentFragment();
+  for (var i = from; i < shown; i++) frag.appendChild(buildRow(i));
+  decorateCode(frag);
+  chat.appendChild(frag);
+  syncMore();
+  requestAnimationFrame(maybeLoad);
+}
+function maybeLoad() {
+  if (!doc || loadingAll || !moreEl || !moreEl.parentNode) return;
+  if (moreEl.getBoundingClientRect().top < window.innerHeight + 1500) loadMore(CHUNK);
+}
+function loadAll(cb) {
+  if (!doc || Math.min(shown, doc.msgs.length) >= doc.msgs.length) { if (cb) cb(); return; }
+  if (cb) loadWaiters.push(cb);
+  if (loadingAll) return;
+  loadingAll = true;
+  var gen = renderGen;
+  (function tick() {
+    if (gen !== renderGen) return;
+    if (!doc || Math.min(shown, doc.msgs.length) >= doc.msgs.length) {
+      loadingAll = false;
+      var w = loadWaiters; loadWaiters = [];
+      w.forEach(function (f) { f(); });
+      return;
+    }
+    loadMore(40);
+    setTimeout(tick, 0);
+  })();
+}
+window.addEventListener('scroll', maybeLoad, { passive: true });
+window.addEventListener('resize', maybeLoad);
 function render() {
+  renderGen++; loadingAll = false; loadWaiters = [];
   var q = $('searchInput').value;
   clearMarks();
   chat.innerHTML = '';
+  moreEl = null;
   selIdx = -1;
   titleEl.textContent = doc.title;
   var u = 0, a = 0;
-  doc.msgs.forEach(function (m, i) {
-    var row = document.createElement('div'), b = document.createElement('div');
-    b.className = 'bubble';
-    row.className = 'row ' + (m.role === 'user' ? 'user' : m.role === 'system' ? 'sys' : 'ai');
-    row.setAttribute('data-i', String(i));
-    if (m.role === 'user') u++; else if (m.role === 'assistant') a++;
-    if (editMode && i === editingIdx) { row.className += ' editing'; buildEditor(b, i); }
-    else {
-      if (editMode) { row.className += ' tap'; b.tabIndex = 0; }
-      b.innerHTML = md(m.text, m.role === 'user');
-      var cl = changeLabel(m);
-      if (cl) { var tg = document.createElement('span'); tg.className = 'etag'; tg.textContent = cl; b.appendChild(tg); }
-    }
-    row.appendChild(b);
-    chat.appendChild(row);
-  });
+  doc.msgs.forEach(function (m) { if (m.role === 'user') u++; else if (m.role === 'assistant') a++; });
+  if (shown < INITIAL) shown = INITIAL;
+  var n = Math.min(shown, doc.msgs.length), frag = document.createDocumentFragment();
+  for (var i = 0; i < n; i++) frag.appendChild(buildRow(i));
+  chat.appendChild(frag);
   if (!doc.msgs.length) {
     var d = document.createElement('p');
     d.className = 'empty';
     d.textContent = 'All messages were deleted. Tap Undo to bring them back.';
     chat.appendChild(d);
   }
+  syncMore();
   metaEl.textContent = doc.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI' + (dirty ? ' · edited' : '');
   decorateCode(chat);
   $('editedBanner').hidden = !isModified();
@@ -789,6 +865,7 @@ function render() {
   $('bannerChanges').hidden = !cs;
   $('undoBtn').disabled = !undoStack.length;
   if (q) runSearch();
+  requestAnimationFrame(maybeLoad);
 }
 
 /* ---- editing ---- */
@@ -1013,6 +1090,7 @@ function syncThemeColor() {
 var PANELS = ['info', 'appearance', 'paste', 'search'];
 function syncSheets() {
   $('scrim').hidden = $('info').hidden;
+  document.body.classList.toggle('searching', !$('search').hidden);
   setTimeout(syncJump, 0);
   document.body.classList.toggle('sheet-open', !$('appearance').hidden);
 }
@@ -1041,18 +1119,25 @@ window.addEventListener('resize', placeSheets);
 function syncJump() {
   var y = window.scrollY, left = document.documentElement.scrollHeight - window.innerHeight - y, has = state !== 'empty';
   $('jumpTop').hidden = !(has && y > 400);
-  $('jumpBottom').hidden = !(has && left > 400);
+  var more = !!(doc && Math.min(shown, doc.msgs.length) < doc.msgs.length);
+  $('jumpBottom').hidden = !(has && (left > 400 || more));
 }
 function jumpTo(top) {
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({ top: top, behavior: calm ? 'auto' : 'smooth' });
 }
 $('jumpTop').addEventListener('click', function () { jumpTo(0); });
-$('jumpBottom').addEventListener('click', function () { jumpTo(document.documentElement.scrollHeight); });
+$('jumpBottom').addEventListener('click', function () {
+  if (doc && Math.min(shown, doc.msgs.length) < doc.msgs.length) toast('Loading the whole chat…', false);
+  loadAll(function () { jumpTo(document.documentElement.scrollHeight); });
+});
 window.addEventListener('scroll', syncJump, { passive: true });
 window.addEventListener('resize', syncJump);
 if (window.ResizeObserver) new ResizeObserver(syncJump).observe(document.body);
-function syncStart() { $('start').hidden = state === 'chat'; }
+function syncStart() {
+  $('start').hidden = state === 'chat';
+  $('searchFab').hidden = state === 'empty';
+}
 function togglePanel(id) {
   var willOpen = $(id).hidden;
   PANELS.forEach(function (p) {
@@ -1062,7 +1147,7 @@ function togglePanel(id) {
     if (btn) btn.setAttribute('aria-expanded', String(open));
   });
   if (willOpen) {
-    if (state === 'sample' && (id === 'paste' || id === 'search')) showEmpty();
+    if (state === 'sample' && id === 'paste') showEmpty();
     else if (state === 'empty' && id === 'appearance') showSample();
   }
   syncSheets();
@@ -1091,9 +1176,13 @@ document.querySelectorAll('[data-close]').forEach(function (b) {
   b.addEventListener('click', function () { closeSheet(b.getAttribute('data-close')); });
 });
 $('scrim').addEventListener('click', function () { closeSheet('info'); });
+$('searchFab').addEventListener('click', function () {
+  if ($('search').hidden) togglePanel('search'); else $('searchInput').focus();
+});
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape' || e.defaultPrevented) return;
-  if (!$('info').hidden) closeSheet('info');
+  if (!$('search').hidden) closeSheet('search');
+  else if (!$('info').hidden) closeSheet('info');
   else if (!$('appearance').hidden && !(editMode && selIdx >= 0)) closeSheet('appearance');
 });
 $('startOpen').addEventListener('click', function () { $('file').click(); });
@@ -1314,6 +1403,11 @@ function goTo(i) {
   updateCount();
 }
 function runSearch() {
+  if (doc && Math.min(shown, doc.msgs.length) < doc.msgs.length) {
+    $('searchCount').textContent = 'Loading the whole chat…';
+    loadAll(runSearch);
+    return;
+  }
   clearMarks();
   var q = $('searchInput').value.trim();
   if (!q) { updateCount(); return; }
