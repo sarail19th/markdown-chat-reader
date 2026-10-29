@@ -206,7 +206,8 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .tbtn.danger { color: var(--danger, var(--muted)); }
 .tbtn:focus-visible, .toastbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .row.editing .bubble { width: 100%; max-width: 100%; box-sizing: border-box; }
-.editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 16px/1.5 var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.row.editing .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/1.55 var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
 .editactions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
 .editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bar); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .editbar .inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; }
