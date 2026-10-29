@@ -128,6 +128,7 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 .user .bubble a { color: inherit; text-decoration: underline; }
 .bubble code { font: 400 .85em var(--mono); background: var(--code); padding: .1em .35em; border-radius: 5px; }
 .bubble pre { background: var(--code); border-radius: 10px; padding: 10px 12px; overflow-x: auto; max-width: 100%; }
+.bubble pre.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
 .bubble pre code { background: none; padding: 0; font-size: calc(var(--chat-fs) * .77); line-height: 1.5; }
 .user .bubble code, .user .bubble pre { background: var(--user-code); }
 .bubble table { display: block; overflow-x: auto; border-collapse: collapse; max-width: 100%; }
@@ -203,7 +204,8 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 :root[data-accent="classic"] .user .bubble .codehead { background: var(--code); color: var(--muted); }
 #search { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 6; box-shadow: 0 6px 18px rgba(0, 0, 0, .14); }
 .copybtn { font: 500 .8rem var(--ff); color: inherit; background: none; border: 0; border-radius: 8px; padding: 6px 10px; min-height: 36px; cursor: pointer; }
-.copybtn:hover { background: rgba(128, 128, 128, .22); }
+.copybtn:hover, .copybtn[aria-pressed="true"] { background: rgba(128, 128, 128, .22); }
+.codeacts { display: flex; gap: 2px; }
 .copybtn:focus-visible, #searchInput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .searchrow { display: flex; gap: 8px; }
 #searchInput { flex: 1 1 auto; min-width: 0; box-sizing: border-box; min-height: 44px; font: 400 16px var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
@@ -1497,7 +1499,18 @@ function decorateCode(root) {
     var btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'copybtn'; btn.textContent = 'Copy'; btn.setAttribute('aria-label', 'Copy code');
     btn.addEventListener('click', function () { copyText((code || pre).textContent.replace(/\n$/, ''), btn); });
-    head.appendChild(lang); head.appendChild(btn);
+    var acts = document.createElement('span'); acts.className = 'codeacts';
+    // Chat code blocks scroll sideways; plain-text blocks (like the conversion prompt) start wrapped, and Wrap switches any block.
+    if (!pre.closest('.panel')) {
+      var wb = document.createElement('button');
+      wb.type = 'button'; wb.className = 'copybtn'; wb.textContent = 'Wrap'; wb.setAttribute('aria-label', 'Wrap long lines');
+      var setWrap = function (on) { pre.classList.toggle('wrap', on); wb.setAttribute('aria-pressed', String(on)); };
+      wb.addEventListener('click', function () { setWrap(!pre.classList.contains('wrap')); });
+      setWrap(!!cm && /^(text|txt|plain|plaintext|markdown|md)$/i.test(cm[1]));
+      acts.appendChild(wb);
+    }
+    acts.appendChild(btn);
+    head.appendChild(lang); head.appendChild(acts);
     pre.parentNode.insertBefore(wrap, pre);
     wrap.appendChild(head); wrap.appendChild(pre);
   });
