@@ -197,14 +197,19 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .panel > * { min-width: 0; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn[aria-pressed="true"] { background: var(--user); color: var(--user-fg); border-color: var(--user); }
-.tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
-.tools.user { justify-content: flex-end; }
-.tools.ai { justify-content: flex-start; }
-.tools.sys { justify-content: center; }
-.tbtn { font: 500 .8rem var(--ff); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; min-height: 36px; cursor: pointer; }
-.tbtn:hover { color: var(--fg); border-color: var(--muted); }
-.tbtn.danger { color: var(--danger, var(--muted)); }
-.tbtn:focus-visible, .toastbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.row.tap .bubble { cursor: pointer; outline: 1px dashed rgba(128, 128, 128, .55); outline-offset: 2px; }
+.row.tap .bubble:focus-visible, .row.sel .bubble { outline: 2px solid var(--focus); outline-offset: 2px; }
+.msgmenu { display: flex; flex-direction: column; width: min(220px, 70%); margin-top: -4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .14); scroll-margin-bottom: 140px; }
+.msgmenu.user { margin-left: auto; }
+.msgmenu.ai { margin-right: auto; }
+.msgmenu.sys { margin-inline: auto; }
+.msgmenu button { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 14px; font: 500 .95rem var(--ff); color: var(--fg); background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; cursor: pointer; }
+.msgmenu button:last-child { border-bottom: 0; }
+.msgmenu button:hover { background: rgba(128, 128, 128, .14); }
+.msgmenu button.danger { color: var(--danger, var(--fg)); }
+.msgmenu button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.msgmenu svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.toastbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .row.editing .bubble { width: 100%; max-width: 100%; box-sizing: border-box; }
 .row.editing .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/1.55 var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
@@ -326,7 +331,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <ul>
       <li>Your messages appear on the right and the AI's on the left.</li>
       <li>Use <strong>Search</strong> to find text, and <strong>Copy</strong> on any code block.</li>
-      <li>Tap <strong>Edit</strong> to change, delete or <strong>Swap side</strong> (moves a message to the other speaker, for when a speaker was mixed up). <strong>Download</strong> saves a new .md copy; your original file is never changed. Edits are labeled, and saved copies say they were edited. Please only edit your own chats.</li>
+      <li>Tap <strong>Edit</strong>, then tap a message to change it, delete it or <strong>Swap side</strong> (moves a message to the other speaker, for when a speaker was mixed up). <strong>Download</strong> saves a new .md copy; your original file is never changed. Edits are labeled, and saved copies say they were edited. Please only edit your own chats.</li>
       <li>On Android, open this page in Chrome, then choose the menu (&#8942;) and <strong>Install app</strong> to add it to your home screen.</li>
     </ul>
     <h2>Your chat stays with you</h2>
@@ -345,7 +350,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   </section>
   <p class="notice" id="notice" hidden></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker or delete it. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved.</p>
@@ -592,7 +597,7 @@ function md(s, breaks) {
 
 /* ---- document model: the chat lives in memory only; nothing is stored ---- */
 var doc = null; // { title, msgs: [{role, label, text}], names: {user, assistant}, editable }
-var editMode = false, editingIdx = -1, dirty = false, undoStack = [], toastTimer = null;
+var editMode = false, editingIdx = -1, selIdx = -1, dirty = false, undoStack = [], toastTimer = null;
 
 function show(text, fallbackTitle) {
   var parsed = parseChat(text);
@@ -643,22 +648,24 @@ function render() {
   var q = $('searchInput').value;
   clearMarks();
   chat.innerHTML = '';
+  selIdx = -1;
   titleEl.textContent = doc.title;
   var u = 0, a = 0;
   doc.msgs.forEach(function (m, i) {
     var row = document.createElement('div'), b = document.createElement('div');
     b.className = 'bubble';
     row.className = 'row ' + (m.role === 'user' ? 'user' : m.role === 'system' ? 'sys' : 'ai');
+    row.setAttribute('data-i', String(i));
     if (m.role === 'user') u++; else if (m.role === 'assistant') a++;
     if (editMode && i === editingIdx) { row.className += ' editing'; buildEditor(b, i); }
     else {
+      if (editMode) { row.className += ' tap'; b.tabIndex = 0; }
       b.innerHTML = md(m.text, m.role === 'user');
       var cl = changeLabel(m);
       if (cl) { var tg = document.createElement('span'); tg.className = 'etag'; tg.textContent = cl; b.appendChild(tg); }
     }
     row.appendChild(b);
     chat.appendChild(row);
-    if (editMode && i !== editingIdx) chat.appendChild(buildTools(i, m.role));
   });
   if (!doc.msgs.length) {
     var d = document.createElement('p');
@@ -678,7 +685,7 @@ function render() {
 
 /* ---- editing ---- */
 function setEdit(on, quiet) {
-  editMode = on; editingIdx = -1;
+  editMode = on; editingIdx = -1; selIdx = -1;
   document.body.classList.toggle('editing', on);
   $('editbar').hidden = !on;
   $('editCaution').hidden = !on;
@@ -691,21 +698,44 @@ function syncEditUI() {
   $('editBtn').disabled = !can;
   if (!can && editMode) setEdit(false, true);
 }
-function buildTools(i, role) {
+var MENU_ICONS = {
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  swap: '<path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',
+  del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+};
+function buildMenu(i, role) {
   var t = document.createElement('div');
-  t.className = 'tools ' + (role === 'user' ? 'user' : role === 'system' ? 'sys' : 'ai');
-  var defs = [['edit', 'Edit', 'Edit message ' + (i + 1)]];
+  t.className = 'msgmenu ' + (role === 'user' ? 'user' : role === 'system' ? 'sys' : 'ai');
+  t.setAttribute('role', 'group');
+  t.setAttribute('aria-label', 'Options for message ' + (i + 1));
+  var defs = [['edit', 'Edit text', 'Edit message ' + (i + 1)]];
   if (role !== 'system') defs.push(['swap', 'Swap side', 'Switch message ' + (i + 1) + ' to the other speaker']);
   defs.push(['del', 'Delete', 'Delete message ' + (i + 1)]);
   defs.forEach(function (d) {
     var b = document.createElement('button');
-    b.type = 'button'; b.className = 'tbtn' + (d[0] === 'del' ? ' danger' : '');
+    b.type = 'button'; b.className = d[0] === 'del' ? 'danger' : '';
     b.setAttribute('data-act', d[0]); b.setAttribute('data-i', String(i));
-    b.setAttribute('aria-label', d[2]); b.title = d[2];
-    b.textContent = d[1];
+    b.setAttribute('aria-label', d[2]);
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + MENU_ICONS[d[0]] + '</svg><span>' + d[1] + '</span>';
     t.appendChild(b);
   });
   return t;
+}
+function selectRow(i) {
+  var old = chat.querySelector('.msgmenu');
+  if (old) old.parentNode.removeChild(old);
+  var prev = chat.querySelector('.row.sel');
+  if (prev) prev.classList.remove('sel');
+  var same = i === selIdx;
+  selIdx = -1;
+  if (same || i < 0) return;
+  var row = chat.querySelector('.row[data-i="' + i + '"]');
+  if (!row || !doc.msgs[i]) return;
+  selIdx = i;
+  row.classList.add('sel');
+  var m = buildMenu(i, doc.msgs[i].role);
+  row.parentNode.insertBefore(m, row.nextSibling);
+  m.scrollIntoView({ block: 'nearest' });
 }
 function buildEditor(b, i) {
   var ta = document.createElement('textarea');
@@ -781,14 +811,32 @@ function isModified() { return !!doc && (doc.loadedEdited || changeCount() > 0);
 function guardDirty() { return !dirty || window.confirm('You have unsaved edits. Replace them with the new chat?'); }
 
 chat.addEventListener('click', function (e) {
-  var b = e.target.closest ? e.target.closest('[data-act]') : null;
-  if (!b || !doc) return;
+  if (!doc || !e.target.closest) return;
+  var b = e.target.closest('[data-act]');
+  if (!b) {
+    if (!editMode || e.target.closest('a, button, textarea, .msgmenu')) return;
+    var sel = window.getSelection && window.getSelection();
+    if (sel && !sel.isCollapsed) return;
+    var bub = e.target.closest('.bubble'), row = bub && bub.parentNode;
+    selectRow(row && row.classList.contains('tap') ? parseInt(row.getAttribute('data-i'), 10) : -1);
+    return;
+  }
   var act = b.getAttribute('data-act'), i = parseInt(b.getAttribute('data-i'), 10);
   if (act === 'edit') { editingIdx = i; render(); }
   else if (act === 'cancel') { editingIdx = -1; render(); }
   else if (act === 'save') { saveEdit(i); }
   else if (act === 'swap') { mutate(function () { doc.msgs[i].role = doc.msgs[i].role === 'user' ? 'assistant' : 'user'; }); }
   else if (act === 'del') { mutate(function () { doc.msgs.splice(i, 1); }, 'Message deleted'); }
+});
+chat.addEventListener('keydown', function (e) {
+  if (!editMode || (e.key !== 'Enter' && e.key !== ' ') || !e.target.classList || !e.target.classList.contains('bubble')) return;
+  var row = e.target.parentNode;
+  if (!row.classList.contains('tap')) return;
+  e.preventDefault();
+  selectRow(parseInt(row.getAttribute('data-i'), 10));
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && editMode && selIdx >= 0 && e.target.tagName !== 'TEXTAREA') selectRow(-1);
 });
 $('editBtn').addEventListener('click', function () { if (!this.disabled) setEdit(!editMode); });
 $('doneBtn').addEventListener('click', function () { setEdit(false); });
