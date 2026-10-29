@@ -900,7 +900,7 @@ function selectRow(i) {
   row.parentNode.insertBefore(m, row.nextSibling);
   m.scrollIntoView({ block: 'nearest' });
 }
-/* ---- text style (bold / italic): pure helpers that work on the Markdown text ---- */
+/* ---- text style (bold, italic, strikethrough, heading): pure helpers that work on the Markdown text ---- */
 //#style-start
 var CODE_SPAN_RE = /^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:\n[ \t]*\1[`~]*[ \t]*(?=\n|$)|$(?![\s\S]))|(`+)[^`\n]+?\2(?!`)|^[ \t]*([*_])(?:[ \t]*\3){2,}[ \t]*$/gm;
 function outsideCode(s, fn) {
@@ -918,15 +918,16 @@ function stripEmphasis(s) {
     var strongStar = new RegExp('(^|[^\\\\])\\*\\*(?=\\S)' + body + '\\*\\*', 'g');
     var strongUnder = new RegExp('(^|[^\\\\\\w])__(?=\\S)' + body + '__(?!\\w)', 'g');
     var emStar = new RegExp('(^|[^\\\\*])\\*(?=[^\\s*])((?:(?!\\n[ \\t]*\\n)[^*])*?[^\\s*])\\*(?!\\*)', 'g');
+    var strike = new RegExp('(^|[^\\\\])~~(?=\\S)' + body + '~~', 'g');
     var emUnder = new RegExp('(^|[^\\\\\\w_])_(?=[^\\s_])((?:(?!\\n[ \\t]*\\n)[^_])*?[^\\s_])_(?!\\w)', 'g');
     do {
       prev = t;
-      t = t.replace(strongStar, '$1$2').replace(strongUnder, '$1$2').replace(emStar, '$1$2').replace(emUnder, '$1$2');
+      t = t.replace(strongStar, '$1$2').replace(strongUnder, '$1$2').replace(strike, '$1$2').replace(emStar, '$1$2').replace(emUnder, '$1$2');
     } while (t !== prev);
     return t;
   });
 }
-// Clear bold and italic from the paragraphs touched by [s, e), or from the whole text when nothing is selected.
+// Clear bold, italic and strikethrough from the paragraphs touched by [s, e), or from the whole text when nothing is selected.
 function clearStyleRange(text, s, e) {
   if (s === e) return { start: 0, end: text.length, out: stripEmphasis(text) };
   var a = text.lastIndexOf('\n\n', s - 1);
@@ -956,47 +957,104 @@ function styleOf(text, a, b) {
     while (l < 3 && text.charAt(a + l) === c) l++;
     while (t < 3 && b - 1 - t >= a + l && text.charAt(b - 1 - t) === c) t++;
     inner = Math.min(l, t);
+    // Marks at both ends that belong to separate spans, as in "**a** and **b**", are not one span.
+    if (inner && new RegExp('\\' + c + '{' + inner + ',}').test(text.slice(a + inner, b - inner))) inner = 0;
     if (inner) { a += inner; b -= inner; break; }
   }
   return { oa: oa, ob: ob, a: a, b: b, bold: inner >= 2, italic: inner % 2 === 1 };
 }
-// kind is 'bold' or 'italic'. Returns the replacement for text[start, end) and where to put the selection (relative to start).
-function toggleStyleRange(text, s, e, kind) {
+// The pieces of text a style button acts on: the selected words on each line (list and heading marks stay outside),
+// or the word at the caret. With nothing to act on it returns { empty: true }.
+function styleSegments(text, s, e) {
   var segs = [], pos;
   if (s === e) {
     var ls = text.lastIndexOf('\n', s - 1) + 1, le = text.indexOf('\n', s);
     if (le < 0) le = text.length;
     var a = s, b = s;
-    while (a > ls && /[^\s*_]/.test(text.charAt(a - 1))) a--;
-    while (b < le && /[^\s*_]/.test(text.charAt(b))) b++;
-    if (a === b) {
-      var mk = kind === 'bold' ? '****' : '**';
-      return { start: s, end: e, out: mk, selStart: mk.length / 2, selEnd: mk.length / 2 };
-    }
-    segs.push([a, b]);
-  } else {
-    for (pos = s; pos < e;) {
-      var nl = text.indexOf('\n', pos);
-      var lineEnd = nl < 0 || nl > e ? e : nl;
-      var lineStart = text.lastIndexOf('\n', pos - 1) + 1;
-      var from = pos;
-      if (from === lineStart) from += (/^(?:[ \t]*(?:[-*+][ \t]+|\d+[.)][ \t]+|>[ \t]*|#{1,6}[ \t]+))*/.exec(text.slice(from, lineEnd)) || [''])[0].length;
-      if (from < lineEnd && /\S/.test(text.slice(from, lineEnd))) segs.push([from, lineEnd]);
-      pos = lineEnd + 1;
-    }
-    if (!segs.length) return { start: s, end: e, out: text.slice(s, e), selStart: 0, selEnd: e - s };
+    while (a > ls && /[^\s*_~]/.test(text.charAt(a - 1))) a--;
+    while (b < le && /[^\s*_~]/.test(text.charAt(b))) b++;
+    if (a !== b) segs.push([a, b]);
+    return segs.length ? { segs: segs } : { empty: true };
   }
-  var infos = segs.map(function (g) { return styleOf(text, g[0], g[1]); });
+  for (pos = s; pos < e;) {
+    var nl = text.indexOf('\n', pos);
+    var lineEnd = nl < 0 || nl > e ? e : nl;
+    var lineStart = text.lastIndexOf('\n', pos - 1) + 1;
+    var from = pos;
+    if (from === lineStart) from += (/^(?:[ \t]*(?:[-*+][ \t]+|\d+[.)][ \t]+|>[ \t]*|#{1,6}[ \t]+))*/.exec(text.slice(from, lineEnd)) || [''])[0].length;
+    if (from < lineEnd && /\S/.test(text.slice(from, lineEnd))) segs.push([from, lineEnd]);
+    pos = lineEnd + 1;
+  }
+  return segs.length ? { segs: segs } : { none: true };
+}
+// Joins per-segment results [{ oa, ob, out }] (ascending) into one replacement of text[start, end).
+function joinSegments(text, parts) {
+  var start = parts[0].oa, end = parts[parts.length - 1].ob, out = '', at = start;
+  parts.forEach(function (q) { out += text.slice(at, q.oa) + q.out; at = q.ob; });
+  return { start: start, end: end, out: out, selStart: 0, selEnd: out.length };
+}
+function insertPair(s, e, mk) { return { start: s, end: e, out: mk, selStart: mk.length / 2, selEnd: mk.length / 2 }; }
+// kind is 'bold' or 'italic'. Returns the replacement for text[start, end) and where to put the selection (relative to start).
+function toggleStyleRange(text, s, e, kind) {
+  var sg = styleSegments(text, s, e);
+  if (sg.empty) return insertPair(s, e, kind === 'bold' ? '****' : '**');
+  if (sg.none) return { start: s, end: e, out: text.slice(s, e), selStart: 0, selEnd: e - s };
+  var infos = sg.segs.map(function (g) { return styleOf(text, g[0], g[1]); });
   var target = !infos[0][kind];
-  var start = infos[0].oa, end = infos[infos.length - 1].ob, out = '', at = start;
-  infos.forEach(function (info) {
+  return joinSegments(text, infos.map(function (info) {
     var w = { bold: info.bold, italic: info.italic };
     w[kind] = target;
     var mark = '*'.repeat((w.bold ? 2 : 0) + (w.italic ? 1 : 0));
-    out += text.slice(at, info.oa) + mark + text.slice(info.a, info.b) + mark;
-    at = info.ob;
-  });
-  return { start: start, end: end, out: out, selStart: 0, selEnd: out.length };
+    return { oa: info.oa, ob: info.ob, out: mark + text.slice(info.a, info.b) + mark };
+  }));
+}
+// ~~strikethrough~~ around text[a, b), looking through any bold or italic marks around it. Gives the range to rewrite and the result of each choice.
+function strikeOf(text, a, b) {
+  while (a < b && /\s/.test(text.charAt(a))) a++;
+  while (b > a && /\s/.test(text.charAt(b - 1))) b--;
+  var inside = text.slice(a, b);
+  if (/^~~(?=\S)/.test(inside) && /\S~~$/.test(inside) && inside.length > 4 && inside.slice(2, -2).indexOf('~~') < 0) {
+    return { oa: a, ob: b, on: true, off: inside.slice(2, -2), add: inside };
+  }
+  var L = a, R = b, layers = [];
+  while (L > 0 && R < text.length && /[*_~]/.test(text.charAt(L - 1)) && text.charAt(R) === text.charAt(L - 1)) {
+    var ch = text.charAt(L - 1), n = 0;
+    while (n < 3 && text.charAt(L - 1 - n) === ch && text.charAt(R + n) === ch) n++;
+    layers.push({ ch: ch, n: n, l: L, r: R });
+    L -= n; R += n;
+  }
+  for (var k = 0; k < layers.length; k++) {
+    var y = layers[k];
+    if (y.ch === '~' && y.n >= 2) {
+      return { oa: L, ob: R, on: true, off: text.slice(L, y.l - 2) + text.slice(y.l, y.r) + text.slice(y.r + 2, R), add: text.slice(L, R) };
+    }
+  }
+  return { oa: a, ob: b, on: false, off: inside, add: '~~' + inside + '~~' };
+}
+function toggleStrikeRange(text, s, e) {
+  var sg = styleSegments(text, s, e);
+  if (sg.empty) return insertPair(s, e, '~~~~');
+  if (sg.none) return { start: s, end: e, out: text.slice(s, e), selStart: 0, selEnd: e - s };
+  var infos = sg.segs.map(function (g) { return strikeOf(text, g[0], g[1]); });
+  var target = !infos[0].on;
+  return joinSegments(text, infos.map(function (q) { return { oa: q.oa, ob: q.ob, out: target ? q.add : q.off }; }));
+}
+// Heading on or off for the lines touched by [s, e). A line with any heading level loses it; otherwise it becomes a ## heading.
+function toggleHeadingRange(text, s, e) {
+  var ls = text.lastIndexOf('\n', s - 1) + 1;
+  var le = text.indexOf('\n', e > s && text.charAt(e - 1) === '\n' ? e - 1 : e);
+  if (le < 0) le = text.length;
+  var lines = text.slice(ls, le).split('\n'), HEAD = /^#{1,6}[ \t]+/;
+  var first = lines.filter(function (l) { return /\S/.test(l); })[0];
+  if (first === undefined) return { start: s, end: e, out: text.slice(s, e), selStart: 0, selEnd: e - s };
+  var on = !HEAD.test(first);
+  var out = lines.map(function (l) {
+    if (!/\S/.test(l)) return l;
+    return on ? '## ' + l.replace(HEAD, '') : l.replace(HEAD, '');
+  }).join('\n');
+  if (s !== e) return { start: ls, end: le, out: out, selStart: 0, selEnd: out.length };
+  var caret = Math.max(0, Math.min(out.length, s - ls + (out.length - (le - ls))));
+  return { start: ls, end: le, out: out, selStart: caret, selEnd: caret };
 }
 //#style-end
 
@@ -1026,12 +1084,15 @@ function buildEditor(b, i) {
   function doStyle(kind) {
     if (kind === 'clear') {
       var c = clearStyleRange(ta.value, ta.selectionStart, ta.selectionEnd);
-      if (c.out === ta.value.slice(c.start, c.end)) { toast('No bold or italic found here.', false); return; }
+      if (c.out === ta.value.slice(c.start, c.end)) { toast('No bold, italic or strikethrough found here.', false); return; }
       var keep = ta.selectionStart !== ta.selectionEnd;
       applyStyle({ start: c.start, end: c.end, out: c.out, selStart: keep ? 0 : c.out.length, selEnd: c.out.length });
+    } else if (kind === 'strike') {
+      applyStyle(toggleStrikeRange(ta.value, ta.selectionStart, ta.selectionEnd));
+    } else if (kind === 'heading') {
+      applyStyle(toggleHeadingRange(ta.value, ta.selectionStart, ta.selectionEnd));
     } else {
-      var r = toggleStyleRange(ta.value, ta.selectionStart, ta.selectionEnd, kind);
-      applyStyle(r);
+      applyStyle(toggleStyleRange(ta.value, ta.selectionStart, ta.selectionEnd, kind));
     }
   }
   ta.addEventListener('keydown', function (e) {
@@ -1041,7 +1102,9 @@ function buildEditor(b, i) {
   tools.className = 'styletools'; tools.setAttribute('role', 'toolbar'); tools.setAttribute('aria-label', 'Text style');
   tools.innerHTML = '<button class="stylebtn" type="button" data-style="bold" aria-label="Bold" title="Bold the selected text (Ctrl+B)"><b>B</b></button>' +
     '<button class="stylebtn" type="button" data-style="italic" aria-label="Italic" title="Italic the selected text (Ctrl+I)"><i>I</i></button>' +
-    '<button class="stylebtn clear" type="button" data-style="clear" title="Remove bold and italic from the selected paragraphs, or from the whole message if nothing is selected">Clear style</button>';
+    '<button class="stylebtn" type="button" data-style="strike" aria-label="Strikethrough" title="Strike through the selected text"><s>S</s></button>' +
+    '<button class="stylebtn" type="button" data-style="heading" aria-label="Heading" title="Turn the selected lines into a heading, or back into plain text">H</button>' +
+    '<button class="stylebtn clear" type="button" data-style="clear" title="Remove bold, italic and strikethrough from the selected paragraphs, or from the whole message if nothing is selected">Clear style</button>';
   tools.addEventListener('mousedown', function (e) { e.preventDefault(); });
   tools.addEventListener('click', function (e) {
     var sb = e.target.closest && e.target.closest('[data-style]');

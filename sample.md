@@ -75,7 +75,7 @@ What can I do once a chat is open?
 | **Paste** | Opens a box for pasted text. On a computer, pressing Ctrl+V anywhere on the page does the same. |
 | **Search** | Finds text in the chat. Use the arrows to jump between matches. |
 | **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
-| **Edit** | Tap a message to change its text and bold or italic style, delete it or swap its side. |
+| **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it or swap its side. |
 | **Style** | Chat colours, light or dark mode, text size, spacing and font. |
 | **Help** | The full steps and what happens to your file. |
 
@@ -93,7 +93,7 @@ Tell me more about Edit. Does it change my original file?
 **AI:**
 No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 
-1. Edit its text. Wrong bold or italic from the conversion? Select the words and tap **B** or **I** to switch the style on or off, or tap **Clear style** to remove all bold and italic from the selected paragraphs (or the whole message if nothing is selected).
+1. Edit its text. Wrong style from the conversion? Select the words and tap **B** (bold), **I** (italic) or **S** (strikethrough) to switch it on or off, and **H** to turn the selected lines into a heading or back into plain text. **Clear style** removes all bold, italic and strikethrough from the selected paragraphs, or from the whole message if nothing is selected.
 2. Delete it.
 3. Use **Swap side** to move it to the other speaker, for when a speaker was mixed up.
 
