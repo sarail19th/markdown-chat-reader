@@ -99,7 +99,7 @@ No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 2. Delete it.
 3. Use **Swap side** to move it to the other speaker, for when a speaker was mixed up.
 
-The icons at the bottom are **Undo**, **Redo**, **Copy** (the whole chat as Markdown) and **Download** (a new `.md` copy). **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
+The icons at the bottom are **Undo**, **Redo**, **Copy** (the whole chat as Markdown) and **Download** (saves a new `.md` copy to your device). **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
 
 ---
 

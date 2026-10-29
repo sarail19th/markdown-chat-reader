@@ -277,8 +277,9 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bar); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .editbar .inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; }
 .editbar .btn { flex: 1 1 auto; justify-content: center; padding-inline: 8px; }
-.editbar .btn.iconbtn { flex: 0 0 auto; width: 48px; padding: 0; }
-.editbar .btn.exit { margin-left: auto; padding-inline: 14px; }
+.editbar .btn.iconbtn { flex: 0 1 44px; min-width: 36px; padding: 0; }
+.editbar .btn.exit { margin-left: auto; padding-inline: 10px; gap: 6px; white-space: nowrap; flex: 0 0 auto; font-weight: 600; background: transparent; border: 1.5px solid var(--fg); }
+.editbar .btn.exit svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .iconbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 body.editing .chat { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
 body.editing .foot { display: none; }
@@ -504,8 +505,8 @@ body.searching .fabs { display: none; }
     <button class="btn iconbtn" id="undoBtn" type="button" disabled aria-label="Undo" title="Undo the last change"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
     <button class="btn iconbtn" id="redoBtn" type="button" disabled aria-label="Redo" title="Redo the change you undid"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
     <button class="btn iconbtn" id="copyMdBtn" type="button" aria-label="Copy as Markdown" title="Copy the whole chat as Markdown"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
-    <button class="btn iconbtn primary" id="dlBtn" type="button" aria-label="Download .md file" title="Download a new .md file. Your original is not changed."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
-    <button class="btn exit" id="doneBtn" type="button" title="Leave edit mode. An open message is saved first.">Exit editing</button>
+    <button class="btn iconbtn primary" id="dlBtn" type="button" aria-label="Save a copy to your device" title="Save a copy to your device as a new .md file. Your original is not changed."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></button>
+    <button class="btn exit" id="doneBtn" type="button" title="Leave edit mode. An open message is saved first, and your changes stay in the chat."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="M16 8l4 4-4 4M20 12H9"/></svg>Exit editing</button>
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden>
@@ -1276,7 +1277,7 @@ function downloadMd() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   dirty = false;
-  toast('Downloading ' + name + (isModified() ? ' (marked as an edited copy)' : ''), false);
+  toast('Saving a copy as ' + name + (isModified() ? ' (marked as an edited copy)' : ''), false);
   render();
 }
 
