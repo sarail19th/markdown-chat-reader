@@ -12,6 +12,9 @@
     if (m === 'light' || m === 'dark') r.setAttribute('data-theme', m);
     var z = localStorage.getItem('cr-size');
     if (z && /^(s|l|xl)$/.test(z)) r.setAttribute('data-size', z);
+    var lh = localStorage.getItem('cr-lh'), ps = localStorage.getItem('cr-ps');
+    if (lh && /^(t|r|l)$/.test(lh)) r.setAttribute('data-lh', lh);
+    if (ps && /^(c|r|a)$/.test(ps)) r.setAttribute('data-ps', ps);
   } catch (e) { /* storage blocked: defaults are used */ }
 })();
 </script>
@@ -61,10 +64,16 @@
   --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
   color-scheme: dark;
 }
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; --chat-fs: 17px; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; --chat-fs: 17px; --chat-lh: 1.55; --chat-ps: .65em; }
 html[data-size="s"] { --chat-fs: 15px; }
 html[data-size="l"] { --chat-fs: 20px; }
 html[data-size="xl"] { --chat-fs: 24px; }
+html[data-lh="t"] { --chat-lh: 1.35; }
+html[data-lh="r"] { --chat-lh: 1.75; }
+html[data-lh="l"] { --chat-lh: 1.95; }
+html[data-ps="c"] { --chat-ps: .4em; }
+html[data-ps="r"] { --chat-ps: 1em; }
+html[data-ps="a"] { --chat-ps: 1.4em; }
 html, body { min-height: 100%; }
 body {
   margin: 0;
@@ -105,14 +114,14 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 .row.user { justify-content: flex-end; }
 .row.ai { justify-content: flex-start; }
 .row.sys { justify-content: center; }
-.bubble { min-width: 0; max-width: 88%; padding: 11px 15px; overflow-wrap: anywhere; font-size: var(--chat-fs); }
+.bubble { min-width: 0; max-width: 88%; padding: 11px 15px; overflow-wrap: anywhere; font-size: var(--chat-fs); line-height: var(--chat-lh); }
 .row.ai .bubble { max-width: 94%; }
 .user .bubble { background: var(--user); color: var(--user-fg); border-radius: 18px 18px 4px 18px; }
 .ai .bubble { background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; }
 .sys .bubble { max-width: 100%; font-size: calc(var(--chat-fs) * .75); color: var(--muted); padding: 4px 8px; text-align: center; }
 .bubble > :first-child { margin-top: 0; }
 .bubble > :last-child { margin-bottom: 0; }
-.bubble p, .bubble ul, .bubble ol, .bubble pre, .bubble blockquote, .bubble table { margin: 0 0 .65em; }
+.bubble p, .bubble ul, .bubble ol, .bubble pre, .bubble blockquote, .bubble table { margin: 0 0 var(--chat-ps); }
 .bubble ul, .bubble ol { padding-left: 1.3em; }
 .bubble li + li { margin-top: .2em; }
 .bubble h1, .bubble h2, .bubble h3, .bubble h4 { font-size: calc(var(--chat-fs) * .96); line-height: 1.3; margin: .9em 0 .35em; }
@@ -212,7 +221,7 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .toastbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .row.editing .bubble { width: 100%; max-width: 100%; box-sizing: border-box; }
 .row.editing .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-.editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/1.55 var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/var(--chat-lh) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
 .editactions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
 .editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bar); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .editbar .inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; }
@@ -315,8 +324,26 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       </div>
     </div>
     <div>
+      <span class="lbl">Line spacing</span>
+      <div class="choices" id="lhGroup" role="radiogroup" aria-label="Line spacing">
+        <button class="choice" type="button" role="radio" aria-checked="false" data-lh="t">Tight</button>
+        <button class="choice" type="button" role="radio" aria-checked="true" data-lh="m">Normal</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-lh="r">Relaxed</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-lh="l">Loose</button>
+      </div>
+    </div>
+    <div>
+      <span class="lbl">Paragraph spacing</span>
+      <div class="choices" id="psGroup" role="radiogroup" aria-label="Paragraph spacing">
+        <button class="choice" type="button" role="radio" aria-checked="false" data-ps="c">Compact</button>
+        <button class="choice" type="button" role="radio" aria-checked="true" data-ps="m">Normal</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-ps="r">Roomy</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-ps="a">Airy</button>
+      </div>
+    </div>
+    <div>
       <button class="btn" id="resetPrefs" type="button">Reset to default</button>
-      <p class="hint">Your style, mode and text size are remembered on this device only. Nothing is sent anywhere.</p>
+      <p class="hint">Your style, mode, text size and spacing are remembered on this device only. Nothing is sent anywhere.</p>
     </div>
   </section>
   <section id="info" class="panel" hidden aria-label="How it works">
@@ -948,6 +975,17 @@ document.querySelectorAll('#sizeGroup button').forEach(function (b) {
     setChecked($('sizeGroup'), 'data-size', z);
   });
 });
+[['lh', 'lhGroup'], ['ps', 'psGroup']].forEach(function (g) {
+  document.querySelectorAll('#' + g[1] + ' button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-' + g[0]);
+      if (v === 'm') root.removeAttribute('data-' + g[0]); else root.setAttribute('data-' + g[0], v);
+      savePref('cr-' + g[0], v === 'm' ? null : v);
+      setChecked($(g[1]), 'data-' + g[0], v);
+    });
+  });
+  setChecked($(g[1]), 'data-' + g[0], root.getAttribute('data-' + g[0]) || 'm');
+});
 if (!(window.CSS && CSS.supports && CSS.supports('color', 'light-dark(red, blue)'))) $('styleRow').hidden = true;
 if (window.matchMedia) {
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -961,8 +999,12 @@ setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto
 setChecked($('sizeGroup'), 'data-size', root.getAttribute('data-size') || 'm');
 $('resetPrefs').addEventListener('click', function () {
   root.removeAttribute('data-accent'); root.removeAttribute('data-theme'); root.removeAttribute('data-size');
+  root.removeAttribute('data-lh'); root.removeAttribute('data-ps');
   savePref('cr-accent', null); savePref('cr-mode', null); savePref('cr-size', null);
+  savePref('cr-lh', null); savePref('cr-ps', null);
   setChecked($('sizeGroup'), 'data-size', 'm');
+  setChecked($('lhGroup'), 'data-lh', 'm');
+  setChecked($('psGroup'), 'data-ps', 'm');
   setChecked($('accentGroup'), 'data-accent', 'green');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();
