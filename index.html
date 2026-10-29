@@ -295,25 +295,31 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .more { display: grid; justify-items: center; gap: 6px; margin: 16px 0 8px; color: var(--muted); font-size: .85rem; }
 #search.panel { position: fixed; top: 0; left: 0; right: 0; z-index: 26; box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; gap: 4px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 12px; border-top: 0; border-radius: 0 0 14px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); }
 #search .count { margin-top: 0; }
-.fabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: grid; justify-items: center; gap: 10px; pointer-events: none; }
-.fabmenu { display: grid; justify-items: center; gap: 10px; }
+.fabs { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; }
+.fabs.moved { right: auto; bottom: auto; }
+.fabmenu { position: absolute; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 10px; }
+.fabs[data-v="up"] .fabmenu { bottom: calc(100% + 10px); }
+.fabs[data-v="down"] .fabmenu { top: calc(100% + 10px); }
+.fabjump { position: absolute; top: 4px; display: flex; gap: 8px; }
+.fabs[data-h="right"] .fabjump { right: calc(100% + 10px); }
+.fabs[data-h="left"] .fabjump { left: calc(100% + 10px); }
 :root[data-menu="collapsed"] .fabmenu { display: none; }
 .fab .ic-show, :root[data-menu="collapsed"] .fab .ic-hide { display: none; }
 :root[data-menu="collapsed"] .fab .ic-show { display: block; }
-.fab { pointer-events: auto; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--user-fg); background: var(--user); border: 1px solid rgba(128, 128, 128, .35); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
+.fab { touch-action: none; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--user-fg); background: var(--user); border: 1px solid rgba(128, 128, 128, .35); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
 .fab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.fabbtn { pointer-events: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
+.fabs.dragging .fab { cursor: grabbing; box-shadow: 0 10px 26px rgba(0, 0, 0, .35); }
+.fabs.dragging .fabmenu, .fabs.dragging .fabjump { opacity: .6; }
+.fabbtn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
 .fabbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .fabbtn:hover { border-color: var(--muted); }
 .fabbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .fabbtn[aria-expanded="true"], .fabbtn[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 3px var(--user); }
 .fabbtn:disabled { opacity: .45; cursor: not-allowed; }
-body.editing .fabs { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+body.editing .fabs:not(.moved) { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 body.searching .fabs { display: none; }
-.jump { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: grid; gap: 8px; pointer-events: none; }
-body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
-.jumpbtn { pointer-events: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
+.jumpbtn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
 .jumpbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .jumpbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) {
@@ -396,7 +402,7 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     </div>
     <div>
       <button class="btn" id="resetPrefs" type="button">Reset all settings</button>
-      <p class="hint">Your style, mode, text size, spacing and font are remembered on this device only. Nothing is sent anywhere.</p>
+      <p class="hint">Your style, mode, text size, spacing, font and button position are remembered on this device only. Nothing is sent anywhere.</p>
     </div>
   </section>
   <section id="info" class="panel sheet" hidden role="dialog" aria-label="How it works" tabindex="-1">
@@ -419,7 +425,7 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>Step 2 above is separate: uploading your export to an AI assistant sends it to that service. This reader never does.</li>
-      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing and font) are remembered, on this device. A font file you add stays on this device too.</li>
+      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font and where you moved the buttons) are remembered, on this device. A font file you add stays on this device too.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>New here?</h2>
@@ -440,7 +446,8 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
-<div class="fabs" id="fabs">
+<div class="fabs" id="fabs" data-h="right" data-v="up">
+  <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
     <button class="fabbtn" id="openBtn" type="button" aria-label="Open a .md file" title="Open a .md file from your device. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
@@ -449,12 +456,11 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
   </div>
-  <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+  <div class="fabjump" id="jump">
+    <button class="jumpbtn" id="jumpTop" type="button" hidden aria-label="Jump to the top" title="Top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
+    <button class="jumpbtn" id="jumpBottom" type="button" hidden aria-label="Jump to the bottom" title="Bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
+  </div>
   <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
-</div>
-<div class="jump" id="jump">
-  <button class="jumpbtn" id="jumpTop" type="button" hidden aria-label="Jump to the top" title="Top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
-  <button class="jumpbtn" id="jumpBottom" type="button" hidden aria-label="Jump to the bottom" title="Bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
 </div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
@@ -835,6 +841,7 @@ function setEdit(on, quiet) {
   editMode = on; editingIdx = -1; selIdx = -1;
   document.body.classList.toggle('editing', on);
   $('editbar').hidden = !on;
+  applyFabPos();
   $('editCaution').hidden = !on;
   $('editBtn').setAttribute('aria-pressed', String(on));
   if (!quiet && doc) render();
@@ -1035,6 +1042,7 @@ function loadFile(file) {
 $('file').addEventListener('change', function (e) { loadFile(e.target.files && e.target.files[0]); e.target.value = ''; });
 $('openBtn').addEventListener('click', function () { $('file').click(); });
 $('fabToggle').addEventListener('click', function () {
+  if (justDragged) { justDragged = false; return; }
   var hide = !document.documentElement.hasAttribute('data-menu');
   if (hide) document.documentElement.setAttribute('data-menu', 'collapsed'); else document.documentElement.removeAttribute('data-menu');
   syncFabToggle();
@@ -1044,9 +1052,61 @@ function syncFabToggle() {
   var open = !document.documentElement.hasAttribute('data-menu'), t = $('fabToggle');
   t.setAttribute('aria-expanded', String(open));
   t.setAttribute('aria-label', open ? 'Hide the tools' : 'Show the tools');
-  t.title = open ? 'Hide the tools' : 'Show the tools';
+  t.title = (open ? 'Hide the tools' : 'Show the tools') + '. Drag to move.';
 }
 syncFabToggle();
+
+/* ---- drag the round button to move all the floating buttons; the spot is remembered on this device ---- */
+var fabPos = null, drag = null, justDragged = false; // fabPos: where the round button's centre sits, as fractions of the window
+try {
+  var saved = (localStorage.getItem('cr-fab') || '').split(',').map(parseFloat);
+  if (saved.length === 2 && saved.every(function (n) { return n >= 0 && n <= 1; })) fabPos = { x: saved[0], y: saved[1] };
+} catch (e) { /* storage blocked: the default spot is used */ }
+function applyFabPos() {
+  var el = $('fabs');
+  if (!fabPos) { el.classList.remove('moved'); el.style.left = el.style.top = ''; el.dataset.h = 'right'; el.dataset.v = 'up'; return; }
+  var w = window.innerWidth, h = window.innerHeight;
+  var cx = Math.min(Math.max(fabPos.x * w, 34), w - 34);
+  var cy = Math.min(Math.max(fabPos.y * h, 34), h - (document.body.classList.contains('editing') ? 84 : 8) - 26);
+  el.classList.add('moved');
+  el.style.left = (cx - 26) + 'px';
+  el.style.top = (cy - 26) + 'px';
+  el.dataset.h = cx < w / 2 ? 'left' : 'right';
+  el.dataset.v = cy < h / 2 ? 'down' : 'up';
+}
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (drag.on) {
+    var r = $('fabs').getBoundingClientRect();
+    fabPos = { x: (r.left + 26) / window.innerWidth, y: (r.top + 26) / window.innerHeight };
+    savePref('cr-fab', fabPos.x.toFixed(3) + ',' + fabPos.y.toFixed(3));
+    $('fabs').classList.remove('dragging');
+    justDragged = true;
+  }
+  drag = null;
+}
+$('fabToggle').addEventListener('pointerdown', function (e) {
+  if (e.button > 0) return;
+  var r = $('fabs').getBoundingClientRect();
+  justDragged = false;
+  drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, dx: e.clientX - (r.left + 26), dy: e.clientY - (r.top + 26), on: false };
+});
+$('fabToggle').addEventListener('pointermove', function (e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.on) {
+    if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 10) return;
+    drag.on = true;
+    this.setPointerCapture(e.pointerId);
+    $('fabs').classList.add('dragging');
+  }
+  fabPos = { x: (e.clientX - drag.dx) / window.innerWidth, y: (e.clientY - drag.dy) / window.innerHeight };
+  applyFabPos();
+  placeSheets();
+});
+$('fabToggle').addEventListener('pointerup', endDrag);
+$('fabToggle').addEventListener('pointercancel', endDrag);
+window.addEventListener('resize', applyFabPos);
+applyFabPos();
 document.addEventListener('paste', function (e) {
   if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
   var t = e.clipboardData && e.clipboardData.getData('text/plain');
@@ -1091,11 +1151,17 @@ function placeSheets() {
   ['appearance', 'info', 'paste'].forEach(function (id) {
     var el = $(id);
     if (el.hidden || !WIDE.matches) { el.style.top = el.style.bottom = el.style.left = el.style.maxHeight = ''; return; }
-    var f = $('fabs').getBoundingClientRect();
-    el.style.top = 'auto';
-    el.style.bottom = Math.max(8, window.innerHeight - f.bottom) + 'px';
-    el.style.left = Math.max(8, f.right + 12) + 'px';
-    el.style.maxHeight = Math.max(240, f.bottom - 16) + 'px';
+    var f = $('fabToggle').getBoundingClientRect(), side = $('fabs').dataset;
+    el.style.left = Math.max(8, side.h === 'right' ? f.left - 12 - el.offsetWidth : f.right + 12) + 'px';
+    if (side.v === 'up') {
+      el.style.top = 'auto';
+      el.style.bottom = Math.max(8, window.innerHeight - f.bottom) + 'px';
+      el.style.maxHeight = Math.max(240, f.bottom - 16) + 'px';
+    } else {
+      el.style.bottom = 'auto';
+      el.style.top = Math.max(8, f.top) + 'px';
+      el.style.maxHeight = Math.max(240, window.innerHeight - f.top - 16) + 'px';
+    }
   });
 }
 window.addEventListener('scroll', placeSheets, { passive: true });
@@ -1384,6 +1450,7 @@ $('resetPrefs').addEventListener('click', function () {
   SLIDERS.forEach(function (c) { c.reset(); });
   setFont('d');
   savePref('cr-accent', null); savePref('cr-mode', null);
+  fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
   setAccent('green');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();

@@ -8,7 +8,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - The file is read inside your browser. It is never uploaded, and the page has no server that could receive it.
 - Chats are never saved or tracked. Reload or close the tab and the chat is gone.
-- The only things remembered on your device are your display choices (style, mode, text size, spacing and font). A font file you add stays on your device and is never uploaded.
+- The only things remembered on your device are your display choices (style, mode, text size, spacing, font and where you moved the buttons). A font file you add stays on your device and is never uploaded.
 - After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.
 
 ## How to use it
@@ -21,7 +21,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - Detects speakers in many export formats, including custom names. If it finds no speakers, it shows the whole file as one message with a notice.
 - Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and four text sizes.
-- A floating menu at the bottom left, folded to one round button until you tap it, with Open, Paste (or press Ctrl+V), Search, Edit, Style and Help. A copy button on every code block.
+- A floating menu at the bottom right, folded to one round button until you tap it (drag that button to move the menu anywhere on screen), with Open, Paste (or press Ctrl+V), Search, Edit, Style and Help. A copy button on every code block.
 - Tap-to-edit: turn on **Edit**, tap a message, then edit its text, swap its speaker or delete it. Undo, then download or copy a new `.md` file. Your original file is never changed.
 - Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**.
 
