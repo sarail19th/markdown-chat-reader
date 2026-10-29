@@ -3,7 +3,7 @@
 const VERSION = '__VERSION__';
 const CACHE = 'chat-reader-' + VERSION;
 const FILES = [
-  './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
+  './', './index.html', './manifest.webmanifest', './sample.md', './icon-192.png', './icon-512.png',
   './vendor/marked.min.js', './vendor/purify.min.js',
   './fonts/figtree-latin-wght-normal.woff2', './fonts/jetbrains-mono-latin-wght-normal.woff2'
 ];

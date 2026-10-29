@@ -657,42 +657,23 @@ function parseChat(text, mode, custom) {
 }
 //#parser-end
 
+// Short built-in copy, used only when sample.md cannot be loaded (for example when the page is opened from disk).
 var SAMPLE = [
-  '# Sourdough starter help',
+  '# How to use Markdown Chat Reader',
   '',
   '**You:**',
-  'My starter smells like nail polish remover. Is it dead?',
+  'How do I use this markdown reader?',
   '',
   '---',
   '',
   '**AI:**',
-  'Not dead. A sharp acetone smell usually means it is **hungry**. Try this:',
+  'Your messages sit on the **right** and the AI\'s on the **left**. There are three steps:',
   '',
-  '1. Discard all but 50 g of starter.',
-  '2. Feed it 50 g flour and 50 g water.',
-  '3. Keep it at about 24 °C and check again in 6 to 8 hours.',
+  '1. **Export** your chats from your AI app.',
+  '2. **Convert** the export to Markdown (`.md`) with an AI assistant.',
+  '3. **Read** the `.md` file here. Tap **Open** or **Paste** at the top.',
   '',
-  'If it doubles within 8 hours after two or three feedings, it is healthy.',
-  '',
-  '---',
-  '',
-  '**You:**',
-  'Can you give me a quick feeding log I can paste into my notes?',
-  '',
-  '---',
-  '',
-  '**AI:**',
-  'Here is a simple one:',
-  '',
-  '```text',
-  'Date    Time   Flour  Water  Ratio  Rise',
-  'Oct 27  08:00  50 g   50 g   1:1:1  2x in 7h',
-  '```',
-  '',
-  '| Ratio | Rise time |',
-  '|---|---|',
-  '| 1:1:1 | 4 to 8 h |',
-  '| 1:5:5 | 10 to 14 h |'
+  'Tap **Help** for the full steps and the conversion prompt.'
 ].join('\n');
 
 var $ = function (id) { return document.getElementById(id); };
@@ -1536,9 +1517,9 @@ $('searchPrev').addEventListener('click', function () { if (!hits.length) runSea
 });
 window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
 
-var SAMPLE_NOTE = 'Below is a sample chat so you can try the look and settings. Your own chat is never uploaded or saved.';
-function showSample() {
-  show(SAMPLE, 'Sourdough starter help (sample)');
+var SAMPLE_NOTE = 'This is a sample chat showing how the reader works. Open or paste your own chat to replace it. Your own chat is never uploaded or saved.';
+function showSample(text) {
+  show(text || SAMPLE, 'How to use this reader (sample)');
   notice.hidden = false;
   notice.textContent = SAMPLE_NOTE;
   state = 'sample';
@@ -1546,7 +1527,11 @@ function showSample() {
   syncEditUI();
 }
 decorateCode($('info'));
-showSample();
+// sample.md is one of the app's own files (cached for offline use). If you open a chat before it arrives, yours stays.
+fetch('sample.md')
+  .then(function (r) { if (!r.ok) throw new Error('sample'); return r.text(); })
+  .catch(function () { return SAMPLE; })
+  .then(function (t) { if (!doc) showSample(t); });
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   navigator.serviceWorker.register('sw.js').catch(function () {});
 }

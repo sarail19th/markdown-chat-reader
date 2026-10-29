@@ -54,6 +54,7 @@ Then open `http://localhost:8000`. Service workers need `localhost` or HTTPS.
 | Path | What it is |
 |---|---|
 | `index.html` | The app: HTML, CSS and vanilla JavaScript. The parser sits between the `//#parser-start` and `//#parser-end` markers. |
+| `sample.md` | The sample chat shown on first load. It explains how to use the reader, in the reader's own chat format. Edit it to change the start screen. |
 | `sw.js` | Service worker for offline use. It caches only app files, never chats. |
 | `manifest.webmanifest`, `icon-192.png`, `icon-512.png` | Install-as-app support |
 | `vendor/` | [marked](https://github.com/markedjs/marked) and [DOMPurify](https://github.com/cure53/DOMPurify), bundled so the app works offline |
