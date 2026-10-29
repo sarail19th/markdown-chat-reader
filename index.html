@@ -77,6 +77,18 @@ html { scrollbar-width: auto; scrollbar-color: var(--muted) var(--line); }
   html::-webkit-scrollbar-track { background: var(--line); }
   html::-webkit-scrollbar-thumb { background: var(--muted); border: 3px solid var(--line); border-radius: 8px; min-height: 48px; }
 }
+/* Touch screens: a Google Docs style fast scroller. A handle fades in on the right edge while you scroll; drag it to move through a long chat. */
+.rail { display: none; }
+@media (pointer: coarse) {
+  .rail { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: 0; z-index: 17; pointer-events: none; }
+  .rail .thumb { position: absolute; top: 0; right: 3px; width: 7px; border-radius: 4px; background: var(--muted); box-shadow: 0 0 0 1px var(--bg); opacity: 0; transition: opacity .25s, width .12s; touch-action: none; }
+  .rail .thumb::before { content: ''; position: absolute; top: 0; bottom: 0; left: -9px; right: -3px; }
+  .rail.show .thumb { opacity: .85; pointer-events: auto; }
+  .rail.drag .thumb { width: 12px; background: var(--fg); opacity: 1; }
+  .rail .tip { display: none; position: absolute; right: 22px; top: 50%; transform: translateY(-50%); padding: 4px 10px; border-radius: 10px; background: var(--fg); color: var(--bg); font: 600 .85rem var(--ff); white-space: nowrap; box-shadow: 0 4px 14px rgba(0, 0, 0, .25); }
+  .rail.drag .tip { display: block; }
+  body.searching .rail { display: none; }
+}
 html[data-font="system"] { --ff: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 html[data-font="custom"] { --ff: 'CR Custom', 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 html, body { min-height: 100%; }
@@ -468,6 +480,7 @@ body.searching .fabs { display: none; }
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
+<div class="rail" id="rail" aria-hidden="true"><div class="thumb" id="railThumb"><span class="tip" id="railTip"></span></div></div>
 <div class="fabs" id="fabs" data-h="right" data-v="up">
   <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
@@ -1442,6 +1455,55 @@ function stepMessage(dir) {
 }
 $('prevMsgBtn').addEventListener('click', function () { stepMessage(-1); });
 $('nextMsgBtn').addEventListener('click', function () { stepMessage(1); });
+// Fast scroller (touch screens): the handle follows the page, and dragging it scrolls the page in proportion.
+var rail = $('rail'), railThumb = $('railThumb'), railTip = $('railTip'), railDrag = null, railHide = 0, railFrame = 0;
+function railBox() {
+  var h = window.innerHeight, total = document.documentElement.scrollHeight, track = h - 32;
+  return { track: track, max: total - h, size: Math.max(48, Math.min(track, track * h / total)) };
+}
+function railTop(b) { return 16 + (b.track - b.size) * Math.min(1, Math.max(0, window.scrollY / b.max)); }
+function syncRail() {
+  railFrame = 0;
+  var b = railBox();
+  if (b.max < 1) { rail.classList.remove('show'); return; }
+  railThumb.style.height = b.size + 'px';
+  railThumb.style.transform = 'translateY(' + railTop(b) + 'px)';
+}
+function railLabel() {
+  var rows = chat.querySelectorAll('.row'), i;
+  for (i = 0; i < rows.length; i++) if (rows[i].getBoundingClientRect().bottom > 40) break;
+  return doc && rows[i] ? (+rows[i].getAttribute('data-i') + 1) + ' / ' + doc.msgs.length : '';
+}
+function railWake() {
+  if (railBox().max < 1) return;
+  rail.classList.add('show');
+  clearTimeout(railHide);
+  if (!railDrag) railHide = setTimeout(function () { rail.classList.remove('show'); }, 1800);
+}
+window.addEventListener('scroll', function () {
+  if (!railFrame) railFrame = requestAnimationFrame(syncRail);
+  railWake();
+}, { passive: true });
+window.addEventListener('resize', function () { if (!railFrame) railFrame = requestAnimationFrame(syncRail); });
+railThumb.addEventListener('pointerdown', function (e) {
+  e.preventDefault();
+  railThumb.setPointerCapture(e.pointerId);
+  loadAll(); // the handle should reach the true end of a long chat
+  railDrag = { y: e.clientY, top: railTop(railBox()) };
+  rail.classList.add('drag');
+  railTip.textContent = railLabel();
+  clearTimeout(railHide);
+});
+railThumb.addEventListener('pointermove', function (e) {
+  if (!railDrag) return;
+  var b = railBox(), room = b.track - b.size;
+  var ratio = room > 0 ? Math.min(1, Math.max(0, (railDrag.top + e.clientY - railDrag.y - 16) / room)) : 0;
+  window.scrollTo(0, ratio * b.max);
+  railTip.textContent = railLabel();
+});
+function endRailDrag() { if (!railDrag) return; railDrag = null; rail.classList.remove('drag'); railWake(); }
+railThumb.addEventListener('pointerup', endRailDrag);
+railThumb.addEventListener('pointercancel', endRailDrag);
 if (window.visualViewport) {
   var vv = window.visualViewport;
   var syncKeyboard = function () {
