@@ -17,7 +17,7 @@ Ask me about any step below.
 ---
 
 **You:**
-How do I export my chats from ChatGPT, Grok, Copilot or Gemini?
+How do I export my chats from ChatGPT, Claude, Grok, Copilot or Gemini?
 
 ---
 
@@ -25,6 +25,7 @@ How do I export my chats from ChatGPT, Grok, Copilot or Gemini?
 Most apps have a data export in Settings. The app emails you a download link or gives you a file, usually a `.zip`, `.json` or `.csv`. Links often expire after about a day, and menu names change from time to time.
 
 - **ChatGPT:** profile icon or name, then Settings, Data controls, Export data.
+- **Claude:** on the web app or Claude Desktop (not the phone apps), click your initials at the bottom left, then Settings, Privacy, **Export data**. The download link is emailed to you and expires after 24 hours.
 - **Grok:** profile icon or name, then Data & Information, Data controls, Export account data. That takes you to your x.ai account page, where you choose **Download account data**. The file is sent by email.
 - **Copilot:** sign in to your Microsoft account privacy dashboard, open Copilot, Your Copilot activity history, then **Export all activity history**. You get a `.csv` file.
 - **Gemini:** its chat menu only saves a chat as a PDF or Google Doc. This reader does not open those, so skip it.
