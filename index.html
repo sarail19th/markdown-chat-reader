@@ -406,6 +406,35 @@ function matchMarker(line, nameRe, custom, loose) {
   return null;
 }
 
+function isCleanMarker(line, label) {
+  return new RegExp('^\\s{0,3}(?:#{1,6}[ \\t]*)?(?:\\*\\*|__)?[ \\t]*' + escapeRe(label) + '[ \\t]*(?:\\*\\*|__)?[ \\t]*[:：]?[ \\t]*(?:\\*\\*|__)?[ \\t]*$', 'i').test(line);
+}
+
+/* In a chat with two main speakers, a rare speaker that is not a plain "Name:" line (or is an
+   ambiguous name such as "ME:") is usually story or roleplay text, so fold it into the message before it. */
+function dropStrayMarkers(msgs) {
+  var total = msgs.length;
+  if (total < 20) return msgs;
+  var counts = {};
+  msgs.forEach(function (x) { var k = x.label.toLowerCase(); counts[k] = (counts[k] || 0) + 1; });
+  var keys = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+  if (keys.length < 3 || (counts[keys[0]] + counts[keys[1]]) * 10 < total * 9) return msgs;
+  var main = {}; main[keys[0]] = 1; main[keys[1]] = 1;
+  var out = [];
+  msgs.forEach(function (x, i) {
+    var k = x.label.toLowerCase();
+    var rare = !main[k] && counts[k] * 20 <= total;
+    if (i > 0 && rare && out.length && (!x.clean || AMBIG.test(x.label))) {
+      var prev = out[out.length - 1];
+      prev.lines.push(x.raw);
+      prev.lines = prev.lines.concat(x.inline ? x.lines.slice(1) : x.lines);
+    } else {
+      out.push(x);
+    }
+  });
+  return out;
+}
+
 function autoDetect(lines) {
   var counts = {}, first = {}, inFence = false, mark = '';
   for (var i = 0; i < lines.length; i++) {
@@ -449,7 +478,7 @@ function parseChat(text, mode, custom) {
     }
     var m = (!inFence && !fm) ? matchMarker(line, nameRe, custom, mode === 'loose') : null;
     if (m) {
-      cur = { role: m.role, label: m.label, lines: [] };
+      cur = { role: m.role, label: m.label, lines: [], raw: line, inline: !!m.text, clean: isCleanMarker(line, m.label) };
       msgs.push(cur);
       if (m.text) cur.lines.push(m.text);
     } else if (cur) {
@@ -463,6 +492,7 @@ function parseChat(text, mode, custom) {
     var t = pre[p].match(/^#\s+(.+?)\s*#*\s*$/);
     if (t) { title = t[1].replace(/[*_`]/g, ''); break; }
   }
+  msgs = dropStrayMarkers(msgs);
   var out = [];
   msgs.forEach(function (msg) {
     var L = msg.lines;
