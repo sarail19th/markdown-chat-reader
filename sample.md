@@ -143,7 +143,20 @@ No. The file is read inside your browser and this page has no server that could 
 
 Only your display choices are remembered, on this device. After your first visit the app's own files stay on your device, so it opens without internet. Your chats are never part of that.
 
-On Android, you can also open this page in Chrome, choose the menu (⋮) and tap **Install app** to add it to your home screen. The installed app opens full screen with no bars, in portrait or landscape. Swipe in from the top or bottom edge to see the system bars for a moment.
+---
+
+**You:**
+Can I install it on my phone?
+
+---
+
+**AI:**
+Yes. It then opens from its own icon with no address bar, and it works without internet after your first visit.
+
+- **Android:** open this page in Chrome, choose the menu (⋮) and tap **Install app**. The installed app opens full screen with no bars, in portrait or landscape. Swipe in from the top or bottom edge to see the system bars for a moment.
+- **iPhone:** open this page in Safari, tap the **Share** button (the square with an arrow pointing up), scroll down and tap **Add to Home Screen**, then tap **Add**. If you see an **Open as Web App** switch, leave it on.
+
+Your chats are still never saved. Installing only keeps the app's own files on your phone.
 
 ---
 
