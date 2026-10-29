@@ -895,7 +895,7 @@ function setEdit(on, quiet) {
   if (!quiet && doc) render();
 }
 function syncEditUI() {
-  var can = state === 'chat' && !!doc && doc.editable;
+  var can = !!doc && doc.editable;
   $('editBtn').disabled = !can;
   if (!can && editMode) setEdit(false, true);
 }
@@ -1916,7 +1916,7 @@ $('searchPrev').addEventListener('click', function () { if (!hits.length) runSea
 });
 window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
 
-var SAMPLE_NOTE = 'This is a sample chat showing how the reader works. Open or paste your own chat to replace it, or drop a .md file on the page. Your own chat is never uploaded or saved.';
+var SAMPLE_NOTE = 'This is a sample chat showing how the reader works. You can try Edit on it, and download a copy to see how that works. Open or paste your own chat to replace it, or drop a .md file on the page. Your own chat is never uploaded or saved.';
 function showSample(text) {
   show(text || SAMPLE, 'How to use this reader (sample)');
   notice.hidden = false;
