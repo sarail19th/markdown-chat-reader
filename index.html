@@ -55,7 +55,8 @@
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', 'Courier New', monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="green"]) {
+  /* :where() keeps this rule's specificity at the level of :root, so the chat style colours below still win over it. */
+  :root:where(:not([data-theme="light"]):not([data-theme="green"])) {
     --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
     --surface: #1b2320; --line: #2b3632; --user: #04bb9f; --user-fg: #111111;
     --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
