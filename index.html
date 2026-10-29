@@ -147,6 +147,8 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .panel { margin-top: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 14px; font-size: .95rem; }
 .panel h2 { margin: 0 0 4px; font-size: 1rem; }
 .panel p, .panel ol, .panel ul { margin: 0; }
+.panel li > ul { margin-top: 6px; }
+.panel a { color: var(--link); overflow-wrap: anywhere; }
 .panel ol, .panel ul { padding-left: 1.3em; display: grid; gap: 4px; }
 .panel code { font: 400 .85em var(--mono); background: var(--code); padding: .1em .35em; border-radius: 5px; overflow-wrap: anywhere; }
 .lbl { display: block; margin-bottom: 6px; font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
@@ -419,7 +421,14 @@ body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <div class="sheethead"><h2>How it works</h2><button class="sheetx" type="button" data-close="info" aria-label="Close help"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <h2>The flow</h2>
     <ol>
-      <li><strong>Export from your AI app.</strong> Most apps have a data export in Settings (for example Data controls, then Export data). The app usually emails you a download link that expires after about a day. Download the file it gives you, a .zip or .json. (Menu wording differs between apps.)</li>
+      <li><strong>Export from your AI app.</strong> The app emails you a download link or gives you a file, usually a .zip, .json or .csv. Links often expire after about a day. Menu names change from time to time.
+        <ul>
+          <li><strong>ChatGPT:</strong> profile icon or name, then Settings, Data controls, Export data. <a href="https://chatgpt.com/settings/data-controls" target="_blank" rel="noopener noreferrer">Open data controls</a></li>
+          <li><strong>Grok:</strong> profile icon or name, then Data &amp; Information, Data controls, Export account data (<a href="https://grok.com/?_s=data" target="_blank" rel="noopener noreferrer">open</a>). That takes you to your x.ai account page, where you choose <strong>Download account data</strong>. The file is sent by email. <a href="https://accounts.x.ai/account?redirect=grok-com&amp;theme=light#data" target="_blank" rel="noopener noreferrer">Open account page</a></li>
+          <li><strong>Copilot:</strong> sign in to your Microsoft account privacy dashboard, open Copilot, Your Copilot activity history, then <strong>Export all activity history</strong>. You get a .csv file. <a href="https://support.microsoft.com/en-us/privacy/manage-your-copilot-activity-history-in-the-privacy-dashboard" target="_blank" rel="noopener noreferrer">Microsoft's steps</a></li>
+          <li><strong>Gemini:</strong> its chat menu (the three dots at the top right of a chat) only saves a chat as a PDF or Google Doc. This reader does not open those, so skip it.</li>
+        </ul>
+      </li>
       <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat or per project, to download.</li>
       <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open .md file</strong>, and pick one to read it as a chat. Open one file at a time.</li>
     </ol>
