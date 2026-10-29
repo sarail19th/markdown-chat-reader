@@ -8,7 +8,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - The file is read inside your browser. It is never uploaded, and the page has no server that could receive it.
 - Chats are never saved or tracked. Reload or close the tab and the chat is gone.
-- The only things remembered on your device are your style, light or dark mode, and text size.
+- The only things remembered on your device are your display choices (style, mode, text size, spacing and font). A font file you add stays on your device and is never uploaded.
 - After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.
 
 ## How to use it

@@ -9,12 +9,14 @@
   try {
     var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
     if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|white)$/.test(a)) r.setAttribute('data-accent', a);
-    if (m === 'light' || m === 'dark') r.setAttribute('data-theme', m);
+    if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     var z = localStorage.getItem('cr-size');
     if (z && /^(s|l|xl)$/.test(z)) r.setAttribute('data-size', z);
     var lh = localStorage.getItem('cr-lh'), ps = localStorage.getItem('cr-ps');
     if (lh && /^(t|r|l)$/.test(lh)) r.setAttribute('data-lh', lh);
     if (ps && /^(c|r|a)$/.test(ps)) r.setAttribute('data-ps', ps);
+    var ft = localStorage.getItem('cr-font');
+    if (ft === 'system' || ft === 'custom') r.setAttribute('data-font', ft);
   } catch (e) { /* storage blocked: defaults are used */ }
 })();
 </script>
@@ -51,7 +53,7 @@
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', 'Courier New', monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-theme="green"]) {
     --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
     --surface: #1b2320; --line: #2b3632; --user: #04bb9f; --user-fg: #111111;
     --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
@@ -68,6 +70,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; --chat-fs: 17px; 
 html[data-size="s"] { --chat-fs: 15px; }
 html[data-size="l"] { --chat-fs: 20px; }
 html[data-size="xl"] { --chat-fs: 24px; }
+html[data-font="system"] { --ff: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+html[data-font="custom"] { --ff: 'CR Custom', 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 html[data-lh="t"] { --chat-lh: 1.35; }
 html[data-lh="r"] { --chat-lh: 1.75; }
 html[data-lh="l"] { --chat-lh: 1.95; }
@@ -258,6 +262,16 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .tb:disabled { opacity: .45; cursor: not-allowed; }
 .tl { white-space: nowrap; }
 @media (max-width: 340px) { .tl { font-size: .64rem; } }
+/* Green Read: recycled-paper tones (warm, not white). Placed last so it wins over the Classic style and the default note colours. */
+:root[data-theme="green"], :root[data-theme="green"][data-accent="classic"] {
+  color-scheme: light;
+  --bg: #e4dac0; --bar: #e4dac0; --fg: #342d22; --muted: #5f543f;
+  --surface: #efe7d0; --line: #cbbf9f; --code: #d8cdae;
+  --link: #7a4413; --focus: #7a4413; --danger: #9c2a1d;
+  --note-bg: #dfe3c8; --note-fg: #33401f; --note-bar: #7d8f45;
+  --warn-bg: #efdcab; --warn-fg: #5e3b00; --warn-bar: #b97500;
+}
+:root[data-theme="green"][data-accent="classic"] { --user: #d6c9a8; --user-fg: #342d22; }
 </style>
 </head>
 <body>
@@ -312,6 +326,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
         <button class="choice" type="button" role="radio" aria-checked="true" data-mode="auto" title="Follow your phone or browser setting">Auto</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="light">Light</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="dark">Dark</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-mode="green" title="Recycled-paper tones that are easy on the eyes">Green Read</button>
       </div>
     </div>
     <div>
@@ -342,8 +357,19 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
       </div>
     </div>
     <div>
+      <span class="lbl">Font</span>
+      <div class="choices" id="fontGroup" role="radiogroup" aria-label="Chat font">
+        <button class="choice" type="button" role="radio" aria-checked="true" data-font="d" title="The bundled Figtree font">Default</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-font="system" title="Your device's own font">System</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-font="custom" title="Use a font file from your device">My font</button>
+      </div>
+      <input type="file" id="fontFile" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,font/ttf,font/otf" hidden>
+      <p class="hint" id="fontHint">My font: choose a .woff2, .ttf or .otf file. It is kept on this device only and works offline.</p>
+      <button class="btn" id="fontRemove" type="button" hidden>Remove my font</button>
+    </div>
+    <div>
       <button class="btn" id="resetPrefs" type="button">Reset to default</button>
-      <p class="hint">Your style, mode, text size and spacing are remembered on this device only. Nothing is sent anywhere.</p>
+      <p class="hint">Your style, mode, text size, spacing and font are remembered on this device only. Nothing is sent anywhere.</p>
     </div>
   </section>
   <section id="info" class="panel" hidden aria-label="How it works">
@@ -365,7 +391,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>Step 2 above is separate: uploading your export to an AI assistant sends it to that service. This reader never does.</li>
-      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your style and mode choice is remembered, on this device.</li>
+      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing and font) are remembered, on this device. A font file you add stays on this device too.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>If the speakers do not split</h2>
@@ -908,7 +934,7 @@ function downloadMd() {
 function loadFile(file) {
   if (!file || !guardDirty()) return;
   var reader = new FileReader();
-  reader.onload = function () { show(String(reader.result), file.name.replace(/\.[^.]+$/, '')); };
+  reader.onload = function () { closePanels(); show(String(reader.result), file.name.replace(/\.[^.]+$/, '')); };
   reader.onerror = function () { notice.hidden = false; notice.textContent = 'That file could not be read. Try opening it again.'; };
   reader.readAsText(file);
 }
@@ -930,6 +956,13 @@ function syncThemeColor() {
   if (meta && c) meta.setAttribute('content', c);
 }
 var PANELS = ['info', 'appearance', 'paste', 'search'];
+function closePanels() {
+  PANELS.forEach(function (p) {
+    $(p).hidden = true;
+    var btn = document.querySelector('[data-panel="' + p + '"]');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  });
+}
 function togglePanel(id) {
   var willOpen = $(id).hidden;
   PANELS.forEach(function (p) {
@@ -986,6 +1019,88 @@ document.querySelectorAll('#sizeGroup button').forEach(function (b) {
   });
   setChecked($(g[1]), 'data-' + g[0], root.getAttribute('data-' + g[0]) || 'm');
 });
+// Font choice. "My font" is a file kept in this browser (IndexedDB), never uploaded.
+var customFace = null, customName = '';
+var FONT_HINT = $('fontHint').textContent;
+function fontDb() {
+  return new Promise(function (res, rej) {
+    var r = indexedDB.open('cr-fonts', 1);
+    r.onupgradeneeded = function () { r.result.createObjectStore('f'); };
+    r.onsuccess = function () { res(r.result); };
+    r.onerror = function () { rej(r.error); };
+  });
+}
+function fontStore(mode, fn) {
+  return fontDb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('f', mode), req = fn(tx.objectStore('f'));
+      tx.oncomplete = function () { db.close(); res(req && req.result); };
+      tx.onerror = tx.onabort = function () { db.close(); rej(tx.error); };
+    });
+  });
+}
+function useCustomFace(buf, name) {
+  var face = new FontFace('CR Custom', buf);
+  return face.load().then(function () {
+    if (customFace) document.fonts.delete(customFace);
+    document.fonts.add(face);
+    customFace = face; customName = name;
+    syncFontUi();
+  });
+}
+function syncFontUi() {
+  $('fontRemove').hidden = !customName;
+  $('fontHint').textContent = customName ? 'My font: ' + customName + '. Kept on this device only and works offline.' : FONT_HINT;
+}
+function setFont(f, save) {
+  if (f === 'd') root.removeAttribute('data-font'); else root.setAttribute('data-font', f);
+  if (save !== false) savePref('cr-font', f === 'd' ? null : f);
+  setChecked($('fontGroup'), 'data-font', f);
+}
+function loadSavedFont() {
+  return fontStore('readonly', function (s) { return s.get('custom'); }).then(function (rec) {
+    if (!rec) { customName = ''; syncFontUi(); return false; }
+    return useCustomFace(rec.data, rec.name).then(function () { return true; });
+  });
+}
+document.querySelectorAll('#fontGroup button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var f = b.getAttribute('data-font');
+    if (f !== 'custom') { setFont(f); return; }
+    if (customFace) { setFont('custom'); return; }
+    $('fontFile').click();
+  });
+});
+$('fontFile').addEventListener('change', function (e) {
+  var file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { $('fontHint').textContent = 'That file is too large for a font (limit 10 MB).'; return; }
+  file.arrayBuffer().then(function (buf) {
+    return useCustomFace(buf, file.name).then(function () {
+      setFont('custom');
+      return fontStore('readwrite', function (s) { return s.put({ name: file.name, data: buf }, 'custom'); })
+        .catch(function () { $('fontHint').textContent = 'My font: ' + file.name + '. This browser would not save it, so it is used for this visit only.'; });
+    });
+  }).catch(function () { $('fontHint').textContent = 'That file could not be used as a font. Try a .woff2, .ttf or .otf file.'; });
+});
+$('fontRemove').addEventListener('click', function () {
+  if (customFace) document.fonts.delete(customFace);
+  customFace = null; customName = '';
+  fontStore('readwrite', function (s) { return s.delete('custom'); }).catch(function () {});
+  if (root.getAttribute('data-font') === 'custom') setFont('d');
+  syncFontUi();
+});
+setChecked($('fontGroup'), 'data-font', root.getAttribute('data-font') || 'd');
+if (window.indexedDB && window.FontFace) {
+  loadSavedFont().catch(function () {
+    if (root.getAttribute('data-font') === 'custom') setFont('d');
+  }).then(function () {
+    if (root.getAttribute('data-font') === 'custom' && !customFace) setFont('d');
+  });
+} else {
+  $('fontGroup').querySelector('[data-font="custom"]').hidden = true;
+}
 if (!(window.CSS && CSS.supports && CSS.supports('color', 'light-dark(red, blue)'))) $('styleRow').hidden = true;
 if (window.matchMedia) {
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -1000,6 +1115,7 @@ setChecked($('sizeGroup'), 'data-size', root.getAttribute('data-size') || 'm');
 $('resetPrefs').addEventListener('click', function () {
   root.removeAttribute('data-accent'); root.removeAttribute('data-theme'); root.removeAttribute('data-size');
   root.removeAttribute('data-lh'); root.removeAttribute('data-ps');
+  setFont('d');
   savePref('cr-accent', null); savePref('cr-mode', null); savePref('cr-size', null);
   savePref('cr-lh', null); savePref('cr-ps', null);
   setChecked($('sizeGroup'), 'data-size', 'm');
