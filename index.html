@@ -847,6 +847,7 @@ function render() {
 
 /* ---- editing ---- */
 function setEdit(on, quiet) {
+  if (!on && !quiet && editMode && !commitEdit()) return;
   editMode = on; editingIdx = -1; selIdx = -1;
   document.body.classList.toggle('editing', on);
   $('editbar').hidden = !on;
@@ -1056,12 +1057,15 @@ function mutate(fn, msg) {
 }
 function saveEdit(i) {
   var v = $('editArea').value.replace(/\s+$/, '');
-  if (!v.trim()) { toast('A message cannot be empty. Use Delete to remove it.', false); return; }
-  if (v === doc.msgs[i].text) { editingIdx = -1; render(); return; }
+  if (!v.trim()) { toast('A message cannot be empty. Use Delete to remove it.', false); return false; }
+  if (v === doc.msgs[i].text) { editingIdx = -1; render(); return true; }
   mutate(function () { doc.msgs[i].text = v; });
+  return true;
 }
+// Keeps whatever is typed in an open editor, so Done, Copy, Download and Undo never drop a pending change.
+function commitEdit() { return editingIdx < 0 || !$('editArea') || saveEdit(editingIdx); }
 function undo() {
-  if (!undoStack.length) return;
+  if (!commitEdit() || !undoStack.length) return;
   doc.msgs = JSON.parse(undoStack.pop());
   dirty = undoStack.length > 0; editingIdx = -1;
   render();
@@ -1137,8 +1141,8 @@ $('editBtn').addEventListener('click', function () { if (!this.disabled) setEdit
 $('doneBtn').addEventListener('click', function () { setEdit(false); });
 $('undoBtn').addEventListener('click', undo);
 $('toastUndo').addEventListener('click', undo);
-$('copyMdBtn').addEventListener('click', function () { copyText(toMarkdown(), this); });
-$('dlBtn').addEventListener('click', downloadMd);
+$('copyMdBtn').addEventListener('click', function () { if (commitEdit()) copyText(toMarkdown(), this); });
+$('dlBtn').addEventListener('click', function () { if (commitEdit()) downloadMd(); });
 window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---- save a new copy (always a new file; the original is never changed) ---- */
