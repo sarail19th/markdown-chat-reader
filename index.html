@@ -429,6 +429,7 @@ body.searching .fabs { display: none; }
     <h2>New here?</h2>
     <p>The guide chat walks through search, editing, styles, installing the app and what to do if the speakers do not split.</p>
     <button class="btn" id="showGuide" type="button">Show the guide chat</button>
+    <p class="hint">App version <span id="appVer">__VERSION__</span></p>
   </section>
   <section id="paste" class="panel sheet" hidden role="dialog" aria-label="Paste text" tabindex="-1">
     <div class="sheethead"><h2>Paste text</h2><button class="sheetx" type="button" data-close="paste" aria-label="Close paste form"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1598,6 +1599,7 @@ function fetchSample() {
     .catch(function () { return SAMPLE; });
 }
 fetchSample().then(function (t) { if (!doc) showSample(t); });
+if ($('appVer').textContent.indexOf('__V') === 0) $('appVer').textContent = 'local copy';
 $('showGuide').addEventListener('click', function () {
   if ((state === 'chat' || dirty) && !window.confirm('Replace the chat you are reading with the guide? Chats are not saved, so open your file again to get it back.')) return;
   closePanels();

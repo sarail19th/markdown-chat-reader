@@ -30,17 +30,19 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== location.origin) return;
 
-  if (req.mode === 'navigate') {
-    // Online: always get the newest page. Offline or slow (4 s): use the saved copy.
-    // no-cache: always check with the server, so GitHub Pages' short HTTP cache cannot serve an old page.
+  const guide = new URL(req.url).pathname.endsWith('/sample.md');
+  if (req.mode === 'navigate' || guide) {
+    // The page and the guide chat: online, always get the newest copy. Offline or slow (4 s): use the saved copy.
+    // no-cache: always check with the server, so GitHub Pages' short HTTP cache cannot serve an old one.
+    const key = guide ? req : './index.html';
     const net = fetch(req, { cache: 'no-cache' }).then((res) => {
-      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put('./index.html', copy)); }
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(key, copy)); }
       return res;
     });
     const timeout = new Promise((_, reject) => setTimeout(reject, 4000));
     e.respondWith(
       Promise.race([net, timeout]).catch(() =>
-        caches.match('./index.html').then((r) => r || caches.match('./')).then((r) => r || net)
+        caches.match(key).then((r) => r || (guide ? null : caches.match('./'))).then((r) => r || net)
       )
     );
     return;
