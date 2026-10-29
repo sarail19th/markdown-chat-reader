@@ -23,7 +23,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 - Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and four text sizes.
 - A floating menu at the bottom right, folded to one round button until you tap it (drag that button to move the menu anywhere on screen), with Open, Paste (or press Ctrl+V), Search, a jump arrow (down to the end, or back up to the start), Edit, Style and Help. A copy button on every code block.
 - Tap-to-edit: turn on **Edit**, tap a message, then edit its text, swap its speaker or delete it. Undo, then download or copy a new `.md` file. Your original file is never changed.
-- Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**.
+- Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**. The installed app opens full screen, in portrait or landscape; swipe in from an edge to show the system bars.
 
 ## Edited chats are labeled
 

@@ -5,8 +5,8 @@
   "description": "Read an AI chat Markdown export as a mobile-style chat. Runs in your browser, also offline. Your chats are never uploaded or saved.",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
-  "orientation": "portrait",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "background_color": "#f2f5f3",
   "theme_color": "#f2f5f3",
   "icons": [

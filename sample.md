@@ -143,7 +143,7 @@ No. The file is read inside your browser and this page has no server that could 
 
 Only your display choices are remembered, on this device. After your first visit the app's own files stay on your device, so it opens without internet. Your chats are never part of that.
 
-On Android, you can also open this page in Chrome, choose the menu (⋮) and tap **Install app** to add it to your home screen.
+On Android, you can also open this page in Chrome, choose the menu (⋮) and tap **Install app** to add it to your home screen. The installed app opens full screen with no bars, in portrait or landscape. Swipe in from the top or bottom edge to see the system bars for a moment.
 
 ---
 
