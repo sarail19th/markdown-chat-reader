@@ -282,6 +282,21 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .sheetx:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .scrim { position: fixed; inset: 0; z-index: 24; background: rgba(0, 0, 0, .4); }
 body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
+/* Wide screens: Appearance and Help drop down from the toolbar instead of docking at the bottom. */
+@media (min-width: 760px) {
+  .sheet { right: auto; bottom: auto; margin: 0; max-width: none; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
+  #appearance.sheet { width: 640px; max-height: none; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+  #info.sheet { width: 520px; max-height: none; }
+  #appearance .sheethead, #appearance #styleRow { grid-column: 1 / -1; }
+  #appearance .choice { min-height: 38px; padding: 4px 12px; }
+  body.sheet-open { padding-bottom: 0; }
+  .scrim { display: none !important; }
+}
+.jump { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: grid; gap: 8px; pointer-events: none; }
+body.editing .jump { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.jumpbtn { pointer-events: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
+.jumpbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.jumpbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) {
   .sheet:not([hidden]) { animation: sheetup .2s ease-out both; }
   @keyframes sheetup { from { transform: translateY(24px); opacity: .001; } to { transform: none; opacity: 1; } }
@@ -384,16 +399,16 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
     <div>
       <span class="lbl">Font</span>
       <div class="choices" id="fontGroup" role="radiogroup" aria-label="Chat font">
-        <button class="choice" type="button" role="radio" aria-checked="true" data-font="d" title="The bundled Figtree font">Default</button>
-        <button class="choice" type="button" role="radio" aria-checked="false" data-font="system" title="Your device's own font">System</button>
+        <button class="choice" type="button" role="radio" aria-checked="true" data-font="d" title="Figtree, the font that comes with this app">Figtree</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-font="system" title="The font your phone or computer normally uses">Device font</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-font="custom" title="Use a font file from your device">My font</button>
       </div>
       <input type="file" id="fontFile" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,font/ttf,font/otf" hidden>
-      <p class="hint" id="fontHint">My font: choose a .woff2, .ttf or .otf file. It is kept on this device only and works offline.</p>
+      <p class="hint" id="fontHint">Figtree: the font that comes with this app.</p>
       <button class="btn" id="fontRemove" type="button" hidden>Remove my font</button>
     </div>
     <div>
-      <button class="btn" id="resetPrefs" type="button">Reset to default</button>
+      <button class="btn" id="resetPrefs" type="button">Reset all settings</button>
       <p class="hint">Your style, mode, text size, spacing and font are remembered on this device only. Nothing is sent anywhere.</p>
     </div>
   </section>
@@ -444,6 +459,10 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
+<div class="jump" id="jump">
+  <button class="jumpbtn" id="jumpTop" type="button" hidden aria-label="Jump to the top" title="Top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
+  <button class="jumpbtn" id="jumpBottom" type="button" hidden aria-label="Jump to the bottom" title="Bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
+</div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
     <button class="btn" id="undoBtn" type="button" disabled title="Undo the last change">Undo</button>
@@ -994,6 +1013,7 @@ function syncThemeColor() {
 var PANELS = ['info', 'appearance', 'paste', 'search'];
 function syncSheets() {
   $('scrim').hidden = $('info').hidden;
+  setTimeout(syncJump, 0);
   document.body.classList.toggle('sheet-open', !$('appearance').hidden);
 }
 function closePanels() {
@@ -1004,6 +1024,34 @@ function closePanels() {
   });
   syncSheets();
 }
+var WIDE = window.matchMedia ? window.matchMedia('(min-width: 760px)') : { matches: false };
+function placeSheets() {
+  ['appearance', 'info'].forEach(function (id) {
+    var el = $(id);
+    if (el.hidden || !WIDE.matches) { el.style.top = el.style.left = el.style.maxHeight = ''; return; }
+    var w = document.querySelector('.wrap').getBoundingClientRect(), t = document.querySelector('.toolbar').getBoundingClientRect();
+    var top = Math.max(8, t.bottom + 8);
+    el.style.top = top + 'px';
+    el.style.left = Math.max(8, w.right - el.offsetWidth) + 'px';
+    el.style.maxHeight = Math.max(240, window.innerHeight - top - 16) + 'px';
+  });
+}
+window.addEventListener('scroll', placeSheets, { passive: true });
+window.addEventListener('resize', placeSheets);
+function syncJump() {
+  var y = window.scrollY, left = document.documentElement.scrollHeight - window.innerHeight - y, has = state !== 'empty';
+  $('jumpTop').hidden = !(has && y > 400);
+  $('jumpBottom').hidden = !(has && left > 400);
+}
+function jumpTo(top) {
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: top, behavior: calm ? 'auto' : 'smooth' });
+}
+$('jumpTop').addEventListener('click', function () { jumpTo(0); });
+$('jumpBottom').addEventListener('click', function () { jumpTo(document.documentElement.scrollHeight); });
+window.addEventListener('scroll', syncJump, { passive: true });
+window.addEventListener('resize', syncJump);
+if (window.ResizeObserver) new ResizeObserver(syncJump).observe(document.body);
 function syncStart() { $('start').hidden = state === 'chat'; }
 function togglePanel(id) {
   var willOpen = $(id).hidden;
@@ -1018,6 +1066,7 @@ function togglePanel(id) {
     else if (state === 'empty' && id === 'appearance') showSample();
   }
   syncSheets();
+  placeSheets();
   if (willOpen && (id === 'appearance' || id === 'info')) $(id).querySelector('.sheetx').focus({ preventScroll: true });
   if (id === 'paste' && !$('paste').hidden) $('pasteText').focus();
   if (id === 'search' && !$('search').hidden) $('searchInput').focus();
@@ -1026,12 +1075,18 @@ function togglePanel(id) {
 document.querySelectorAll('[data-panel]').forEach(function (b) {
   b.addEventListener('click', function () { togglePanel(b.getAttribute('data-panel')); });
 });
-function closeSheet(id) {
+function closeSheet(id, keepFocus) {
   if ($(id).hidden) return;
   togglePanel(id);
   var btn = document.querySelector('[data-panel="' + id + '"]');
-  if (btn) btn.focus({ preventScroll: true });
+  if (btn && !keepFocus) btn.focus({ preventScroll: true });
 }
+document.addEventListener('click', function (e) {
+  if (!WIDE.matches) return;
+  ['appearance', 'info'].forEach(function (id) {
+    if (!$(id).hidden && !$(id).contains(e.target) && !e.target.closest('[data-panel="' + id + '"]')) closeSheet(id, true);
+  });
+});
 document.querySelectorAll('[data-close]').forEach(function (b) {
   b.addEventListener('click', function () { closeSheet(b.getAttribute('data-close')); });
 });
@@ -1084,7 +1139,6 @@ document.querySelectorAll('#sizeGroup button').forEach(function (b) {
 });
 // Font choice. "My font" is a file kept in this browser (IndexedDB), never uploaded.
 var customFace = null, customName = '';
-var FONT_HINT = $('fontHint').textContent;
 function fontDb() {
   return new Promise(function (res, rej) {
     var r = indexedDB.open('cr-fonts', 1);
@@ -1113,12 +1167,17 @@ function useCustomFace(buf, name) {
 }
 function syncFontUi() {
   $('fontRemove').hidden = !customName;
-  $('fontHint').textContent = customName ? 'My font: ' + customName + '. Kept on this device only and works offline.' : FONT_HINT;
+  var f = root.getAttribute('data-font') || 'd';
+  $('fontHint').textContent =
+    f === 'system' ? 'Device font: the font your phone or computer normally uses.' :
+    f === 'custom' ? (customName ? 'My font: ' + customName + '. Kept on this device only and works offline.' : 'My font: choose a .woff2, .ttf or .otf file. It is kept on this device only and works offline.') :
+    'Figtree: the font that comes with this app.';
 }
 function setFont(f, save) {
   if (f === 'd') root.removeAttribute('data-font'); else root.setAttribute('data-font', f);
   if (save !== false) savePref('cr-font', f === 'd' ? null : f);
   setChecked($('fontGroup'), 'data-font', f);
+  syncFontUi();
 }
 function loadSavedFont() {
   return fontStore('readonly', function (s) { return s.get('custom'); }).then(function (rec) {
