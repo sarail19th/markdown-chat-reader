@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Markdown Chat Reader",
   "short_name": "Chat Reader",
-  "description": "Read a ChatGPT Markdown export as a mobile-style chat. Runs in your browser, also offline. Your chats are never uploaded or saved.",
+  "description": "Read an AI chat Markdown export as a mobile-style chat. Runs in your browser, also offline. Your chats are never uploaded or saved.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

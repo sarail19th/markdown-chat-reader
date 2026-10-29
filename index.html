@@ -305,11 +305,11 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   <section id="info" class="panel" hidden aria-label="How it works">
     <h2>The flow</h2>
     <ol>
-      <li><strong>Export from ChatGPT.</strong> Open Settings, then Data controls, then Export data. ChatGPT emails you a download link that expires after about a day. Download the .zip. (Menu wording may differ slightly.)</li>
-      <li><strong>Convert with Claude.</strong> Upload the .zip, or the conversations.json inside it, to Claude and paste the prompt below. Claude gives you Markdown files, one per chat or per project, to download.</li>
+      <li><strong>Export from your AI app.</strong> Most apps have a data export in Settings (for example Data controls, then Export data). The app usually emails you a download link that expires after about a day. Download the file it gives you, a .zip or .json. (Menu wording differs between apps.)</li>
+      <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat or per project, to download.</li>
       <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open .md file</strong>, and pick one to read it as a chat. Open one file at a time.</li>
     </ol>
-    <pre><code class="language-prompt">Convert this ChatGPT export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **ChatGPT:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
+    <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
     <h2>Using the reader</h2>
     <ul>
       <li>Your messages appear on the right and the AI's on the left.</li>
@@ -320,12 +320,12 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
     <h2>Your chat stays with you</h2>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
-      <li>Step 2 above is separate: uploading your export to Claude sends it to Claude. This reader never does.</li>
+      <li>Step 2 above is separate: uploading your export to an AI assistant sends it to that service. This reader never does.</li>
       <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your style and mode choice is remembered, on this device.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>If the speakers do not split</h2>
-    <p>The reader looks for lines such as <code>**You:**</code>, <code>**ChatGPT:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
+    <p>The reader looks for lines such as <code>**You:**</code>, <code>**AI:**</code>, <code>### User</code>, <code>### Assistant</code>, <code>You said:</code> or <code>Prompt:</code> / <code>Response:</code>, with an optional time or model name after them.</p>
   </section>
   <section id="paste" hidden>
     <textarea id="pasteText" placeholder="Paste the exported chat here" aria-label="Chat markdown"></textarea>
@@ -334,7 +334,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   <p class="notice" id="notice" hidden></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
   <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
-  <p class="unofficial" id="unofficial">Unofficial viewer. Not an OpenAI export or an official ChatGPT screen.</p>
+  <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved.</p>
 </div>
@@ -497,7 +497,7 @@ var SAMPLE = [
   '',
   '---',
   '',
-  '**ChatGPT:**',
+  '**AI:**',
   'Not dead. A sharp acetone smell usually means it is **hungry**. Try this:',
   '',
   '1. Discard all but 50 g of starter.',
@@ -513,7 +513,7 @@ var SAMPLE = [
   '',
   '---',
   '',
-  '**ChatGPT:**',
+  '**AI:**',
   'Here is a simple one:',
   '',
   '```text',
@@ -562,7 +562,7 @@ function show(text, fallbackTitle) {
   $('unofficial').hidden = false;
   $('editedBanner').hidden = true;
   document.title = 'Markdown Chat Reader';
-  var names = { user: 'You', assistant: 'ChatGPT' }, gotU = false, gotA = false;
+  var names = { user: 'You', assistant: 'AI' }, gotU = false, gotA = false;
   parsed.msgs.forEach(function (m) {
     if (m.role === 'user' && !gotU) { names.user = m.label; gotU = true; }
     if (m.role === 'assistant' && !gotA) { names.assistant = m.label; gotA = true; }
@@ -580,7 +580,7 @@ function show(text, fallbackTitle) {
     titleEl.textContent = doc.title;
     metaEl.textContent = 'No messages found';
     notice.hidden = false;
-    notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**ChatGPT:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
+    notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**AI:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
     chat.innerHTML = '';
     var row = document.createElement('div');
     row.className = 'row ai';
