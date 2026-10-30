@@ -271,6 +271,36 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .stylebtn { min-width: 44px; min-height: 40px; padding: 4px 12px; font: 600 .95rem var(--ff); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
 .stylebtn:hover { border-color: var(--muted); }
 .stylebtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.titlerow { display: flex; align-items: flex-start; gap: 6px; }
+.titleedit { display: none; flex: none; align-items: center; justify-content: center; width: 36px; height: 36px; margin-top: -5px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+body.editing .titleedit { display: inline-flex; }
+.titleedit:hover { border-color: var(--muted); }
+.titleedit:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.titleedit svg, .grip svg, .mvbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.modalback { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .45); }
+.modalback[hidden] { display: none; }
+.modalcard { box-sizing: border-box; width: min(480px, 100%); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 16px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 40px rgba(0, 0, 0, .3); }
+.modalcard h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.modalhelp { margin: 0 0 12px; font-size: .88rem; line-height: 1.45; color: var(--muted); }
+.modalfield { display: block; margin: 0 0 4px; font-size: .85rem; color: var(--muted); }
+.fieldrow { display: flex; align-items: center; gap: 6px; }
+.fieldrow span { flex: none; color: var(--muted); }
+.modalinput { display: block; flex: 1; min-width: 0; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: 400 max(16px, 1rem) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.modalinput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.modalactions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.arrlist { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 42vh; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; }
+.arrlist li { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.arrlist li.dragging { position: relative; z-index: 1; border-color: var(--muted); box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
+.arrlist li.skip { opacity: .6; }
+.arrnum { flex: none; width: 1.3em; text-align: center; font-weight: 700; color: var(--muted); }
+.grip { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; min-height: 44px; color: var(--muted); background: none; border: 0; border-radius: 10px; cursor: grab; touch-action: none; }
+.grip:focus-visible, .mvbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.arrinfo { flex: 1; min-width: 0; }
+.arrinfo b, .arrinfo span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arrinfo b { font-size: .92rem; }
+.arrinfo span { font-size: .8rem; color: var(--muted); }
+.mvbtn { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 40px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.mvbtn:disabled { opacity: .35; cursor: default; }
 .stylebtn.clear { font-weight: 500; margin-left: auto; }
 .stylebtn.split { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
 .stylebtn.split svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -383,7 +413,7 @@ body.searching .fabs { display: none; }
     <div class="brand">
       <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 5h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-9l-5 4v-4a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z" fill="currentColor" opacity=".4"/><path d="M12 13h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-1v4l-5-4h-9a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3z" fill="var(--user)"/></svg>
       <div class="heading">
-        <h1 id="title">Chat export</h1>
+        <div class="titlerow"><h1 id="title">Chat export</h1><button class="titleedit" id="renameBtn" type="button" aria-label="Rename this chat" title="Rename this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div>
         <p class="meta" id="meta"></p>
       </div>
     </div>
@@ -457,7 +487,7 @@ body.searching .fabs { display: none; }
         </ul>
       </li>
       <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat or per project, to download.</li>
-      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. If the export came in several parts, select all the files at once (or drop them together) and they are merged into one chat in file name order.</li>
+      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. If the export came in several parts, select all the files at once (or drop them together), put them in reading order by dragging, and they are merged into one chat.</li>
     </ol>
     <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
     <h2>Your chat stays with you</h2>
@@ -484,14 +514,22 @@ body.searching .fabs { display: none; }
     <button class="btn primary" id="pasteGo" type="button">Show chat</button>
   </section>
   <p class="notice" id="notice" hidden></p>
-  <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers or delete it. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved. <a href="https://github.com/sarail19th/markdown-chat-reader" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
+<div class="modalback" id="modal" hidden>
+  <div class="modalcard" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle"></h2>
+    <p class="modalhelp" id="modalHelp"></p>
+    <div id="modalBody"></div>
+    <div class="modalactions"><button class="btn" id="modalCancel" type="button">Cancel</button><button class="btn primary" id="modalOk" type="button"></button></div>
+  </div>
+</div>
 <div class="rail" id="rail" aria-hidden="true"><div class="thumb" id="railThumb"><span class="tip" id="railTip"></span></div></div>
 <div class="fabs" id="fabs" data-h="right" data-v="up">
   <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
@@ -754,10 +792,12 @@ function show(text, fallbackTitle, merged) {
     title: parsed.title || fallbackTitle || 'Chat export',
     msgs: parsed.msgs.map(function (m, i) { return { id: i + 1, role: m.role, label: m.label, text: m.text, origRole: m.role, origText: m.text }; }),
     names: names,
+    origTitle: parsed.title || fallbackTitle || 'Chat export',
     orig: parsed.msgs.map(function (m, i) { return { id: i + 1, role: m.role }; }),
     loadedChanges: (function () { var cm = (parsed.pre || '').match(/^>\s*Changes:\s*(.+)$/m); return cm ? cm[1].trim() : ''; })(),
     editable: parsed.msgs.length > 0,
     mergedFrom: merged ? merged.files : null,
+    saveName: '',
     loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
   };
   if (!doc.editable) {
@@ -1186,7 +1226,9 @@ function doSplit(i, ta) {
   var next = chat.querySelector('.row[data-i="' + (i + 1) + '"]');
   if (next) next.scrollIntoView({ block: 'nearest' });
 }
-function pushHistory() { undoStack.push(JSON.stringify(doc.msgs)); if (undoStack.length > 50) undoStack.shift(); redoStack = []; }
+function snap() { return JSON.stringify({ t: doc.title, m: doc.msgs }); }
+function restore(str) { var o = JSON.parse(str); doc.title = o.t; doc.msgs = o.m; }
+function pushHistory() { undoStack.push(snap()); if (undoStack.length > 50) undoStack.shift(); redoStack = []; }
 function mutate(fn, msg) {
   pushHistory(); fn(); dirty = true; editingIdx = -1; render();
   if (msg) toast(msg, true);
@@ -1202,16 +1244,16 @@ function saveEdit(i) {
 function commitEdit() { return editingIdx < 0 || !$('editArea') || saveEdit(editingIdx); }
 function undo() {
   if (!commitEdit() || !undoStack.length) return;
-  redoStack.push(JSON.stringify(doc.msgs));
-  doc.msgs = JSON.parse(undoStack.pop());
+  redoStack.push(snap());
+  restore(undoStack.pop());
   dirty = undoStack.length > 0; editingIdx = -1;
   render();
   $('toast').hidden = true;
 }
 function redo() {
   if (!commitEdit() || !redoStack.length) return;
-  undoStack.push(JSON.stringify(doc.msgs));
-  doc.msgs = JSON.parse(redoStack.pop());
+  undoStack.push(snap());
+  restore(redoStack.pop());
   dirty = true; editingIdx = -1;
   render();
   $('toast').hidden = true;
@@ -1238,9 +1280,9 @@ function changeParts() {
     if (m.text !== m.origText) ed.push(m.id);
     if (m.role !== m.origRole) sw.push(m.id);
   });
-  return { ed: ed, sw: sw, spl: spl, del: doc.orig.filter(function (o) { return !alive[o.id]; }) };
+  return { ed: ed, sw: sw, spl: spl, title: doc.title !== doc.origTitle, del: doc.orig.filter(function (o) { return !alive[o.id]; }) };
 }
-function changeCount() { var p = changeParts(); return p.ed.length + p.sw.length + p.spl.length + p.del.length; }
+function changeCount() { var p = changeParts(); return p.ed.length + p.sw.length + p.spl.length + (p.title ? 1 : 0) + p.del.length; }
 function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
 function idList(a) { return a.slice(0, 12).map(function (x) { return '#' + x; }).join(', ') + (a.length > 12 ? ', …' : ''); }
 function changeSummary() {
@@ -1249,6 +1291,7 @@ function changeSummary() {
   if (p.ed.length) out.push(plural(p.ed.length, 'message') + ' edited (' + idList(p.ed) + ')');
   if (p.sw.length) out.push(plural(p.sw.length, 'message') + ' moved to the other speaker (' + idList(p.sw) + ')');
   if (p.spl.length) out.push(plural(p.spl.length, 'message') + ' split between both speakers (' + idList(p.spl) + ')');
+  if (p.title) out.push('title renamed (from "' + doc.origTitle + '")');
   if (p.del.length) out.push(plural(p.del.length, 'message') + ' deleted (' + p.del.slice(0, 12).map(function (o) { return '#' + o.id + ' ' + nameOf(o.role); }).join(', ') + (p.del.length > 12 ? ', …' : '') + ')');
   if (out.length) s = out.join('; ') + '. The opened file had ' + doc.orig.length + ' messages.';
   if (doc.loadedChanges) s += (s ? ' Earlier changes: ' : '') + doc.loadedChanges;
@@ -1292,14 +1335,27 @@ $('undoBtn').addEventListener('click', undo);
 $('redoBtn').addEventListener('click', redo);
 $('toastUndo').addEventListener('click', undo);
 $('copyMdBtn').addEventListener('click', function () { if (commitEdit()) copyText(toMarkdown(), this); });
-$('dlBtn').addEventListener('click', function () { if (commitEdit()) downloadMd(); });
+$('dlBtn').addEventListener('click', function () { if (commitEdit()) askSaveName(); });
+$('renameBtn').addEventListener('click', function () {
+  if (!doc || !commitEdit()) return;
+  var input = textInput(doc.title, 'Chat title', '', false);
+  openModal({
+    title: 'Rename chat', help: 'The new title shows at the top and heads a saved copy. Your original file is not changed.',
+    body: input.box, ok: 'Rename', focus: input.el,
+    onOk: function () {
+      var v = input.el.value.replace(/\s+/g, ' ').trim();
+      if (!v) { input.el.focus(); return false; }
+      if (v !== doc.title) mutate(function () { doc.title = v; }, 'Title changed');
+    }
+  });
+});
 window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---- save a new copy (always a new file; the original is never changed) ---- */
 function toMarkdown() {
   var out = ['# ' + (doc.title || 'Chat export'), ''];
   if (isModified()) {
-    out.push('> **Edited copy.** Made with Markdown Chat Reader. Some messages were changed or removed, so this may not match the original conversation.');
+    out.push('> **Edited copy.** Made with Markdown Chat Reader. Some messages or the title were changed or removed, so this may not match the original conversation.');
     var cs = changeSummary();
     if (cs) out.push('>', '> Changes: ' + cs);
     out.push('');
@@ -1316,8 +1372,19 @@ function fileName() {
   var s = (doc.title || 'chat').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   return (s || 'chat') + (!isModified() && doc.mergedFrom ? '-merged.md' : '-edited.md');
 }
-function downloadMd() {
-  var name = fileName();
+function cleanFileName(v, fallback) {
+  var s = String(v || '').replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\.(md|markdown)$/i, '').replace(/^[.\s]+|[.\s]+$/g, '').slice(0, 100);
+  return (s || fallback) + '.md';
+}
+function askSaveName() {
+  var def = fileName().replace(/\.md$/, ''), input = textInput(doc.saveName || def, 'File name', true, true);
+  openModal({
+    title: 'Name your copy', help: 'The copy is saved as a new .md file on your device. Your original file is not changed.',
+    body: input.box, ok: 'Save copy', focus: input.el,
+    onOk: function () { var name = cleanFileName(input.el.value, def); doc.saveName = name.replace(/\.md$/, ''); downloadMd(name); }
+  });
+}
+function downloadMd(name) {
   var url = URL.createObjectURL(new Blob([toMarkdown()], { type: 'text/markdown;charset=utf-8' }));
   var a = document.createElement('a');
   a.href = url; a.download = name;
@@ -1343,29 +1410,166 @@ function loadFiles(list) {
   if (!files.length || !guardDirty()) return;
   files.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }); });
   Promise.all(files.map(readText)).then(function (texts) {
+    if (files.length === 1) { closePanels(); show(texts[0], baseName(files[0].name)); return; }
+    var items = files.map(function (f, k) { return { name: f.name, parsed: parseChat(texts[k]) }; });
+    if (!items.some(function (it) { return it.parsed.msgs.length; })) { closePanels(); show(texts[0], baseName(files[0].name)); return; }
     closePanels();
-    if (files.length === 1) show(texts[0], baseName(files[0].name));
-    else showMerged(files.map(function (f) { return f.name; }), texts);
+    arrangeFiles(items);
   }, function () { notice.hidden = false; notice.textContent = 'A file could not be read. Try opening it again.'; });
 }
-function showMerged(names, texts) {
-  var parts = texts.map(function (t, k) { return { name: names[k], parsed: parseChat(t) }; });
-  var good = parts.filter(function (p) { return p.parsed.msgs.length; });
-  if (!good.length) { show(texts[0], baseName(names[0])); return; }
-  var skipped = parts.filter(function (p) { return !p.parsed.msgs.length; }).map(function (p) { return p.name; });
-  var title = '';
-  good.forEach(function (p) { if (!title && p.parsed.title) title = p.parsed.title; });
-  show(null, title || baseName(good[0].name), {
+// Lets people put the parts in order (drag the handle, or use the arrows) and name the merged chat before it opens.
+function arrangeFiles(items) {
+  var list = document.createElement('ol'), box = document.createElement('div');
+  list.className = 'arrlist'; list.setAttribute('aria-label', 'Files in merge order');
+  var first = '';
+  items.forEach(function (it) { if (!first && it.parsed.title) first = it.parsed.title; });
+  var input = textInput(first || baseName(items[0].name), 'Title of the merged chat', '', false);
+  var svgUp = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>', svgDown = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  items.forEach(function (it, k) {
+    var n = it.parsed.msgs.length, li = document.createElement('li');
+    li.setAttribute('data-k', String(k));
+    if (!n) li.className = 'skip';
+    var pv = n ? it.parsed.msgs[0].text.replace(/\s+/g, ' ').slice(0, 70) : 'skipped';
+    li.innerHTML = '<span class="arrnum"></span>' +
+      '<button class="grip" type="button" aria-label="Drag to move this file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" stroke-width="3"/></svg></button>' +
+      '<div class="arrinfo"><b></b><span></span></div>' +
+      '<button class="mvbtn" type="button" data-mv="-1" aria-label="Move up">' + svgUp + '</button>' +
+      '<button class="mvbtn" type="button" data-mv="1" aria-label="Move down">' + svgDown + '</button>';
+    li.querySelector('b').textContent = it.name;
+    li.querySelector('.arrinfo span').textContent = n ? plural(n, 'message') + ' · starts: ' + pv : 'No messages found, skipped';
+    list.appendChild(li);
+  });
+  function sync() {
+    var rows = Array.prototype.slice.call(list.children);
+    rows.forEach(function (li, k) {
+      li.querySelector('.arrnum').textContent = String(k + 1);
+      li.querySelector('[data-mv="-1"]').disabled = k === 0;
+      li.querySelector('[data-mv="1"]').disabled = k === rows.length - 1;
+    });
+  }
+  list.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-mv]');
+    if (!b) return;
+    var li = b.closest('li'), d = parseInt(b.getAttribute('data-mv'), 10);
+    if (d < 0 && li.previousElementSibling) list.insertBefore(li, li.previousElementSibling);
+    else if (d > 0 && li.nextElementSibling) list.insertBefore(li.nextElementSibling, li);
+    sync();
+    if (b.disabled) li.querySelector('[data-mv="' + (-d) + '"]').focus(); else b.focus();
+  });
+  list.addEventListener('pointerdown', function (e) {
+    var g = e.target.closest && e.target.closest('.grip');
+    if (!g || (e.button !== undefined && e.button > 0)) return;
+    e.preventDefault();
+    var li = g.closest('li');
+    li.classList.add('dragging');
+    function move(ev) {
+      var y = ev.clientY, before = null, rows = Array.prototype.slice.call(list.children);
+      for (var k = 0; k < rows.length; k++) {
+        if (rows[k] === li) continue;
+        var r = rows[k].getBoundingClientRect();
+        if (y < r.top + r.height / 2) { before = rows[k]; break; }
+      }
+      if (before !== li.nextElementSibling) { list.insertBefore(li, before); sync(); }
+      var lr = list.getBoundingClientRect();
+      if (y < lr.top + 24) list.scrollTop -= 12; else if (y > lr.bottom - 24) list.scrollTop += 12;
+    }
+    function end() {
+      li.classList.remove('dragging');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    }
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+  });
+  // The grip also works from the keyboard: Up and Down move the file.
+  list.addEventListener('keydown', function (e) {
+    var g = e.target.closest && e.target.closest('.grip');
+    if (!g || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    var li = g.closest('li');
+    if (e.key === 'ArrowUp' && li.previousElementSibling) list.insertBefore(li, li.previousElementSibling);
+    else if (e.key === 'ArrowDown' && li.nextElementSibling) list.insertBefore(li.nextElementSibling, li);
+    sync(); g.focus();
+  });
+  box.appendChild(list); box.appendChild(input.box);
+  sync();
+  openModal({
+    title: 'Merge ' + items.length + ' files', help: 'They are in file name order. Drag the dots (or use the arrows) to put them in reading order, and name the merged chat.',
+    body: box, ok: 'Merge files', focus: list.querySelector('.grip'),
+    onOk: function () {
+      var order = Array.prototype.slice.call(list.children).map(function (li) { return items[parseInt(li.getAttribute('data-k'), 10)]; });
+      showMerged(order, input.el.value.replace(/\s+/g, ' ').trim());
+    }
+  });
+}
+function showMerged(items, title) {
+  var good = items.filter(function (it) { return it.parsed.msgs.length; });
+  var skipped = items.filter(function (it) { return !it.parsed.msgs.length; }).map(function (it) { return it.name; });
+  title = title || baseName(good[0].name);
+  show(null, title, {
     title: title,
-    msgs: good.reduce(function (all, p) { return all.concat(p.parsed.msgs); }, []),
-    pre: good.map(function (p) { return p.parsed.pre; }).filter(Boolean).join('\n'),
-    files: good.map(function (p) { return p.name; })
+    msgs: good.reduce(function (all, it) { return all.concat(it.parsed.msgs); }, []),
+    pre: good.map(function (it) { return it.parsed.pre; }).filter(Boolean).join('\n'),
+    files: good.map(function (it) { return it.name; })
   });
   notice.hidden = false;
-  notice.textContent = 'Merged ' + good.length + ' files into one chat, in this order: ' + good.map(function (p) { return p.name; }).join(', ') + '.' +
-    (skipped.length ? ' Skipped (no messages found): ' + skipped.join(', ') + '.' : '') +
-    ' Wrong order? Rename the files so their names sort in order, and open them again.';
+  notice.textContent = 'Merged ' + good.length + ' files into one chat, in this order: ' + good.map(function (it) { return it.name; }).join(', ') + '.' +
+    (skipped.length ? ' Skipped (no messages found): ' + skipped.join(', ') + '.' : '');
 }
+
+/* ---- one small dialog, used to arrange merged files, name a saved copy and rename the chat ---- */
+var modalFrom = null, modalOnOk = null;
+function textInput(value, label, suffix, selectAll) {
+  var box = document.createElement('div'), lab = document.createElement('label'), row = document.createElement('div'), el = document.createElement('input');
+  lab.className = 'modalfield'; lab.textContent = label;
+  el.type = 'text'; el.className = 'modalinput'; el.value = value; el.maxLength = 200;
+  el.setAttribute('autocomplete', 'off'); el.setAttribute('autocapitalize', 'off'); el.spellcheck = false;
+  lab.appendChild(document.createElement('br'));
+  row.className = 'fieldrow'; row.appendChild(el);
+  if (suffix) { var sf = document.createElement('span'); sf.textContent = '.md'; row.appendChild(sf); }
+  lab.appendChild(row); box.appendChild(lab);
+  el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('modalOk').click(); } });
+  el._selectAll = !!selectAll;
+  return { box: box, el: el };
+}
+function openModal(o) {
+  modalFrom = document.activeElement;
+  $('modalTitle').textContent = o.title;
+  $('modalHelp').textContent = o.help || '';
+  $('modalBody').innerHTML = '';
+  $('modalBody').appendChild(o.body);
+  $('modalOk').textContent = o.ok;
+  modalOnOk = o.onOk;
+  $('modal').hidden = false;
+  var f = o.focus || $('modalOk');
+  f.focus();
+  if (f.select && f._selectAll) f.select();
+}
+function closeModal() {
+  if ($('modal').hidden) return;
+  $('modal').hidden = true; modalOnOk = null;
+  $('modalBody').innerHTML = '';
+  if (modalFrom && modalFrom.focus && document.contains(modalFrom)) modalFrom.focus({ preventScroll: true });
+}
+$('modalOk').addEventListener('click', function () {
+  var fn = modalOnOk;
+  if (fn && fn() === false) return;
+  closeModal();
+});
+$('modalCancel').addEventListener('click', closeModal);
+$('modal').addEventListener('mousedown', function (e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', function (e) {
+  if ($('modal').hidden) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeModal(); return; }
+  if (e.key !== 'Tab') return;
+  var f = Array.prototype.filter.call($('modal').querySelectorAll('button, input'), function (x) { return !x.disabled; });
+  if (!f.length) return;
+  var a = f[0], z = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+  else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+}, true);
 
 $('file').addEventListener('change', function (e) { loadFiles(e.target.files); e.target.value = ''; });
 $('openBtn').addEventListener('click', function () { $('file').click(); });

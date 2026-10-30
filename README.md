@@ -15,7 +15,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 1. **Export from your AI app.** Most apps have a data export in Settings. The app usually emails you a download link. The in-app Help panel lists the steps for ChatGPT, Claude, Grok and Copilot.
 2. **Convert to Markdown.** Upload the export to an AI assistant you trust and paste the prompt from the in-app Help panel. You get one `.md` file per chat. This step is separate: it sends your export to that assistant. The reader itself never sends anything.
-3. **Read here.** Tap the **Open** button in the floating menu, pick a `.md` file, and read it as a chat. You can also drop a file on the page or use **Paste**. If the export came in several `.md` parts, select them all at once (or drop them together): they are merged into one chat in file name order, and **Download** saves them as a single `.md` file.
+3. **Read here.** Tap the **Open** button in the floating menu, pick a `.md` file, and read it as a chat. You can also drop a file on the page or use **Paste**. If the export came in several `.md` parts, select them all at once (or drop them together): a window lets you drag them into reading order and name the merged chat, and **Download** saves them as a single `.md` file.
 
 ## Features
 
@@ -23,7 +23,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 - Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and four text sizes.
 - A floating menu at the bottom right, folded to one round button until you tap it (drag that button to move the menu anywhere on screen), with Open, Paste (or press Ctrl+V), Search, a previous and next message pair (speech-bubble icons), a jump arrow (down to the end, or back up to the start), Edit, Style and Help. A copy button on every code block.
 - On touch screens, a draggable scroll handle appears on the right edge while you scroll (like the Google Docs app) with a message counter, so you can move through a long chat fast. Desktop browsers get a wide, high-contrast scrollbar.
-- Tap-to-edit: turn on **Edit**, tap a message, then edit its text (with **B**, **I**, **S**, **H** and **Clear style** buttons to fix wrong bold, italic, strikethrough or headings), swap its speaker, split it between both speakers (for a message that mixes two speakers) or delete it. Undo and redo, then download or copy a new `.md` file with the icons at the bottom, and tap **Exit editing** when you are done. Your original file is never changed.
+- Tap-to-edit: turn on **Edit**, tap a message, then edit its text (with **B**, **I**, **S**, **H** and **Clear style** buttons to fix wrong bold, italic, strikethrough or headings), swap its speaker, split it between both speakers (for a message that mixes two speakers) or delete it. A pencil beside the title renames the chat, and Download asks what to call the saved copy. Undo and redo, then download or copy a new `.md` file with the icons at the bottom, and tap **Exit editing** when you are done. Your original file is never changed.
 - Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**. On iPhone, open it in Safari, tap **Share**, then **Add to Home Screen**. The installed app opens full screen, in portrait or landscape; swipe in from an edge to show the system bars.
 
 ## Edited chats are labeled

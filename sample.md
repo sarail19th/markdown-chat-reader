@@ -59,7 +59,7 @@ Tap **Open** in the top bar and pick a file. You can also:
 - tap **Paste** and paste the chat text,
 - or drop a `.md` file anywhere on the page on a computer.
 
-Opening your own file replaces this sample. If your export came in several parts, select all the files at once in the picker (or drop them together) and they are merged into one chat, in file name order. Download then gives you one merged `.md` file.
+Opening your own file replaces this sample. If your export came in several parts, select all the files at once in the picker (or drop them together). A window lists them in file name order: drag the dots (or use the arrows) to put them in reading order, name the merged chat, and tap **Merge files**. Download then gives you one merged `.md` file.
 
 ---
 
@@ -100,7 +100,9 @@ No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 3. Use **Swap side** to move it to the other speaker, for when a speaker was mixed up.
 4. Use **Split speaker** when one message holds both speakers' words. Tap in the text where the other speaker starts, or select the part that is theirs, then tap **Split speaker**. The message becomes separate messages on the correct sides. **Undo** brings it back.
 
-The icons at the bottom are **Undo**, **Redo**, **Copy** (the whole chat as Markdown) and **Download** (saves a new `.md` copy to your device). **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. You can try all of this on this guide chat: nothing is saved, and Download gives you a copy. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
+While editing, a pencil appears beside the chat title so you can rename the chat.
+
+The icons at the bottom are **Undo**, **Redo**, **Copy** (the whole chat as Markdown) and **Download** (saves a new `.md` copy to your device, and asks you what to call it). **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. You can try all of this on this guide chat: nothing is saved, and Download gives you a copy. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
 
 ---
 
