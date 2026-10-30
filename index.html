@@ -272,6 +272,9 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .stylebtn:hover { border-color: var(--muted); }
 .stylebtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .stylebtn.clear { font-weight: 500; margin-left: auto; }
+.stylebtn.split { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.stylebtn.split svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.edithint { margin: 6px 0 0; font-size: .8rem; line-height: 1.35; color: var(--muted); }
 .editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/var(--chat-lh) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
 .editactions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
 .editbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bar); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
@@ -482,7 +485,7 @@ body.searching .fabs { display: none; }
   </section>
   <p class="notice" id="notice" hidden></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker or delete it. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers or delete it. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved. <a href="https://github.com/sarail19th/markdown-chat-reader" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
@@ -901,6 +904,7 @@ function syncEditUI() {
 }
 var MENU_ICONS = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  split: '<path d="M12 4v16M8 8l-4 4 4 4M16 8l4 4-4 4"/>',
   swap: '<path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',
   del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
 };
@@ -910,6 +914,7 @@ function buildMenu(i, role) {
   t.setAttribute('role', 'group');
   t.setAttribute('aria-label', 'Options for message ' + (i + 1));
   var defs = [['edit', 'Edit text', 'Edit message ' + (i + 1)]];
+  if (role !== 'system') defs.push(['split', 'Split speaker', 'Split message ' + (i + 1) + ' between both speakers']);
   if (role !== 'system') defs.push(['swap', 'Swap side', 'Switch message ' + (i + 1) + ' to the other speaker']);
   defs.push(['del', 'Delete', 'Delete message ' + (i + 1)]);
   defs.forEach(function (d) {
@@ -1125,6 +1130,8 @@ function buildEditor(b, i) {
       if (c.out === ta.value.slice(c.start, c.end)) { toast('No bold, italic or strikethrough found here.', false); return; }
       var keep = ta.selectionStart !== ta.selectionEnd;
       applyStyle({ start: c.start, end: c.end, out: c.out, selStart: keep ? 0 : c.out.length, selEnd: c.out.length });
+    } else if (kind === 'split') {
+      doSplit(i, ta);
     } else if (kind === 'strike') {
       applyStyle(toggleStrikeRange(ta.value, ta.selectionStart, ta.selectionEnd));
     } else if (kind === 'heading') {
@@ -1142,14 +1149,41 @@ function buildEditor(b, i) {
     '<button class="stylebtn" type="button" data-style="italic" aria-label="Italic" title="Italic the selected text (Ctrl+I)"><i>I</i></button>' +
     '<button class="stylebtn" type="button" data-style="strike" aria-label="Strikethrough" title="Strike through the selected text"><s>S</s></button>' +
     '<button class="stylebtn" type="button" data-style="heading" aria-label="Heading" title="Turn the selected lines into a heading, or back into plain text">H</button>' +
+    (doc.msgs[i].role === 'system' ? '' : '<button class="stylebtn split" type="button" data-style="split" aria-label="Split speaker" title="' + SPLIT_HINT + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + MENU_ICONS.split + '</svg><span>Split speaker</span></button>') +
     '<button class="stylebtn clear" type="button" data-style="clear" title="Remove bold, italic and strikethrough from the selected paragraphs, or from the whole message if nothing is selected">Clear style</button>';
   tools.addEventListener('mousedown', function (e) { e.preventDefault(); });
   tools.addEventListener('click', function (e) {
     var sb = e.target.closest && e.target.closest('[data-style]');
     if (sb) doStyle(sb.getAttribute('data-style'));
   });
-  b.appendChild(tools); b.appendChild(ta); b.appendChild(bar);
+  b.appendChild(tools); b.appendChild(ta);
+  if (doc.msgs[i].role !== 'system') { var hint = document.createElement('p'); hint.className = 'edithint'; hint.textContent = SPLIT_HINT; b.appendChild(hint); }
+  b.appendChild(bar);
   setTimeout(function () { grow(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+}
+/* ---- split speaker: one message that holds both speakers becomes separate messages ---- */
+var SPLIT_HINT = 'Mixed speakers? Tap in the text where the other speaker starts, or select the part that is theirs, then tap Split speaker.';
+var splitSeq = 0;
+// Cut points: a cursor makes two parts (the second goes to the other speaker); a selection makes up to three (the selected middle goes to the other speaker). Blank parts are dropped.
+function splitParts(text, s, e) {
+  var cuts = s === e ? [[0, s, false], [s, text.length, true]] : [[0, s, false], [s, e, true], [e, text.length, false]];
+  return cuts.map(function (c) { return { text: text.slice(c[0], c[1]).replace(/^\s+|\s+$/g, ''), flip: c[2] }; })
+    .filter(function (p) { return p.text; });
+}
+function doSplit(i, ta) {
+  var m = doc.msgs[i], parts = splitParts(ta.value, ta.selectionStart, ta.selectionEnd);
+  if (parts.length < 2) { toast('Nothing to split. ' + SPLIT_HINT, false); return; }
+  var other = m.role === 'user' ? 'assistant' : 'user', src = m.src || m.id;
+  mutate(function () {
+    var pieces = parts.map(function (p, k) {
+      var role = p.flip ? other : m.role;
+      if (k === 0) { m.role = role; m.text = p.text; m.split = true; m.src = src; return m; }
+      return { id: 's' + (++splitSeq), role: role, label: nameOf(role), text: p.text, origRole: role, origText: p.text, split: true, src: src };
+    });
+    doc.msgs.splice.apply(doc.msgs, [i, 1].concat(pieces));
+  }, 'Split into ' + parts.length + ' messages');
+  var next = chat.querySelector('.row[data-i="' + (i + 1) + '"]');
+  if (next) next.scrollIntoView({ block: 'nearest' });
 }
 function pushHistory() { undoStack.push(JSON.stringify(doc.msgs)); if (undoStack.length > 50) undoStack.shift(); redoStack = []; }
 function mutate(fn, msg) {
@@ -1191,19 +1225,21 @@ function toast(msg, withUndo) {
 }
 function nameOf(role) { return role === 'user' ? doc.names.user : role === 'system' ? 'System' : doc.names.assistant; }
 function changeLabel(m) {
+  if (m.split) return 'split';
   var t = m.text !== m.origText, s = m.role !== m.origRole;
   return t && s ? 'edited · speaker changed' : t ? 'edited' : s ? 'speaker changed' : '';
 }
 function changeParts() {
-  var ed = [], sw = [], alive = {};
+  var ed = [], sw = [], spl = [], alive = {};
   doc.msgs.forEach(function (m) {
     alive[m.id] = true;
+    if (m.split) { if (spl.indexOf(m.src) < 0) spl.push(m.src); return; }
     if (m.text !== m.origText) ed.push(m.id);
     if (m.role !== m.origRole) sw.push(m.id);
   });
-  return { ed: ed, sw: sw, del: doc.orig.filter(function (o) { return !alive[o.id]; }) };
+  return { ed: ed, sw: sw, spl: spl, del: doc.orig.filter(function (o) { return !alive[o.id]; }) };
 }
-function changeCount() { var p = changeParts(); return p.ed.length + p.sw.length + p.del.length; }
+function changeCount() { var p = changeParts(); return p.ed.length + p.sw.length + p.spl.length + p.del.length; }
 function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
 function idList(a) { return a.slice(0, 12).map(function (x) { return '#' + x; }).join(', ') + (a.length > 12 ? ', …' : ''); }
 function changeSummary() {
@@ -1211,6 +1247,7 @@ function changeSummary() {
   var p = changeParts(), out = [], s = '';
   if (p.ed.length) out.push(plural(p.ed.length, 'message') + ' edited (' + idList(p.ed) + ')');
   if (p.sw.length) out.push(plural(p.sw.length, 'message') + ' moved to the other speaker (' + idList(p.sw) + ')');
+  if (p.spl.length) out.push(plural(p.spl.length, 'message') + ' split between both speakers (' + idList(p.spl) + ')');
   if (p.del.length) out.push(plural(p.del.length, 'message') + ' deleted (' + p.del.slice(0, 12).map(function (o) { return '#' + o.id + ' ' + nameOf(o.role); }).join(', ') + (p.del.length > 12 ? ', …' : '') + ')');
   if (out.length) s = out.join('; ') + '. The opened file had ' + doc.orig.length + ' messages.';
   if (doc.loadedChanges) s += (s ? ' Earlier changes: ' : '') + doc.loadedChanges;
@@ -1234,6 +1271,7 @@ chat.addEventListener('click', function (e) {
   if (act === 'edit') { editingIdx = i; render(); }
   else if (act === 'cancel') { editingIdx = -1; render(); }
   else if (act === 'save') { saveEdit(i); }
+  else if (act === 'split') { editingIdx = i; render(); toast(SPLIT_HINT, false); }
   else if (act === 'swap') { mutate(function () { doc.msgs[i].role = doc.msgs[i].role === 'user' ? 'assistant' : 'user'; }); }
   else if (act === 'del') { mutate(function () { doc.msgs.splice(i, 1); }, 'Message deleted'); }
 });

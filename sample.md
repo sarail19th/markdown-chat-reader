@@ -77,7 +77,7 @@ What can I do once a chat is open?
 | **Scroll handle** | On a touch screen, a handle appears on the right edge while you scroll. Drag it to move through a long chat quickly; a counter shows which message you are at. |
 | **Previous / next message** | The pair of speech-bubble buttons moves up or down exactly one message per tap. |
 | **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
-| **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it or swap its side. |
+| **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it, swap its side or split it between both speakers. |
 | **Style** | Chat colours, light or dark mode, text size, spacing and font. |
 | **Help** | The full steps and what happens to your file. |
 
@@ -98,6 +98,7 @@ No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 1. Edit its text. Wrong style from the conversion? Select the words and tap **B** (bold), **I** (italic) or **S** (strikethrough) to switch it on or off, and **H** to turn the selected lines into a heading or back into plain text. **Clear style** removes all bold, italic and strikethrough from the selected paragraphs, or from the whole message if nothing is selected.
 2. Delete it.
 3. Use **Swap side** to move it to the other speaker, for when a speaker was mixed up.
+4. Use **Split speaker** when one message holds both speakers' words. Tap in the text where the other speaker starts, or select the part that is theirs, then tap **Split speaker**. The message becomes separate messages on the correct sides. **Undo** brings it back.
 
 The icons at the bottom are **Undo**, **Redo**, **Copy** (the whole chat as Markdown) and **Download** (saves a new `.md` copy to your device). **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. You can try all of this on this guide chat: nothing is saved, and Download gives you a copy. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
 
