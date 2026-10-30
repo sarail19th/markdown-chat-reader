@@ -59,7 +59,7 @@ Tap **Open** in the top bar and pick a file. You can also:
 - tap **Paste** and paste the chat text,
 - or drop a `.md` file anywhere on the page on a computer.
 
-Opening your own file replaces this sample. Open one file at a time.
+Opening your own file replaces this sample. If your export came in several parts, select all the files at once in the picker (or drop them together) and they are merged into one chat, in file name order. Download then gives you one merged `.md` file.
 
 ---
 

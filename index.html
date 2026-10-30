@@ -457,7 +457,7 @@ body.searching .fabs { display: none; }
         </ul>
       </li>
       <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat or per project, to download.</li>
-      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. Open one file at a time.</li>
+      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. If the export came in several parts, select all the files at once (or drop them together) and they are merged into one chat in file name order.</li>
     </ol>
     <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
     <h2>Your chat stays with you</h2>
@@ -496,7 +496,7 @@ body.searching .fabs { display: none; }
 <div class="fabs" id="fabs" data-h="right" data-v="up">
   <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
-    <button class="fabbtn" id="openBtn" type="button" aria-label="Open a .md file" title="Open a .md file from your device. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+    <button class="fabbtn" id="openBtn" type="button" aria-label="Open a .md file" title="Open a .md file from your device, or select several parts to merge them into one chat. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
     <button class="fabbtn" id="jumpBtn" type="button" data-dir="bottom" aria-label="Jump to the bottom" title="Jump to the bottom"><svg class="ic-up" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg><svg class="ic-down" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
@@ -508,7 +508,7 @@ body.searching .fabs { display: none; }
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
   </div>
-  <input type="file" id="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
+  <input type="file" id="file" multiple accept=".md,.markdown,.txt,text/markdown,text/plain">
 </div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
@@ -735,8 +735,8 @@ function md(s, breaks) {
 var doc = null; // { title, msgs: [{role, label, text}], names: {user, assistant}, editable }
 var editMode = false, editingIdx = -1, selIdx = -1, dirty = false, undoStack = [], redoStack = [], toastTimer = null;
 
-function show(text, fallbackTitle) {
-  var parsed = parseChat(text);
+function show(text, fallbackTitle, merged) {
+  var parsed = merged || parseChat(text);
   state = 'chat';
   dirty = false; undoStack = []; redoStack = [];
   setEdit(false, true);
@@ -757,6 +757,7 @@ function show(text, fallbackTitle) {
     orig: parsed.msgs.map(function (m, i) { return { id: i + 1, role: m.role }; }),
     loadedChanges: (function () { var cm = (parsed.pre || '').match(/^>\s*Changes:\s*(.+)$/m); return cm ? cm[1].trim() : ''; })(),
     editable: parsed.msgs.length > 0,
+    mergedFrom: merged ? merged.files : null,
     loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
   };
   if (!doc.editable) {
@@ -1303,6 +1304,7 @@ function toMarkdown() {
     if (cs) out.push('>', '> Changes: ' + cs);
     out.push('');
   }
+  if (doc.mergedFrom) out.push('> **Merged copy.** Made with Markdown Chat Reader from ' + doc.mergedFrom.length + ' files, in this order: ' + doc.mergedFrom.join(', ') + '.', '');
   doc.msgs.forEach(function (m, i) {
     if (i) out.push('---', '');
     var lab = m.role === 'user' ? doc.names.user : m.role === 'system' ? 'System' : doc.names.assistant;
@@ -1312,7 +1314,7 @@ function toMarkdown() {
 }
 function fileName() {
   var s = (doc.title || 'chat').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-  return (s || 'chat') + '-edited.md';
+  return (s || 'chat') + (!isModified() && doc.mergedFrom ? '-merged.md' : '-edited.md');
 }
 function downloadMd() {
   var name = fileName();
@@ -1326,15 +1328,46 @@ function downloadMd() {
   render();
 }
 
-function loadFile(file) {
-  if (!file || !guardDirty()) return;
-  var reader = new FileReader();
-  reader.onload = function () { closePanels(); show(String(reader.result), file.name.replace(/\.[^.]+$/, '')); };
-  reader.onerror = function () { notice.hidden = false; notice.textContent = 'That file could not be read. Try opening it again.'; };
-  reader.readAsText(file);
+function readText(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result)); };
+    reader.onerror = function () { reject(reader.error); };
+    reader.readAsText(file);
+  });
+}
+function baseName(name) { return name.replace(/\.[^.]+$/, ''); }
+// Several files (an export split into parts) are merged into one chat, in natural file name order (part2 before part10).
+function loadFiles(list) {
+  var files = Array.prototype.slice.call(list || []);
+  if (!files.length || !guardDirty()) return;
+  files.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }); });
+  Promise.all(files.map(readText)).then(function (texts) {
+    closePanels();
+    if (files.length === 1) show(texts[0], baseName(files[0].name));
+    else showMerged(files.map(function (f) { return f.name; }), texts);
+  }, function () { notice.hidden = false; notice.textContent = 'A file could not be read. Try opening it again.'; });
+}
+function showMerged(names, texts) {
+  var parts = texts.map(function (t, k) { return { name: names[k], parsed: parseChat(t) }; });
+  var good = parts.filter(function (p) { return p.parsed.msgs.length; });
+  if (!good.length) { show(texts[0], baseName(names[0])); return; }
+  var skipped = parts.filter(function (p) { return !p.parsed.msgs.length; }).map(function (p) { return p.name; });
+  var title = '';
+  good.forEach(function (p) { if (!title && p.parsed.title) title = p.parsed.title; });
+  show(null, title || baseName(good[0].name), {
+    title: title,
+    msgs: good.reduce(function (all, p) { return all.concat(p.parsed.msgs); }, []),
+    pre: good.map(function (p) { return p.parsed.pre; }).filter(Boolean).join('\n'),
+    files: good.map(function (p) { return p.name; })
+  });
+  notice.hidden = false;
+  notice.textContent = 'Merged ' + good.length + ' files into one chat, in this order: ' + good.map(function (p) { return p.name; }).join(', ') + '.' +
+    (skipped.length ? ' Skipped (no messages found): ' + skipped.join(', ') + '.' : '') +
+    ' Wrong order? Rename the files so their names sort in order, and open them again.';
 }
 
-$('file').addEventListener('change', function (e) { loadFile(e.target.files && e.target.files[0]); e.target.value = ''; });
+$('file').addEventListener('change', function (e) { loadFiles(e.target.files); e.target.value = ''; });
 $('openBtn').addEventListener('click', function () { $('file').click(); });
 $('fabToggle').addEventListener('click', function () {
   if (justDragged) { justDragged = false; return; }
@@ -1952,7 +1985,7 @@ $('searchPrev').addEventListener('click', function () { if (!hits.length) runSea
 ['dragleave', 'drop'].forEach(function (t) {
   window.addEventListener(t, function (e) { e.preventDefault(); document.body.classList.remove('drag'); });
 });
-window.addEventListener('drop', function (e) { loadFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+window.addEventListener('drop', function (e) { loadFiles(e.dataTransfer && e.dataTransfer.files); });
 
 var SAMPLE_NOTE = 'This is a sample chat showing how the reader works. You can try Edit on it, and download a copy to see how that works. Open or paste your own chat to replace it, or drop a .md file on the page. Your own chat is never uploaded or saved.';
 function showSample(text) {
