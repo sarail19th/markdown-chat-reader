@@ -497,7 +497,7 @@ body.searching .fabs { display: none; }
         <ul>
           <li><strong>ChatGPT:</strong> profile icon or name, then Settings, Data controls, Export data. <a href="https://chatgpt.com/settings/data-controls" target="_blank" rel="noopener noreferrer">Open data controls</a></li>
           <li><strong>Claude:</strong> on the web app or Claude Desktop (not the phone apps), click your initials at the bottom left, then Settings, Privacy, <strong>Export data</strong>. The download link is emailed to you and expires after 24 hours. <a href="https://support.claude.com/en/articles/9450526-export-your-claude-data" target="_blank" rel="noopener noreferrer">Claude's steps</a></li>
-          <li><strong>Grok:</strong> profile icon or name, then Data &amp; Information, Data controls, Export account data (<a href="https://grok.com/?_s=data" target="_blank" rel="noopener noreferrer">open</a>). That takes you to your x.ai account page, where you choose <strong>Download account data</strong>. The file is sent by email. <a href="https://accounts.x.ai/account?redirect=grok-com&amp;theme=light#data" target="_blank" rel="noopener noreferrer">Open account page</a></li>
+          <li><strong>Grok:</strong> profile icon or name, then Data &amp; Information, Data controls, Export account data (<a href="https://grok.com/?_s=data" target="_blank" rel="noopener noreferrer">open</a>). That takes you to your x.ai account page, where you choose <strong>Download account data</strong>. The file is sent by email. <a href="https://accounts.x.ai/account?redirect=grok-com&amp;theme=light#data" target="_blank" rel="noopener noreferrer">Open account page</a> To export just one chat, straight from the app, use the Grok prompt below.</li>
           <li><strong>Copilot:</strong> sign in to your Microsoft account privacy dashboard, open Copilot, Your Copilot activity history, then <strong>Export all activity history</strong>. You get a .csv file. <a href="https://support.microsoft.com/en-us/privacy/manage-your-copilot-activity-history-in-the-privacy-dashboard" target="_blank" rel="noopener noreferrer">Microsoft's steps</a></li>
           <li><strong>Gemini:</strong> its chat menu (the three dots at the top right of a chat) only saves a chat as a PDF or Google Doc. This reader does not open those, so skip it.</li>
         </ul>
@@ -506,6 +506,27 @@ body.searching .fabs { display: none; }
       <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. If the export came in several parts, select all the files at once (or drop them together), put them in reading order by dragging, and they are merged into one chat.</li>
     </ol>
     <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
+    <h2>Grok: export one chat from the app</h2>
+    <p>No email or account download needed. Open the chat in Grok, paste this prompt, and download the files it makes. Then select them all at once with <strong>Open</strong> to read them as one chat.</p>
+    <pre><code class="language-prompt">Export this entire conversation into sequential .md files for an AI chat reader.
+
+Start the first file with the chat title as a # heading. Then format every message exactly like this, with a blank line between messages:
+
+**You**
+(my message)
+
+**Grok**
+(your reply)
+
+Rules:
+- Put **You** and **Grok** on their own line, with no colon or other characters after them.
+- Keep code blocks, lists and tables as they are.
+- If the conversation is long, split it into several files of roughly 80 to 120 lines each (about 3 to 5 A4 pages).
+- Cut only at the end of a complete **You** and **Grok** pair, never in the middle of a message.
+- Name the files in order: chat_export_01.md, chat_export_02.md, and so on.
+- After creating all the files, render every one of them so I can download each file directly in the Grok app on my phone.
+
+Do this for the full conversation history of this chat.</code></pre>
     <h2>Your chat stays with you</h2>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
@@ -582,7 +603,7 @@ body.searching .fabs { display: none; }
 <script src="vendor/purify.min.js"></script>
 <script>
 //#parser-start
-var NAMES = 'You|User|Human|Me|ChatGPT|Assistant|AI|Claude|System|Prompt|Response|Question|Answer|Bot|Model|Gemini|Copilot|GPT-?\\d[\\w.-]*';
+var NAMES = 'You|User|Human|Me|ChatGPT|Assistant|AI|Claude|System|Prompt|Response|Question|Answer|Bot|Model|Gemini|Copilot|Grok|GPT-?\\d[\\w.-]*';
 var BASE_RE = new RegExp('^(' + NAMES + ')(?![\\w])', 'i');
 var AMBIG = /^(me|ai|prompt|response|question|answer|bot|model)$/i;
 var USER_NAMES = /^(you|user|human|me|prompt|question)$/i;

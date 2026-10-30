@@ -49,6 +49,38 @@ Use the **Copy** button on the code block to copy the prompt. This step sends yo
 ---
 
 **You:**
+Can I export just one Grok chat from the app, without the email?
+
+---
+
+**AI:**
+Yes. Open the chat in Grok, paste the prompt below, and download the files it makes. Long chats come back in several parts: select them all at once with **Open** and they merge into one chat.
+
+```text
+Export this entire conversation into sequential .md files for an AI chat reader.
+
+Start the first file with the chat title as a # heading. Then format every message exactly like this, with a blank line between messages:
+
+**You**
+(my message)
+
+**Grok**
+(your reply)
+
+Rules:
+- Put **You** and **Grok** on their own line, with no colon or other characters after them.
+- Keep code blocks, lists and tables as they are.
+- If the conversation is long, split it into several files of roughly 80 to 120 lines each (about 3 to 5 A4 pages).
+- Cut only at the end of a complete **You** and **Grok** pair, never in the middle of a message.
+- Name the files in order: chat_export_01.md, chat_export_02.md, and so on.
+- After creating all the files, render every one of them so I can download each file directly in the Grok app on my phone.
+
+Do this for the full conversation history of this chat.
+```
+
+---
+
+**You:**
 Okay, I have the .md files on my phone. How do I open one?
 
 ---
