@@ -107,17 +107,17 @@ What can I do once a chat is open?
 **AI:**
 | Floating button | What it does |
 |---|---|
-| **Open** | Opens a .md file from your device. |
-| **Paste** | Opens a box for pasted text. On a computer, pressing Ctrl+V anywhere on the page does the same. |
-| **Search** | Finds text in the chat. Use the arrows to jump between matches. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> **Open** | Opens a .md file from your device. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg> **Paste** | Opens a box for pasted text. On a computer, pressing Ctrl+V anywhere on the page does the same. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg> **Search** | Finds text in the chat. Use the arrows to jump between matches. |
 | **Scroll handle** | On a touch screen, a handle appears on the right edge while you scroll. Drag it to move through a long chat quickly; a counter shows which message you are at. |
-| **Previous / next message** | The pair of speech-bubble buttons moves up or down exactly one message per tap. |
-| **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
-| **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it, swap its side or split it between both speakers. |
-| **Style** | Chat colours, light or dark mode, text size, spacing, font and whether long messages are collapsed. |
-| **Help** | The full steps and what happens to your file. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l4-4 4 4"/><path d="M6 10h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V19H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/></svg> <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V11.5H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/><path d="M8 17l4 4 4-4"/></svg> **Previous / next message** | The pair of speech-bubble buttons moves up or down exactly one message per tap. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg> <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg> **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg> **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it, swap its side or split it between both speakers. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg> **Style** | Chat colours, light or dark mode, text size, spacing, font and whether long messages are collapsed. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg> **Help** | The full steps and what happens to your file. |
 
-The buttons start folded into one round button at the bottom right. Tap it to show the rest, and tap it again to fold them. Drag the round button to move the buttons wherever suits you, and the reader remembers the spot. **Reset all settings** in Style puts it back.
+The buttons start folded into one round button (<svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>) at the bottom right. Tap it to show the rest, and tap it again (it now shows <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>) to fold them. Drag the round button to move the buttons wherever suits you, and the reader remembers the spot. **Reset all settings** in Style puts it back.
 
 Every code block has a **Copy** button.
 
@@ -138,7 +138,7 @@ No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 
 While editing, a pencil appears beside the chat title so you can rename the chat.
 
-The icons at the bottom are **Undo**, **Redo**, **Copy** (the whole chat as Markdown) and **Download** (saves a new `.md` copy to your device, and asks you what to call it). **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. You can try all of this on this guide chat: nothing is saved, and Download gives you a copy. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
+The icons at the bottom are <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg> **Undo**, <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg> **Redo**, <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> **Copy** (the whole chat as Markdown) and <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg> **Download** (saves a new `.md` copy to your device, and asks you what to call it). <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="M16 8l4 4-4 4M20 12H9"/></svg> **Exit editing** at the right leaves edit mode and saves a message you still have open. Edited messages show an "edited" tag, and saved copies say they were edited. You can try all of this on this guide chat: nothing is saved, and Download gives you a copy. Please only edit your own chats, for example to remove private details, and do not present an edited chat as a real, original conversation.
 
 ---
 
