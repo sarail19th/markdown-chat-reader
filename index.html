@@ -211,6 +211,9 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .choice[data-mode="light"]:not([aria-checked="true"]) { border-color: #dce3df; }
 .choice[data-mode="dark"]:not([aria-checked="true"]) { border-color: #2b3632; }
 .choice[data-mode="green"]:not([aria-checked="true"]) { border-color: #cbbf9f; }
+/* All four modes share one row: tighter padding and equal growth so Green Read fits on a narrow phone. */
+#appearance #modeGroup { flex-wrap: nowrap; gap: 6px; }
+#appearance #modeGroup .choice { flex: 1 1 auto; justify-content: center; min-width: 0; gap: 6px; padding: 6px 8px; font-size: .9rem; white-space: nowrap; }
 .choice[data-mode="auto"] i { background: linear-gradient(135deg, #f2f5f3 50%, #111715 50%); }
 .foot { margin: 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: .82rem; color: var(--muted); }
 @supports (color: light-dark(red, blue)) {
