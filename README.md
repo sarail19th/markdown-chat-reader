@@ -38,7 +38,7 @@ Please only edit your own chats, and do not present an edited chat as a real, or
 
 ## What it understands
 
-Speaker lines such as `**You:**`, `**AI:**`, `**Grok**`, `### User`, `### Assistant`, `You said:` or `Prompt:` / `Response:`, with an optional time or model name after them. A rare extra label inside a long two-speaker chat, such as an in-story line, is treated as part of the message before it.
+Speaker lines such as `**You:**`, `**AI:**`, `**Grok:**`, `### User`, `### Assistant`, `You said:` or `Prompt:` / `Response:`, with an optional time or model name after them. A rare extra label inside a long two-speaker chat, such as an in-story line, is treated as part of the message before it.
 
 ## Run it locally
 

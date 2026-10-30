@@ -61,18 +61,18 @@ Export this entire conversation into sequential .md files for an AI chat reader.
 
 Start the first file with the chat title as a # heading. Then format every message exactly like this, with a blank line between messages:
 
-**You**
+**You:**
 (my message)
 
-**AI**
+**AI:**
 (your reply)
 
 Rules:
 - Copy every message word for word. Do not summarize, shorten or skip anything. If you cannot, tell me instead of cutting it.
-- Put **You** and **AI** on their own line, with no colon or other characters after them.
+- Put **You:** and **AI:** on their own line, with nothing after the colon.
 - Keep code blocks, lists and tables as they are.
 - If the conversation is long, split it into several files of roughly 80 to 120 lines each (about 3 to 5 A4 pages).
-- Cut only at the end of a complete **You** and **AI** pair, never in the middle of a message.
+- Cut only at the end of a complete **You:** and **AI:** pair, never in the middle of a message.
 - Name the files in order: chat_export_01.md, chat_export_02.md, and so on.
 - Give each file as a download if you can. If you cannot make files, give each part as its own code block that I can copy (use four backticks if the text contains code blocks).
 - If one reply is not enough for all the parts, give part 1 and wait until I say next.
