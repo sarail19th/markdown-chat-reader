@@ -26,9 +26,9 @@ Most apps have a data export in Settings. The app emails you a download link or 
 
 - **ChatGPT:** profile icon or name, then Settings, Data controls, Export data.
 - **Claude:** on the web app or Claude Desktop (not the phone apps), click your initials at the bottom left, then Settings, Privacy, **Export data**. The download link is emailed to you and expires after 24 hours.
-- **Grok:** profile icon or name, then Data & Information, Data controls, Export account data. That takes you to your x.ai account page, where you choose **Download account data**. The file is sent by email.
+- **Grok:** profile icon or name, then Data & Information, Data controls, Export account data. That takes you to your x.ai account page, where you choose **Download account data**. The file is sent by email. This covers chats made in the Grok app, not Grok inside X. For one chat, or Grok in X, use the one-chat prompt further down.
 - **Copilot:** sign in to your Microsoft account privacy dashboard, open Copilot, Your Copilot activity history, then **Export all activity history**. You get a `.csv` file.
-- **Gemini:** its chat menu only saves a chat as a PDF or Google Doc. This reader does not open those, so skip it.
+- **Gemini:** its chat menu only saves a chat as a PDF or Google Doc. This reader does not open those. Use the one-chat prompt further down instead.
 
 ---
 
@@ -49,12 +49,12 @@ Use the **Copy** button on the code block to copy the prompt. This step sends yo
 ---
 
 **You:**
-Can I export just one Grok chat from the app, without the email?
+My app has no export, or only exports everything. Can I export just one chat?
 
 ---
 
 **AI:**
-Yes. Open the chat in Grok, paste the prompt below, and download the files it makes. Long chats come back in several parts: select them all at once with **Open** and they merge into one chat.
+Yes, with any AI. Open the chat, paste the prompt below, and save what the AI gives you. Long chats come back in several parts: select them all at once with **Open** and they merge into one chat, or use **Paste** one part at a time.
 
 ```text
 Export this entire conversation into sequential .md files for an AI chat reader.
@@ -64,19 +64,23 @@ Start the first file with the chat title as a # heading. Then format every messa
 **You**
 (my message)
 
-**Grok**
+**AI**
 (your reply)
 
 Rules:
-- Put **You** and **Grok** on their own line, with no colon or other characters after them.
+- Copy every message word for word. Do not summarize, shorten or skip anything. If you cannot, tell me instead of cutting it.
+- Put **You** and **AI** on their own line, with no colon or other characters after them.
 - Keep code blocks, lists and tables as they are.
 - If the conversation is long, split it into several files of roughly 80 to 120 lines each (about 3 to 5 A4 pages).
-- Cut only at the end of a complete **You** and **Grok** pair, never in the middle of a message.
+- Cut only at the end of a complete **You** and **AI** pair, never in the middle of a message.
 - Name the files in order: chat_export_01.md, chat_export_02.md, and so on.
-- After creating all the files, render every one of them so I can download each file directly in the Grok app on my phone.
+- Give each file as a download if you can. If you cannot make files, give each part as its own code block that I can copy (use four backticks if the text contains code blocks).
+- If one reply is not enough for all the parts, give part 1 and wait until I say next.
 
 Do this for the full conversation history of this chat.
 ```
+
+The AI rewrites the chat from memory, so it is not a true export. Long chats can still come back shortened. Skim the result against the original.
 
 ---
 

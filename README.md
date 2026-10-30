@@ -13,7 +13,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 ## How to use it
 
-1. **Export from your AI app.** Most apps have a data export in Settings. The app usually emails you a download link. The in-app Help panel lists the steps for ChatGPT, Claude, Grok and Copilot, and has a prompt that makes Grok export a single chat as numbered `.md` files right from the app.
+1. **Export from your AI app.** Most apps have a data export in Settings. The app usually emails you a download link. The in-app Help panel lists the steps for ChatGPT, Claude, Grok and Copilot, and has a one-chat prompt that makes any AI (useful for Grok inside X, Gemini, or any app without a per-chat export) write the chat out as numbered `.md` files. The AI rewrites the chat from memory, so check the result against the original.
 2. **Convert to Markdown.** Upload the export to an AI assistant you trust and paste the prompt from the in-app Help panel. You get one `.md` file per chat. This step is separate: it sends your export to that assistant. The reader itself never sends anything.
 3. **Read here.** Tap the **Open** button in the floating menu, pick a `.md` file, and read it as a chat. You can also drop a file on the page or use **Paste**. If the export came in several `.md` parts, select them all at once (or drop them together): a window lets you drag them into reading order and name the merged chat, and **Download** saves them as a single `.md` file.
 
