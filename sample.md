@@ -78,7 +78,7 @@ What can I do once a chat is open?
 | **Previous / next message** | The pair of speech-bubble buttons moves up or down exactly one message per tap. |
 | **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
 | **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it, swap its side or split it between both speakers. |
-| **Style** | Chat colours, light or dark mode, text size, spacing and font. |
+| **Style** | Chat colours, light or dark mode, text size, spacing, font and whether long messages are collapsed. |
 | **Help** | The full steps and what happens to your file. |
 
 The buttons start folded into one round button at the bottom right. Tap it to show the rest, and tap it again to fold them. Drag the round button to move the buttons wherever suits you, and the reader remembers the spot. **Reset all settings** in Style puts it back.
@@ -120,6 +120,7 @@ Open **Style**:
 | Mode | Auto, Light, Dark or Green Read |
 | Text size | A slider from 14 to 28 px |
 | Line and paragraph spacing | Sliders |
+| Long messages | Show full (the default), or Collapse: messages longer than about 14 lines are shortened to 12 lines, and **Show more** opens one in full. Search opens any message that has a match. |
 | Font | Figtree, your device font, or a font file you add |
 
 Green Read uses recycled-paper tones that are easy on the eyes. Your choices are remembered on this device only.

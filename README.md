@@ -8,7 +8,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - The file is read inside your browser. It is never uploaded, and the page has no server that could receive it.
 - Chats are never saved or tracked. Reload or close the tab and the chat is gone.
-- The only things remembered on your device are your display choices (style, mode, text size, spacing, font and where you moved the buttons). A font file you add stays on your device and is never uploaded.
+- The only things remembered on your device are your display choices (style, mode, text size, spacing, font, long-message collapsing and where you moved the buttons). A font file you add stays on your device and is never uploaded.
 - After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.
 
 ## How to use it
@@ -20,7 +20,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 ## Features
 
 - Detects speakers in many export formats, including custom names. If it finds no speakers, it shows the whole file as one message with a notice.
-- Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and four text sizes.
+- Phone-fit layout with a Classic look plus ten colour themes, Auto, Light and Dark modes, and a text size slider. Long messages can be collapsed to 12 lines with a **Show more** button (off by default, set in Style).
 - A floating menu at the bottom right, folded to one round button until you tap it (drag that button to move the menu anywhere on screen), with Open, Paste (or press Ctrl+V), Search, a previous and next message pair (speech-bubble icons), a jump arrow (down to the end, or back up to the start), Edit, Style and Help. A copy button on every code block.
 - On touch screens, a draggable scroll handle appears on the right edge while you scroll (like the Google Docs app) with a message counter, so you can move through a long chat fast. Desktop browsers get a wide, high-contrast scrollbar.
 - Tap-to-edit: turn on **Edit**, tap a message, then edit its text (with **B**, **I**, **S**, **H** and **Clear style** buttons to fix wrong bold, italic, strikethrough or headings), swap its speaker, split it between both speakers (for a message that mixes two speakers) or delete it. A pencil beside the title renames the chat, and Download asks what to call the saved copy. Undo and redo, then download or copy a new `.md` file with the icons at the bottom, and tap **Exit editing** when you are done. Your original file is never changed.

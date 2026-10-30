@@ -19,6 +19,7 @@
     });
     var ft = localStorage.getItem('cr-font');
     if (ft === 'system' || ft === 'custom') r.setAttribute('data-font', ft);
+    if (localStorage.getItem('cr-long') === 'clip') r.setAttribute('data-long', 'clip');
   } catch (e) { /* storage blocked: defaults are used */ }
 })();
 </script>
@@ -139,6 +140,13 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 .user .bubble { background: var(--user); color: var(--user-fg); border-radius: 18px 18px 4px 18px; }
 .ai .bubble { background: var(--surface); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; }
 .sys .bubble { max-width: 100%; font-size: calc(var(--chat-fs) * .75); color: var(--muted); padding: 4px 8px; text-align: center; }
+.user .bubble { --bbg: var(--user); }
+.ai .bubble { --bbg: var(--surface); }
+:root[data-long="clip"] .bubble.clippable:not(.open) { position: relative; overflow: hidden; max-height: calc(var(--chat-fs) * var(--chat-lh) * 12); }
+.moretoggle { display: none; }
+:root[data-long="clip"] .bubble.clippable .moretoggle { display: block; margin: 8px 0 0; padding: 6px 0; min-height: 44px; width: 100%; font: 600 .85em var(--ff); color: inherit; background: none; border: 0; text-align: center; cursor: pointer; }
+:root[data-long="clip"] .bubble.clippable:not(.open) .moretoggle { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; display: flex; align-items: flex-end; justify-content: center; height: 56px; padding: 0 0 8px; background: linear-gradient(to bottom, transparent, var(--bbg) 75%); }
+.moretoggle:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .bubble > :first-child { margin-top: 0; }
 .bubble > :last-child { margin-bottom: 0; }
 .bubble p, .bubble ul, .bubble ol, .bubble pre, .bubble blockquote, .bubble table { margin: 0 0 var(--chat-ps); }
@@ -456,6 +464,14 @@ body.searching .fabs { display: none; }
     <div class="slider">
       <label class="lbl" for="psRange">Paragraph spacing <output id="psVal">0.65 em</output></label>
       <input type="range" id="psRange" min="0.2" max="2" step="0.05" value="0.65">
+    </div>
+    <div>
+      <span class="lbl" id="longLbl">Long messages</span>
+      <div class="choices" id="longGroup" role="radiogroup" aria-labelledby="longLbl">
+        <button class="choice" type="button" role="radio" aria-checked="true" data-long="full" title="Show every message in full">Show full</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-long="clip" title="Shorten long messages. Tap Show more to read one in full.">Collapse</button>
+      </div>
+      <p class="hint">Collapse shortens messages longer than about 14 lines to 12 lines, with a Show more button.</p>
     </div>
     <div>
       <span class="lbl">Font</span>
@@ -776,7 +792,7 @@ var editMode = false, editingIdx = -1, selIdx = -1, dirty = false, undoStack = [
 function show(text, fallbackTitle, merged) {
   var parsed = merged || parseChat(text);
   state = 'chat';
-  dirty = false; undoStack = []; redoStack = [];
+  dirty = false; undoStack = []; redoStack = []; openIds = {};
   setEdit(false, true);
   resetSearch();
   notice.hidden = true;
@@ -822,6 +838,7 @@ function show(text, fallbackTitle, merged) {
   syncEditUI();
 }
 
+var openIds = {}; // messages the reader expanded, by id; kept while the chat is open
 var INITIAL = 60, CHUNK = 60, shown = 0, moreEl = null, renderGen = 0, loadingAll = false, loadWaiters = [];
 function buildRow(i) {
   var m = doc.msgs[i], row = document.createElement('div'), b = document.createElement('div');
@@ -832,12 +849,67 @@ function buildRow(i) {
   else {
     if (editMode) { row.className += ' tap'; b.tabIndex = 0; }
     b.innerHTML = md(m.text, m.role === 'user');
+    if (openIds[m.id]) b.classList.add('open');
     var cl = changeLabel(m);
     if (cl) { var tg = document.createElement('span'); tg.className = 'etag'; tg.textContent = cl; b.appendChild(tg); }
   }
   row.appendChild(b);
   return row;
 }
+/* ---- long messages: with "Collapse" on, a message taller than about 14 lines is clipped to 12 lines with a Show more button ---- */
+var clipTimer = 0;
+function clipOn() { return document.documentElement.getAttribute('data-long') === 'clip'; }
+function applyClip(scope, force) {
+  if (!clipOn()) return;
+  var bs = Array.prototype.filter.call(scope.querySelectorAll('.row > .bubble'), function (b) {
+    var r = b.parentNode;
+    return !r.classList.contains('sys') && !r.classList.contains('editing') && (force || !b._clipDone);
+  });
+  if (!bs.length) return;
+  bs.forEach(function (b) {
+    b.classList.remove('clippable');
+    var t = b.querySelector('.moretoggle');
+    if (t) b.removeChild(t);
+  });
+  var cs = getComputedStyle(bs[0]), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.55;
+  var pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  var tall = bs.map(function (b) { return b.scrollHeight > lh * 14 + pad; });
+  bs.forEach(function (b, k) {
+    b._clipDone = true;
+    if (!tall[k]) return;
+    var t = document.createElement('button');
+    t.type = 'button'; t.className = 'moretoggle';
+    b.classList.add('clippable');
+    b.appendChild(t);
+    syncToggle(b);
+  });
+}
+function syncToggle(b) {
+  var t = b.querySelector('.moretoggle'), open = b.classList.contains('open');
+  if (!t) return;
+  t.textContent = open ? 'Show less' : 'Show more';
+  t.setAttribute('aria-expanded', String(open));
+}
+function toggleClip(b, open) {
+  var m = doc && doc.msgs[parseInt(b.parentNode.getAttribute('data-i'), 10)];
+  if (!m) return;
+  if (open === undefined) open = !b.classList.contains('open');
+  b.classList.toggle('open', open);
+  if (open) openIds[m.id] = 1; else delete openIds[m.id];
+  syncToggle(b);
+  if (!open) b.scrollIntoView({ block: 'nearest' });
+}
+function refreshClip() {
+  clearTimeout(clipTimer);
+  clipTimer = setTimeout(function () { if (doc) applyClip(chat, true); }, 120);
+}
+chat.addEventListener('click', function (e) {
+  var t = e.target.closest && e.target.closest('.moretoggle');
+  if (t) toggleClip(t.parentNode);
+});
+var clipW = window.innerWidth;
+window.addEventListener('resize', function () { if (window.innerWidth !== clipW) { clipW = window.innerWidth; refreshClip(); } });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshClip);
 // Long chats are drawn in chunks: the first screens fast, the rest as you scroll, or all at once for search and jump to bottom.
 function syncMore() {
   var total = doc ? doc.msgs.length : 0, n = Math.min(shown, total);
@@ -867,6 +939,7 @@ function loadMore(count) {
   for (var i = from; i < shown; i++) frag.appendChild(buildRow(i));
   decorateCode(frag);
   chat.appendChild(frag);
+  applyClip(chat);
   syncMore();
   requestAnimationFrame(maybeLoad);
 }
@@ -917,6 +990,7 @@ function render() {
   syncMore();
   metaEl.textContent = doc.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI' + (dirty ? ' · edited' : '');
   decorateCode(chat);
+  applyClip(chat, true);
   $('editedBanner').hidden = !isModified();
   var cs = changeSummary();
   $('bannerChanges').textContent = cs ? 'Changes: ' + cs : '';
@@ -1933,6 +2007,15 @@ document.querySelectorAll('#modeGroup button').forEach(function (b) {
     syncThemeColor();
   });
 });
+document.querySelectorAll('#longGroup button').forEach(function (b) {
+  b.addEventListener('click', function () { setLong(b.getAttribute('data-long')); });
+});
+function setLong(v) {
+  if (v === 'clip') root.setAttribute('data-long', 'clip'); else root.removeAttribute('data-long');
+  savePref('cr-long', v === 'clip' ? 'clip' : null);
+  setChecked($('longGroup'), 'data-long', v === 'clip' ? 'clip' : 'full');
+  if (doc) applyClip(chat, true);
+}
 // Text size, line spacing and paragraph spacing are sliders that set CSS variables on the page.
 var SLIDERS = [
   { id: 'fsRange', out: 'fsVal', prop: '--chat-fs', key: 'cr-size', def: 17, unit: 'px', fmt: function (v) { return v + ' px'; } },
@@ -1953,6 +2036,7 @@ SLIDERS.forEach(function (c) {
   el.addEventListener('input', function () {
     c.set(el.value);
     savePref(c.key, Number(el.value) === c.def ? null : el.value);
+    refreshClip();
   });
 });
 // Font choice. "My font" is a file kept in this browser (IndexedDB), never uploaded.
@@ -1996,6 +2080,7 @@ function setFont(f, save) {
   if (save !== false) savePref('cr-font', f === 'd' ? null : f);
   setChecked($('fontGroup'), 'data-font', f);
   syncFontUi();
+  refreshClip();
 }
 function loadSavedFont() {
   return fontStore('readonly', function (s) { return s.get('custom'); }).then(function (rec) {
@@ -2051,10 +2136,12 @@ function savePref(k, v) {
 }
 setAccent(root.getAttribute('data-accent') || 'green');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
+setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
 $('resetPrefs').addEventListener('click', function () {
   root.removeAttribute('data-accent'); root.removeAttribute('data-theme');
   SLIDERS.forEach(function (c) { c.reset(); });
   setFont('d');
+  setLong('full');
   savePref('cr-accent', null); savePref('cr-mode', null);
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
   setAccent('green');
@@ -2152,7 +2239,7 @@ function runSearch() {
   var walker = document.createTreeWalker(chat, NodeFilter.SHOW_TEXT, {
     acceptNode: function (n) {
       var p = n.parentNode;
-      return (p && p.closest && p.closest('.codehead, .etag')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      return (p && p.closest && p.closest('.codehead, .etag, .moretoggle')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
     }
   });
   var nodes = [];
@@ -2173,6 +2260,10 @@ function runSearch() {
       if (last < t.length) frag.appendChild(document.createTextNode(t.slice(last)));
       node.parentNode.replaceChild(frag, node);
     }
+  });
+  hits.forEach(function (h) {
+    var b = h.closest('.bubble.clippable');
+    if (b && !b.classList.contains('open')) toggleClip(b, true);
   });
   if (hits.length) goTo(0); else updateCount();
 }
