@@ -299,6 +299,7 @@ body.editing .titleedit { display: inline-flex; }
 .modalinput { display: block; flex: 1; min-width: 0; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: 400 max(16px, 1rem) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
 .modalinput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .splitpart { margin: 0 0 14px; }
+.splitnote { margin: 4px 0 6px; font-size: .85rem; line-height: 1.4; color: var(--fg); overflow-wrap: anywhere; }
 .splitpart .btn { margin-top: 8px; }
 .modalactions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .arrlist { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 42vh; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; }
@@ -561,7 +562,7 @@ Do this for the full conversation history of this chat.</code></pre>
   </section>
   <p class="notice" id="notice" hidden></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the whole chat into two files or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the chat into two files after a message or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved. <a href="https://github.com/sarail19th/markdown-chat-reader" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
@@ -1062,7 +1063,7 @@ function buildMenu(i, role) {
   var defs = [['edit', 'Edit text', 'Edit message ' + (i + 1)]];
   if (role !== 'system') defs.push(['split', 'Split speaker', 'Split message ' + (i + 1) + ' between both speakers']);
   if (role !== 'system') defs.push(['swap', 'Swap side', 'Switch message ' + (i + 1) + ' to the other speaker']);
-  if (i < doc.msgs.length - 1) defs.push(['cut', 'Split chat', 'Split the chat into two files after message ' + (i + 1)]);
+  if (i < doc.msgs.length - 1) defs.push(['cut', 'Split after this', 'Split the chat into two files, cutting right after message ' + (i + 1)]);
   defs.push(['del', 'Delete', 'Delete message ' + (i + 1)]);
   defs.forEach(function (d) {
     var b = document.createElement('button');
@@ -1502,6 +1503,10 @@ function saveFile(name, text) {
   setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
 }
 /* ---- split chat: a long chat is saved as two files, cut after the chosen message; the open chat is not changed ---- */
+function snippet(t) {
+  var s = String(t).replace(/\s+/g, ' ').trim();
+  return s.length > 60 ? s.slice(0, 60).replace(/\s+\S*$/, '') + '…' : s;
+}
 function splitChatAfter(i) {
   if (!doc || !commitEdit()) return;
   var total = doc.msgs.length;
@@ -1513,6 +1518,10 @@ function splitChatAfter(i) {
     p.def = base + ' (part ' + p.n + ')';
     p.field = textInput(p.def, 'Part ' + p.n + ' of 2: messages ' + (p.from + 1) + ' to ' + p.to + ' (' + plural(p.to - p.from, 'message') + ')', true, false);
     p.field.box.className = 'splitpart';
+    var edge = doc.msgs[p.n === 1 ? p.to - 1 : p.from], note = document.createElement('p');
+    note.className = 'splitnote';
+    note.textContent = (p.n === 1 ? 'Ends with ' : 'Starts with ') + nameOf(edge.role) + ': "' + snippet(edge.text) + '"';
+    p.field.box.insertBefore(note, p.field.box.firstChild.nextSibling);
     p.btn = document.createElement('button');
     p.btn.type = 'button'; p.btn.className = 'btn'; p.btn.textContent = 'Download part ' + p.n;
     p.btn.addEventListener('click', function () { savePart(p); p.btn.textContent = 'Saved. Download part ' + p.n + ' again'; });
@@ -1530,7 +1539,7 @@ function splitChatAfter(i) {
   }
   openModal({
     title: 'Split chat after message ' + (i + 1), cancel: 'Close',
-    help: 'The chat is cut after this message and saved as two new .md files. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.',
+    help: 'The cut is right after the message you tapped: it is the last message of part 1, and the next message starts part 2. To start part 2 with a message instead, tap the message just above it. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.',
     body: box, ok: 'Download both', focus: parts[0].field.el,
     onOk: function () {
       var a = cleanFileName(parts[0].field.el.value, parts[0].def), b = cleanFileName(parts[1].field.el.value, parts[1].def);

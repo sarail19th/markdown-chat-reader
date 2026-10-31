@@ -135,7 +135,7 @@ No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 2. Delete it.
 3. Use **Swap side** to move it to the other speaker, for when a speaker was mixed up.
 4. Use **Split speaker** when one message holds both speakers' words. Tap in the text where the other speaker starts, or select the part that is theirs, then tap **Split speaker**. The message becomes separate messages on the correct sides. **Undo** brings it back.
-5. Use **Split chat** to cut a very long chat in two. The chat is cut after the message you tapped and saved as two new `.md` files, named "(part 1)" and "(part 2)" unless you rename them. Your open chat is not changed, and selecting both files in **Open** merges them back into one chat.
+5. Use **Split after this** to cut a very long chat in two. The cut is right after the message you tapped: that message is the last one in part 1, and the next message starts part 2. To start part 2 with a certain message, tap the message just above it. The window shows how each part ends and starts, and saves two new `.md` files named "(part 1)" and "(part 2)" unless you rename them. Your open chat is not changed, and selecting both files in **Open** merges them back into one chat.
 
 While editing, a pencil appears beside the chat title so you can rename the chat.
 
