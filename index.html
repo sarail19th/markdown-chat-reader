@@ -1010,6 +1010,7 @@ function show(text, fallbackTitle, merged) {
     editable: parsed.msgs.length > 0,
     mergedFrom: merged ? merged.files : null,
     saveName: '',
+    saveTitle: '',
     loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
   };
   if (!doc.editable) {
@@ -1664,11 +1665,12 @@ function cleanFileName(v, fallback) {
   return (s || fallback) + '.md';
 }
 function askSaveName() {
-  var def = fileName().replace(/\.md$/, ''), input = textInput(doc.saveName || def, 'File name', true, true);
+  // A name you chose is offered again only while the title is the one it was chosen for; rename the chat and the suggestion follows the new title.
+  var def = fileName().replace(/\.md$/, ''), input = textInput(doc.saveName && doc.saveTitle === doc.title ? doc.saveName : def, 'File name', true, true);
   openModal({
     title: 'Name your copy', help: 'The copy is saved as a new .md file on your device. Your original file is not changed.',
     body: input.box, ok: 'Save copy', focus: input.el,
-    onOk: function () { var name = cleanFileName(input.el.value, def); doc.saveName = name.replace(/\.md$/, ''); downloadMd(name); }
+    onOk: function () { var name = cleanFileName(input.el.value, def); doc.saveName = name.replace(/\.md$/, ''); doc.saveTitle = doc.title; downloadMd(name); }
   });
 }
 function saveFile(name, text) {

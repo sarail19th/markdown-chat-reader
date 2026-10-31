@@ -290,3 +290,24 @@ test('the message editor keeps your text open and explains when it would leave a
   await page.click('[data-act="save"]');
   assert.equal(await page.evaluate(() => doc.msgs[0].text), 'Hello **You:** there', 'a name inside a line is fine');
 });
+
+test('the suggested file name follows the chat title, and a name you chose is kept only for that title', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  const suggested = async () => {
+    await page.click('#dlBtn');
+    const v = await page.inputValue('#modal input');
+    await page.click('#modalCancel');
+    return v;
+  };
+  assert.equal(await suggested(), 'how-to-use-markdown-chat-reader-edited');
+  await page.evaluate(() => { doc.title = 'My Trip to Rome'; render(); });
+  assert.equal(await suggested(), 'my-trip-to-rome-edited', 'a renamed chat suggests its new title');
+  await page.click('#dlBtn');
+  await page.fill('#modal input', 'rome-final');
+  await page.click('#modalOk');
+  assert.equal(await suggested(), 'rome-final', 'the name you chose is offered again for the same title');
+  await page.evaluate(() => { doc.title = 'My Trip to Paris'; render(); });
+  assert.equal(await suggested(), 'my-trip-to-paris-edited', 'but not after the title changes');
+});
