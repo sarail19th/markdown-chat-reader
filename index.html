@@ -1508,9 +1508,9 @@ function saveFile(name, text) {
   setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
 }
 /* ---- split chat: a long chat is saved as two files, cut after the chosen message; the open chat is not changed ---- */
-function snippet(t) {
-  var s = String(t).replace(/\s+/g, ' ').trim();
-  return s.length > 60 ? s.slice(0, 60).replace(/\s+\S*$/, '') + '…' : s;
+function snippet(t, max) {
+  var s = String(t).replace(/\s+/g, ' ').trim(), n = max || 60;
+  return s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
 }
 function numField(label, value, max) {
   var box = document.createElement('label'), el = document.createElement('input');
@@ -1561,8 +1561,24 @@ function splitChatAfter(i) {
   var exDef = exBase + ' (excerpt)';
   var exBox = document.createElement('div'), row = document.createElement('div');
   exBox.hidden = true; row.className = 'rangerow';
-  var fromF = numField('From message', i + 2, total), toF = numField('To message', total, total);
+  // A scene is usually your prompt and the reply: the end starts as the last message before your next prompt.
+  function exchangeEnd(a) { var z = a; while (z < total && doc.msgs[z].role !== 'user') z++; return z; }
+  var fromF = numField('From message', i + 2, total), toF = numField('To message', exchangeEnd(i + 2), total);
   row.appendChild(fromF.box); row.appendChild(toF.box);
+  var endBox = document.createElement('label'), endSel = document.createElement('select');
+  endBox.className = 'modalfield'; endBox.textContent = 'Or pick the next scene: the excerpt ends right before it';
+  endSel.className = 'modalinput'; endSel.setAttribute('aria-label', 'End the excerpt right before one of your next messages');
+  endBox.appendChild(document.createElement('br')); endBox.appendChild(endSel);
+  function fillEnds() {
+    var a = parseInt(fromF.el.value, 10);
+    if (!(a >= 1)) a = 1;
+    endSel.innerHTML = '';
+    function add(value, text) { var o = document.createElement('option'); o.value = value; o.textContent = text; endSel.appendChild(o); }
+    add('', 'Pick where it ends…');
+    for (var n = a + 1; n <= total; n++) if (doc.msgs[n - 1].role === 'user') add(String(n - 1), 'Before message ' + n + ': ' + nameOf('user') + ' "' + snippet(doc.msgs[n - 1].text, 45) + '"');
+    add(String(total), 'To the end of the chat (message ' + total + ')');
+  }
+  fillEnds();
   var exCount = document.createElement('p'), exStart = document.createElement('p'), exEnd = document.createElement('p'), exHint = document.createElement('p'), exMove = document.createElement('button');
   exCount.className = exStart.className = exEnd.className = exHint.className = 'splitnote';
   exMove.type = 'button'; exMove.className = 'btn'; exMove.textContent = 'Include the message before it';
@@ -1570,13 +1586,15 @@ function splitChatAfter(i) {
   exHint.appendChild(exMove);
   var exName = textInput(exDef, 'File name', true, false);
   exName.box.className = 'splitpart';
-  [row, exCount, exStart, exEnd, exHint, exName.box].forEach(function (el) { exBox.appendChild(el); });
+  [row, endBox, exCount, exStart, exEnd, exHint, exName.box].forEach(function (el) { exBox.appendChild(el); });
   function exRange() {
     var a = parseInt(fromF.el.value, 10), z = parseInt(toF.el.value, 10);
     return a >= 1 && z <= total && a <= z ? { from: a, to: z } : null;
   }
   function refresh() {
     var r = exRange();
+    endSel.value = toF.el.value;
+    if (endSel.value !== toF.el.value) endSel.value = '';
     $('modalOk').disabled = mode === 'excerpt' && !r;
     exHint.hidden = !r || r.from < 2 || doc.msgs[r.from - 1].role !== 'assistant';
     if (!r) {
@@ -1589,8 +1607,9 @@ function splitChatAfter(i) {
     exStart.textContent = 'Starts with ' + nameOf(first.role) + ': "' + snippet(first.text) + '"';
     exEnd.textContent = 'Ends with ' + nameOf(last.role) + ': "' + snippet(last.text) + '"';
   }
-  fromF.el.addEventListener('input', refresh); toF.el.addEventListener('input', refresh);
-  exMove.addEventListener('click', function () { fromF.el.value = String(parseInt(fromF.el.value, 10) - 1); refresh(); });
+  fromF.el.addEventListener('input', function () { fillEnds(); refresh(); }); toF.el.addEventListener('input', refresh);
+  endSel.addEventListener('change', function () { if (endSel.value) { toF.el.value = endSel.value; refresh(); } });
+  exMove.addEventListener('click', function () { fromF.el.value = String(parseInt(fromF.el.value, 10) - 1); fillEnds(); refresh(); });
 
   var modes = document.createElement('div');
   modes.className = 'splitmodes';
@@ -1817,7 +1836,7 @@ document.addEventListener('keydown', function (e) {
   if ($('modal').hidden) return;
   if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeModal(); return; }
   if (e.key !== 'Tab') return;
-  var f = Array.prototype.filter.call($('modal').querySelectorAll('button, input'), function (x) { return !x.disabled; });
+  var f = Array.prototype.filter.call($('modal').querySelectorAll('button, input, select'), function (x) { return !x.disabled; });
   if (!f.length) return;
   var a = f[0], z = f[f.length - 1];
   if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
