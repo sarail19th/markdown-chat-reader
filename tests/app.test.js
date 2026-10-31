@@ -442,6 +442,7 @@ test('tapping a message shows a copy icon, and tapping the icon copies it as for
   assert.equal(await page.locator('.copytab').count(), 1, 'a tap shows one copy icon');
   assert.ok(await page.locator('#toast').isHidden(), 'and nothing is copied yet');
   await page.locator('.copytab button').click();
+  await page.waitForFunction(() => document.getElementById('toastMsg').textContent === 'Copied'); // the copy is finished once this shows
   const clip = await page.evaluate(async () => {
     const items = await navigator.clipboard.read(), out = {};
     for (const t of items[0].types) out[t] = await (await items[0].getType(t)).text();
