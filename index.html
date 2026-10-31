@@ -449,14 +449,19 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mitem:hover { background: var(--code); }
 .mitem:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-/* Second group: move around the chat. It sits in the opposite bottom corner from the tools, and swaps sides if the tools are dragged across. */
-.navfabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.navmenu { display: grid; justify-items: center; gap: 10px; }
+/* Second group: move around the chat. It starts in the opposite bottom corner from the tools (swapping sides if the tools are dragged across), and can be dragged by its round button. */
+.navfabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; }
+.navfabs.moved { bottom: auto; }
+.navmenu { position: absolute; left: 4px; display: grid; justify-items: center; gap: 10px; }
+.navfabs[data-v="up"] .navmenu { bottom: calc(100% + 10px); }
+.navfabs[data-v="down"] .navmenu { top: calc(100% + 10px); }
+.navfabs.dragging .fab { cursor: grabbing; box-shadow: 0 10px 26px rgba(0, 0, 0, .35); }
+.navfabs.dragging .navmenu { opacity: .6; }
 :root[data-nav="collapsed"] .navmenu { display: none; }
 #navToggle .ic-show, :root[data-nav="collapsed"] #navToggle .ic-hide { display: none; }
 :root[data-nav="collapsed"] #navToggle .ic-show { display: block; }
-.fabs[data-h="left"] ~ .navfabs { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); }
-body.editing .fabs:not(.moved), body.editing .navfabs { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.fabs[data-h="left"] ~ .navfabs:not(.moved) { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); }
+body.editing .fabs:not(.moved), body.editing .navfabs:not(.moved) { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 body.searching .fabs, body.searching .navfabs { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   .sheet:not([hidden]) { animation: sheetup .2s ease-out backwards; }
@@ -1184,7 +1189,7 @@ function setEdit(on, quiet) {
   editMode = on; editingIdx = -1; selIdx = -1;
   document.body.classList.toggle('editing', on);
   $('editbar').hidden = !on;
-  applyFabPos();
+  applyFabPos(); applyNavPos();
   $('editCaution').hidden = !on || tipsHidden;
   $('editBtn').setAttribute('aria-pressed', String(on));
   if (!quiet && doc) render();
@@ -2015,15 +2020,67 @@ function syncNavToggle() {
   var open = !document.documentElement.hasAttribute('data-nav'), t = $('navToggle');
   t.setAttribute('aria-expanded', String(open));
   t.setAttribute('aria-label', open ? 'Hide the arrows' : 'Show the arrows');
-  t.title = t.getAttribute('aria-label');
+  t.title = t.getAttribute('aria-label') + '. Drag to move.';
 }
 $('navToggle').addEventListener('click', function () {
+  if (navJustDragged) { navJustDragged = false; return; }
   var hide = !document.documentElement.hasAttribute('data-nav');
   if (hide) document.documentElement.setAttribute('data-nav', 'collapsed'); else document.documentElement.removeAttribute('data-nav');
   savePref('cr-nav', hide ? 'collapsed' : null);
   syncNavToggle();
 });
 syncNavToggle();
+
+/* ---- drag the arrows' round button to move them on their own; the spot is remembered on this device ---- */
+var navPos = null, navDrag = null, navJustDragged = false; // navPos: where that button's centre sits, as fractions of the window
+try {
+  var navSaved = (localStorage.getItem('cr-navpos') || '').split(',').map(parseFloat);
+  if (navSaved.length === 2 && navSaved.every(function (n) { return n >= 0 && n <= 1; })) navPos = { x: navSaved[0], y: navSaved[1] };
+} catch (e) { /* storage blocked: the default corner is used */ }
+function applyNavPos() {
+  var el = $('navFabs');
+  if (!navPos) { el.classList.remove('moved'); el.style.left = el.style.top = ''; el.dataset.v = 'up'; return; }
+  var w = window.innerWidth, h = window.innerHeight;
+  var cx = Math.min(Math.max(navPos.x * w, 34), w - 34);
+  var cy = Math.min(Math.max(navPos.y * h, 34), h - (document.body.classList.contains('editing') ? 84 : 8) - 26);
+  el.classList.add('moved');
+  el.style.left = (cx - 26) + 'px';
+  el.style.top = (cy - 26) + 'px';
+  el.dataset.v = cy < h / 2 ? 'down' : 'up';
+}
+function endNavDrag(e) {
+  if (!navDrag || e.pointerId !== navDrag.id) return;
+  if (navDrag.on) {
+    var r = $('navFabs').getBoundingClientRect();
+    navPos = { x: (r.left + 26) / window.innerWidth, y: (r.top + 26) / window.innerHeight };
+    savePref('cr-navpos', navPos.x.toFixed(3) + ',' + navPos.y.toFixed(3));
+    $('navFabs').classList.remove('dragging');
+    navJustDragged = true;
+  }
+  navDrag = null;
+}
+$('navToggle').addEventListener('pointerdown', function (e) {
+  if (e.button > 0) return;
+  var r = $('navFabs').getBoundingClientRect();
+  navJustDragged = false;
+  try { this.setPointerCapture(e.pointerId); } catch (err) { /* the drag still works on touch screens */ }
+  navDrag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, dx: e.clientX - (r.left + 26), dy: e.clientY - (r.top + 26), on: false };
+});
+$('navToggle').addEventListener('pointermove', function (e) {
+  if (!navDrag || e.pointerId !== navDrag.id) return;
+  if (!navDrag.on) {
+    if (Math.abs(e.clientX - navDrag.sx) + Math.abs(e.clientY - navDrag.sy) < 10) return;
+    navDrag.on = true;
+    this.setPointerCapture(e.pointerId);
+    $('navFabs').classList.add('dragging');
+  }
+  navPos = { x: (e.clientX - navDrag.dx) / window.innerWidth, y: (e.clientY - navDrag.dy) / window.innerHeight };
+  applyNavPos();
+});
+$('navToggle').addEventListener('pointerup', endNavDrag);
+$('navToggle').addEventListener('pointercancel', endNavDrag);
+window.addEventListener('resize', applyNavPos);
+applyNavPos();
 
 /* ---- drag the round button to move all the floating buttons; the spot is remembered on this device ---- */
 var fabPos = null, drag = null, justDragged = false; // fabPos: where the round button's centre sits, as fractions of the window
@@ -2067,6 +2124,7 @@ $('fabToggle').addEventListener('pointerdown', function (e) {
   if (e.button > 0) return;
   var r = $('fabs').getBoundingClientRect();
   justDragged = false;
+  try { this.setPointerCapture(e.pointerId); } catch (err) { /* the drag still works on touch screens */ }
   drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, dx: e.clientX - (r.left + 26), dy: e.clientY - (r.top + 26), on: false };
 });
 $('fabToggle').addEventListener('pointermove', function (e) {
@@ -2923,6 +2981,7 @@ $('resetPrefs').addEventListener('click', function () {
   saveFolderMap(null); $('libRemember').checked = false;
   savePref('cr-accent', null); savePref('cr-mode', null);
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
+  navPos = null; savePref('cr-navpos', null); applyNavPos();
   document.documentElement.removeAttribute('data-nav'); savePref('cr-nav', null); syncNavToggle();
   setAccent('lavender');
   setChecked($('modeGroup'), 'data-mode', 'auto');

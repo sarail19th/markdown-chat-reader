@@ -146,3 +146,24 @@ test('the top and bottom buttons both work, wherever you are in the chat', async
   await page.click('#topBtn');
   await page.waitForFunction(() => window.scrollY === 0);
 });
+
+test('the arrows can be dragged on their own, and stay where you put them', async () => {
+  const page = await openApp();
+  const box = () => page.locator('#navToggle').boundingBox();
+  const start = await box();
+  await page.mouse.move(start.x + 26, start.y + 26);
+  await page.mouse.down();
+  await page.mouse.move(150, 300, { steps: 8 });
+  await page.mouse.up();
+  const moved = await box();
+  assert.ok(Math.abs(moved.x + 26 - 150) < 4 && Math.abs(moved.y + 26 - 300) < 4, 'the button follows the finger');
+  assert.ok(await page.locator('#navMenu').isVisible(), 'dragging does not fold the arrows');
+  const tools = await page.locator('#fabToggle').boundingBox();
+  assert.ok(tools.x > 200, 'the tools stay where they were');
+  await page.reload();
+  await page.waitForFunction(() => window.doc && doc.msgs.length > 0);
+  const again = await box();
+  assert.ok(Math.abs(again.x - moved.x) < 3 && Math.abs(again.y - moved.y) < 3, 'and it stays there after a reload');
+  await page.click('#navToggle');
+  assert.ok(await page.locator('#navMenu').isHidden(), 'a plain tap still folds them');
+});
