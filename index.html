@@ -1511,8 +1511,10 @@ function splitChatAfter(i) {
   if (!doc || !commitEdit()) return;
   var total = doc.msgs.length;
   if (i < 0 || i >= total - 1) return;
-  // A chat that is already a part ("Title (part 2)") nests: its halves are "Title (part 2.1)" and "Title (part 2.2)", which still sort between parts 1 and 3.
-  var was = doc.title.match(/^(.*?)\s*\(part (\d+(?:\.\d+)*)\)\s*$/), stem = was && was[1] ? was[1] : doc.title, pre = was && was[1] ? was[2] + '.' : '';
+  // Names start from the file that was opened (you may have renamed it), not from the title inside it.
+  // A file that is already a part ("Name (part 2)") nests: its halves are "Name (part 2.1)" and "Name (part 2.2)", which still sort between parts 1 and 3.
+  var from = doc.fileBase || doc.title;
+  var was = from.match(/^(.*?)\s*\(part (\d+(?:\.\d+)*)\)\s*$/), stem = was && was[1] ? was[1] : from, pre = was && was[1] ? was[2] + '.' : '';
   var base = cleanFileName(stem, 'chat').replace(/\.md$/, '');
   var parts = [{ n: 1, from: 0, to: i + 1 }, { n: 2, from: i + 1, to: total }];
   var box = document.createElement('div');
@@ -1534,7 +1536,7 @@ function splitChatAfter(i) {
   function savePart(p) {
     var name = cleanFileName(p.field.el.value, p.def);
     saveFile(name, toMarkdown({
-      title: stem + ' (part ' + p.label + ')',
+      title: name.replace(/\.md$/, ''), // the title inside the file matches the name you gave it
       msgs: doc.msgs.slice(p.from, p.to),
       note: 'Made with Markdown Chat Reader. Part ' + p.label + ' of "' + stem + '" (the ' + (p.n === 1 ? 'first' : 'second') + ' half of ' + (pre ? 'part ' + pre.slice(0, -1) : 'the chat') + '), messages ' + (p.from + 1) + ' to ' + p.to + ' of ' + total + '. The other part is a separate file. Select both files in Open to read them as one chat again.'
     }));
@@ -1575,9 +1577,9 @@ function loadFiles(list) {
   if (!files.length || !guardDirty()) return;
   files.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }); });
   Promise.all(files.map(readText)).then(function (texts) {
-    if (files.length === 1) { closePanels(); show(texts[0], baseName(files[0].name)); return; }
+    if (files.length === 1) { closePanels(); show(texts[0], baseName(files[0].name)); doc.fileBase = baseName(files[0].name); return; }
     var items = files.map(function (f, k) { return { name: f.name, parsed: parseChat(texts[k]) }; });
-    if (!items.some(function (it) { return it.parsed.msgs.length; })) { closePanels(); show(texts[0], baseName(files[0].name)); return; }
+    if (!items.some(function (it) { return it.parsed.msgs.length; })) { closePanels(); show(texts[0], baseName(files[0].name)); doc.fileBase = baseName(files[0].name); return; }
     closePanels();
     arrangeFiles(items);
   }, function () { notice.hidden = false; notice.textContent = 'A file could not be read. Try opening it again.'; });
