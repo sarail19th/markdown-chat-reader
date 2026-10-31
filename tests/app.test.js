@@ -122,11 +122,18 @@ test('the buttons are in groups: Open, Paste and Help in a top-right menu, Edit,
   await page.click('#pasteBtn');
   assert.ok(await page.locator('#topMenu').isHidden(), 'choosing an item closes the menu');
   assert.ok(await page.locator('#paste').isVisible(), 'and opens what was chosen');
-  assert.deepEqual(await page.$$eval('#navFabs button', (bs) => bs.map((b) => b.id)), ['topBtn', 'jumpBtn', 'prevMsgBtn', 'nextMsgBtn'], 'top and bottom are both there');
+  assert.deepEqual(await page.$$eval('#navMenu button', (bs) => bs.map((b) => b.id)), ['topBtn', 'jumpBtn', 'prevMsgBtn', 'nextMsgBtn'], 'top and bottom are both there');
   const sides = await page.evaluate(() => ({ nav: document.getElementById('navFabs').getBoundingClientRect().left, fab: document.getElementById('fabToggle').getBoundingClientRect().left }));
   assert.ok(sides.nav < sides.fab, 'the two floating groups are in opposite corners');
   await page.click('#fabToggle');
-  assert.ok(await page.locator('#navFabs').isVisible(), 'hiding the tools leaves the moving-around buttons on screen');
+  assert.ok(await page.locator('#navMenu').isVisible(), 'hiding the tools leaves the moving-around buttons on screen');
+  await page.click('#navToggle');
+  assert.ok(await page.locator('#navMenu').isHidden(), 'the moving-around buttons fold on their own toggle');
+  await page.reload();
+  await page.waitForFunction(() => window.doc && doc.msgs.length > 0);
+  assert.ok(await page.locator('#navMenu').isHidden(), 'and stay folded on this device');
+  await page.click('#navToggle');
+  assert.ok(await page.locator('#navMenu').isVisible(), 'and unfold again');
 });
 
 test('the top and bottom buttons both work, wherever you are in the chat', async () => {

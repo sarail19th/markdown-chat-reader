@@ -419,8 +419,8 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 /* The buttons are written nearest-first (Edit, Style, Search). Above the round button the column is flipped so Open stays closest to it. */
 :root:not([data-menu="collapsed"]) .fabs[data-v="up"] .fabmenu:not(.cols) { display: flex; flex-direction: column-reverse; align-items: center; }
 :root[data-menu="collapsed"] .fabmenu { display: none; }
-.fab .ic-show, :root[data-menu="collapsed"] .fab .ic-hide { display: none; }
-:root[data-menu="collapsed"] .fab .ic-show { display: block; }
+#fabToggle .ic-show, :root[data-menu="collapsed"] #fabToggle .ic-hide { display: none; }
+:root[data-menu="collapsed"] #fabToggle .ic-show { display: block; }
 .fab { touch-action: none; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--user-fg); background: var(--user); border: 1px solid rgba(128, 128, 128, .35); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
 .fab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -448,6 +448,10 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .mitem:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 /* Second group: move around the chat. It sits in the opposite bottom corner from the tools, and swaps sides if the tools are dragged across. */
 .navfabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.navmenu { display: grid; justify-items: center; gap: 10px; }
+:root[data-nav="collapsed"] .navmenu { display: none; }
+#navToggle .ic-show, :root[data-nav="collapsed"] #navToggle .ic-hide { display: none; }
+:root[data-nav="collapsed"] #navToggle .ic-show { display: block; }
 .fabs[data-h="left"] ~ .navfabs { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); }
 body.editing .fabs:not(.moved), body.editing .navfabs { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 body.searching .fabs, body.searching .navfabs { display: none; }
@@ -695,6 +699,7 @@ Do this for the full conversation history of this chat.</code></pre>
   <input type="file" id="file" multiple accept=".md,.markdown,.txt,.zip,.json,text/markdown,text/plain,application/zip,application/json">
 </div>
 <div class="navfabs" id="navFabs" role="group" aria-label="Move around the chat">
+  <div class="navmenu" id="navMenu">
     <div class="fabpair" role="group" aria-label="Jump to the top or the bottom">
       <button class="fabbtn" id="topBtn" type="button" aria-label="Jump to the top" title="Jump to the top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg></button>
       <button class="fabbtn" id="jumpBtn" type="button" aria-label="Jump to the bottom" title="Jump to the bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
@@ -703,6 +708,8 @@ Do this for the full conversation history of this chat.</code></pre>
       <button class="fabbtn" id="prevMsgBtn" type="button" aria-label="Previous message" title="Previous message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l4-4 4 4"/><path d="M6 10h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V19H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/></svg></button>
       <button class="fabbtn" id="nextMsgBtn" type="button" aria-label="Next message" title="Next message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V11.5H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/><path d="M8 17l4 4 4-4"/></svg></button>
     </div>
+  </div>
+  <button class="fab" id="navToggle" type="button" aria-controls="navMenu" aria-expanded="true" aria-label="Hide the arrows" title="Hide the arrows"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button>
 </div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
@@ -1999,6 +2006,21 @@ function syncFabToggle() {
   t.title = (open ? 'Hide the tools' : 'Show the tools') + '. Drag to move.';
 }
 syncFabToggle();
+// The arrows in the bottom corner fold the same way, and the choice is remembered on this device.
+try { if (localStorage.getItem('cr-nav') === 'collapsed') document.documentElement.setAttribute('data-nav', 'collapsed'); } catch (e) { /* storage blocked: they start unfolded */ }
+function syncNavToggle() {
+  var open = !document.documentElement.hasAttribute('data-nav'), t = $('navToggle');
+  t.setAttribute('aria-expanded', String(open));
+  t.setAttribute('aria-label', open ? 'Hide the arrows' : 'Show the arrows');
+  t.title = t.getAttribute('aria-label');
+}
+$('navToggle').addEventListener('click', function () {
+  var hide = !document.documentElement.hasAttribute('data-nav');
+  if (hide) document.documentElement.setAttribute('data-nav', 'collapsed'); else document.documentElement.removeAttribute('data-nav');
+  savePref('cr-nav', hide ? 'collapsed' : null);
+  syncNavToggle();
+});
+syncNavToggle();
 
 /* ---- drag the round button to move all the floating buttons; the spot is remembered on this device ---- */
 var fabPos = null, drag = null, justDragged = false; // fabPos: where the round button's centre sits, as fractions of the window
@@ -2898,6 +2920,7 @@ $('resetPrefs').addEventListener('click', function () {
   saveFolderMap(null); $('libRemember').checked = false;
   savePref('cr-accent', null); savePref('cr-mode', null);
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
+  document.documentElement.removeAttribute('data-nav'); savePref('cr-nav', null); syncNavToggle();
   setAccent('lavender');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();
