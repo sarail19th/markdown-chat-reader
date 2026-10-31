@@ -14,6 +14,10 @@
     if (a && /^(classic|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     if (localStorage.getItem('cr-tint') === 'on') r.setAttribute('data-tint', 'on');
+    var labOn = /[?&]lab(=1)?(&|$)/.test(location.search), labOff = /[?&]lab=0(&|$)/.test(location.search);
+    if (labOn) localStorage.setItem('cr-lab', '1');
+    if (labOff) localStorage.removeItem('cr-lab');
+    if (labOn || (!labOff && localStorage.getItem('cr-lab') === '1')) r.setAttribute('data-lab', '');
     var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
     [['cr-size', '--chat-fs', 14, 28, 'px'], ['cr-lh', '--chat-lh', 1.2, 2.2, ''], ['cr-ps', '--chat-ps', .2, 2, 'em']].forEach(function (d) {
       var v = localStorage.getItem(d[0]);
@@ -326,6 +330,13 @@ body.editing .titleedit { display: inline-flex; }
 .arrinfo b, .arrinfo span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .arrinfo b { font-size: .92rem; }
 .arrinfo span { font-size: .8rem; color: var(--muted); }
+/* Lab: the library of chats from an opened export */
+.libgroup h3 { margin: 4px 0 6px; font-size: .9rem; }
+.panel .liblist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.librow { display: flex; align-items: center; gap: 8px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.librow input { width: 20px; height: 20px; flex: none; margin: 0; accent-color: var(--logo-user, var(--user)); }
+.libopen { flex: 1; min-width: 0; min-height: 44px; padding: 4px 0; text-align: left; font: inherit; color: var(--fg); background: none; border: 0; cursor: pointer; }
+.libbar { position: sticky; bottom: -14px; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 -14px -14px; padding: 10px 14px 14px; background: var(--surface); border-top: 1px solid var(--line); }
 .mvbtn { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 40px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
 .mvbtn:disabled { opacity: .35; cursor: default; }
 .stylebtn.clear { font-weight: 500; margin-left: auto; }
@@ -631,6 +642,19 @@ Do this for the full conversation history of this chat.</code></pre>
     <textarea id="pasteText" placeholder="Paste the exported chat here" aria-label="Chat markdown"></textarea>
     <button class="btn primary" id="pasteGo" type="button">Show chat</button>
   </section>
+  <section id="library" class="panel sheet" hidden role="dialog" aria-label="Chats in this export" tabindex="-1">
+    <div class="sheethead"><h2>Chats in this export</h2><button class="sheetx" type="button" data-close="library" aria-label="Close the list of chats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="hint" id="libInfo"></p>
+    <input type="search" id="libSearch" class="modalinput" placeholder="Search chat titles" aria-label="Search chat titles" autocomplete="off">
+    <div id="libList"></div>
+    <p class="hint">Test feature. Everything happens in this browser: nothing is uploaded or saved, and folders last until you close the page. Titles that start with [Name] go into the folder Name.</p>
+    <div class="libbar">
+      <button class="btn" id="libAll" type="button">Select all shown</button>
+      <button class="btn" id="libMove" type="button" disabled>Move to folder</button>
+      <button class="btn primary" id="libZip" type="button">Download .zip</button>
+      <button class="btn" id="libDir" type="button" hidden>Save into a folder</button>
+    </div>
+  </section>
   <p class="notice" id="notice" hidden><span id="noticeText"></span><button class="nx" type="button" data-nx="notice" aria-label="Dismiss this notice" title="Dismiss">&times;</button></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> <span class="nbody">Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></span><button class="nx" type="button" data-nx="banner" aria-label="Hide the details of this notice" aria-expanded="true" title="Hide details">&times;</button></p>
   <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the chat into two files or save an excerpt, or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.<button class="nx" type="button" data-nx="tips" aria-label="Hide these editing tips" title="Hide these tips">&times;</button></p>
@@ -653,6 +677,7 @@ Do this for the full conversation history of this chat.</code></pre>
   <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
     <button class="fabbtn" id="openBtn" type="button" aria-label="Open a .md file" title="Open a .md file from your device, or select several parts to merge them into one chat. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+    <button class="fabbtn" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg></button>
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
     <button class="fabbtn" id="jumpBtn" type="button" data-dir="bottom" aria-label="Jump to the bottom" title="Jump to the bottom"><svg class="ic-up" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg><svg class="ic-down" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg></button>
@@ -691,6 +716,29 @@ var USER_NAMES = /^(you|user|human|me|prompt|question)$/i;
 var RE_HR = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
 var SKIP_LEAD = /^[^\w\s*_#:\[(]{1,8}\s*/;
 var META = /^(?:[-–—|·@,(\[]|\d)|^[\w.-]{1,24}[*_:\s]*$/;
+// Files this reader converted from an export say so under the title. In them only exact **You:** and **AI:** lines are speakers,
+// so dialogue such as "**Name:**" or "User:" inside a story stays part of its message.
+var RE_CONVERTED = /^>\s*Converted with Markdown Chat Reader\b/m;
+function parseExact(lines) {
+  var msgs = [], cur = null, pre = [], title = '';
+  lines.forEach(function (line) {
+    var who = line === '**You:**' ? 'user' : line === '**AI:**' ? 'assistant' : '';
+    if (who) { cur = { role: who, label: who === 'user' ? 'You' : 'AI', lines: [] }; msgs.push(cur); }
+    else if (cur) cur.lines.push(line);
+    else pre.push(line);
+  });
+  pre.forEach(function (l) { var t = !title && l.match(/^#\s+(.+?)\s*#*\s*$/); if (t) title = t[1].replace(/[*_`]/g, ''); });
+  var out = [];
+  msgs.forEach(function (msg) {
+    var L = msg.lines;
+    // Messages are written with a blank line and a --- rule between them; only that separator is removed.
+    while (L.length && /^\s*$/.test(L[L.length - 1])) L.pop();
+    if (L.length && L[L.length - 1] === '---') { L.pop(); while (L.length && /^\s*$/.test(L[L.length - 1])) L.pop(); }
+    while (L.length && /^\s*$/.test(L[0])) L.shift();
+    if (L.length) out.push({ role: msg.role, label: msg.label, text: L.join('\n') });
+  });
+  return { title: title, msgs: out, pre: pre.join('\n').trim() };
+}
 
 function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
@@ -793,6 +841,7 @@ function autoDetect(lines) {
 
 function parseChat(text, mode, custom) {
   var lines = String(text).replace(/\r\n?/g, '\n').split('\n');
+  if (!mode && RE_CONVERTED.test(lines.slice(0, 6).join('\n'))) return parseExact(lines);
   var nameRe = custom
     ? new RegExp('^(' + Object.keys(custom).map(escapeRe).join('|') + ')(?![\\w])', 'i')
     : BASE_RE;
@@ -1746,6 +1795,7 @@ function baseName(name) { return name.replace(/\.[^.]+$/, ''); }
 // Several files (an export split into parts) are merged into one chat, in natural file name order (part2 before part10).
 function loadFiles(list) {
   var files = Array.prototype.slice.call(list || []);
+  if (LAB && files.some(isArchive)) { closePanels(); openArchive(files.filter(isArchive)[0]); return; }
   if (!files.length || !guardDirty()) return;
   files.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }); });
   Promise.all(files.map(readText)).then(function (texts) {
@@ -2049,10 +2099,10 @@ function syncTabIcon() {
   copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   link.href = 'data:image/svg+xml,' + encodeURIComponent(new XMLSerializer().serializeToString(copy));
 }
-var PANELS = ['info', 'appearance', 'paste', 'search'];
+var PANELS = ['info', 'appearance', 'paste', 'search', 'library'];
 function syncSheets() {
   closeAccent(false);
-  $('scrim').hidden = $('info').hidden && $('paste').hidden;
+  $('scrim').hidden = $('info').hidden && $('paste').hidden && $('library').hidden;
   document.body.classList.toggle('searching', !$('search').hidden);
   document.body.classList.toggle('sheet-open', !$('appearance').hidden);
 }
@@ -2066,7 +2116,7 @@ function closePanels() {
 }
 var WIDE = window.matchMedia ? window.matchMedia('(min-width: 760px)') : { matches: false };
 function placeSheets() {
-  ['appearance', 'info', 'paste'].forEach(function (id) {
+  ['appearance', 'info', 'paste', 'library'].forEach(function (id) {
     var el = $(id);
     if (el.hidden || !WIDE.matches) { el.style.top = el.style.bottom = el.style.left = el.style.maxHeight = ''; return; }
     var f = $('fabToggle').getBoundingClientRect(), side = $('fabs').dataset;
@@ -2189,7 +2239,7 @@ function togglePanel(id) {
   });
   syncSheets();
   placeSheets();
-  if (willOpen && (id === 'appearance' || id === 'info')) $(id).querySelector('.sheetx').focus({ preventScroll: true });
+  if (willOpen && (id === 'appearance' || id === 'info' || id === 'library')) $(id).querySelector('.sheetx').focus({ preventScroll: true });
   if (id === 'paste' && !$('paste').hidden) $('pasteText').focus();
   if (id === 'search' && !$('search').hidden) $('searchInput').focus();
   if ($('search').hidden) resetSearch();
@@ -2205,19 +2255,20 @@ function closeSheet(id, keepFocus) {
 }
 document.addEventListener('click', function (e) {
   if (!WIDE.matches || (accList && !accList.hidden)) return;
-  ['appearance', 'info', 'paste'].forEach(function (id) {
+  ['appearance', 'info', 'paste', 'library'].forEach(function (id) {
     if (!$(id).hidden && !$(id).contains(e.target) && !e.target.closest('[data-panel="' + id + '"]')) closeSheet(id, true);
   });
 });
 document.querySelectorAll('[data-close]').forEach(function (b) {
   b.addEventListener('click', function () { closeSheet(b.getAttribute('data-close')); });
 });
-$('scrim').addEventListener('click', function () { closeSheet('info'); closeSheet('paste'); });
+$('scrim').addEventListener('click', function () { closeSheet('info'); closeSheet('paste'); closeSheet('library'); });
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape' || e.defaultPrevented) return;
   if (!$('search').hidden) closeSheet('search');
   else if (!$('info').hidden) closeSheet('info');
   else if (!$('paste').hidden) closeSheet('paste');
+  else if (!$('library').hidden) closeSheet('library');
   else if (!$('appearance').hidden && !(editMode && selIdx >= 0)) closeSheet('appearance');
 });
 var ACCENT_LIST = [
@@ -2448,6 +2499,275 @@ setAccent(root.getAttribute('data-accent') || 'lavender');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
 setChecked($('tintGroup'), 'data-tint', root.getAttribute('data-tint') === 'on' ? 'on' : 'off');
+/* ---- Lab (only after opening the site with ?lab): open a ChatGPT or Claude export (.zip or .json), or a .zip of .md files,
+   list its chats, read any of them, sort them into folders and save them as .md files. It all happens in this browser. ---- */
+var LAB = root.hasAttribute('data-lab');
+var lib = null; // { items: [{ title, date, folder, msgs, md, fileBase }], sel: {} } while the page is open
+if (LAB) $('file').accept += ',.zip,.json,application/zip,application/json';
+function isArchive(f) { return /\.(zip|json)$/i.test(f.name); }
+// Reads a .zip with the browser's own decompression, so no library is needed.
+function zipEntries(buf) {
+  var v = new DataView(buf), n = buf.byteLength, e = -1, list = [], dec = new TextDecoder();
+  for (var i = n - 22; i >= Math.max(0, n - 65557); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('This file is not a .zip.');
+  var count = v.getUint16(e + 10, true), off = v.getUint32(e + 16, true);
+  if (count === 0xffff || off === 0xffffffff) throw new Error('This .zip is too large to open here. Unzip it and open conversations.json.');
+  for (var k = 0; k < count && v.getUint32(off, true) === 0x02014b50; k++) {
+    var nl = v.getUint16(off + 28, true);
+    list.push({ name: dec.decode(new Uint8Array(buf, off + 46, nl)), method: v.getUint16(off + 10, true), size: v.getUint32(off + 20, true), at: v.getUint32(off + 42, true) });
+    off += 46 + nl + v.getUint16(off + 30, true) + v.getUint16(off + 32, true);
+  }
+  return list;
+}
+function zipText(buf, ent) {
+  var v = new DataView(buf), start = ent.at + 30 + v.getUint16(ent.at + 26, true) + v.getUint16(ent.at + 28, true), data = new Uint8Array(buf, start, ent.size);
+  if (ent.method === 0) return Promise.resolve(new TextDecoder().decode(data));
+  if (ent.method !== 8 || typeof DecompressionStream === 'undefined') return Promise.reject(new Error('This browser cannot unzip this file. Unzip it and open conversations.json.'));
+  return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+}
+var CRC = null;
+function crc32(u8) {
+  if (!CRC) { CRC = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; CRC[n] = c >>> 0; } }
+  var x = 0xffffffff;
+  for (var i = 0; i < u8.length; i++) x = CRC[(x ^ u8[i]) & 255] ^ (x >>> 8);
+  return (x ^ 0xffffffff) >>> 0;
+}
+function deflateRaw(u8) {
+  if (typeof CompressionStream === 'undefined') return Promise.resolve(null);
+  return new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer().then(function (b) { return new Uint8Array(b); }, function () { return null; });
+}
+// files: [{ path, text, date }] -> one .zip Blob, compressed where the browser can, with UTF-8 names.
+function makeZip(files) {
+  var enc = new TextEncoder(), parts = [], central = [], off = 0;
+  return files.reduce(function (p, f) {
+    return p.then(function () {
+      var data = enc.encode(f.text), name = enc.encode(f.path), crc = crc32(data);
+      return deflateRaw(data).then(function (z) {
+        var method = z && z.length < data.length ? 8 : 0, body = method ? z : data, d = f.date || new Date();
+        var time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), day = ((Math.max(d.getFullYear(), 1980) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+        var lh = new DataView(new ArrayBuffer(30)), ch = new DataView(new ArrayBuffer(46));
+        [[lh, 4], [ch, 6]].forEach(function (h) {
+          var o = h[1];
+          h[0].setUint16(o, 20, true); h[0].setUint16(o + 2, 0x0800, true); h[0].setUint16(o + 4, method, true); h[0].setUint16(o + 6, time, true); h[0].setUint16(o + 8, day, true);
+          h[0].setUint32(o + 10, crc, true); h[0].setUint32(o + 14, body.length, true); h[0].setUint32(o + 18, data.length, true); h[0].setUint16(o + 22, name.length, true);
+        });
+        lh.setUint32(0, 0x04034b50, true); ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint32(42, off, true);
+        parts.push(lh.buffer, name, body); central.push(ch.buffer, name);
+        off += 30 + name.length + body.length;
+      });
+    });
+  }, Promise.resolve()).then(function () {
+    var size = central.reduce(function (t, b) { return t + b.byteLength; }, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+    return new Blob(parts.concat(central, [end.buffer]), { type: 'application/zip' });
+  });
+}
+// ChatGPT: each chat is a tree of messages; walking back from current_node gives the version you last saw.
+// Kept: your messages and the replies. Left out: system and tool messages, and the model's hidden thinking.
+function fromChatGPT(list, assets) {
+  return list.map(function (c) {
+    var path = [], id = c.current_node, seen = {}, msgs = [];
+    while (id && c.mapping && c.mapping[id] && !seen[id]) { seen[id] = 1; if (c.mapping[id].message) path.push(c.mapping[id].message); id = c.mapping[id].parent; }
+    path.reverse().forEach(function (m) {
+      var role = m.author && m.author.role, ct = m.content || {}, meta = m.metadata || {};
+      if ((role !== 'user' && role !== 'assistant') || meta.is_visually_hidden_from_conversation) return;
+      if (ct.content_type !== 'text' && ct.content_type !== 'multimodal_text') return;
+      var bits = (ct.parts || []).map(function (x) {
+        if (typeof x === 'string') return x;
+        if (x && x.content_type === 'image_asset_pointer') { var key = String(x.asset_pointer || '').replace(/^\w+:\/\//, ''); return '*[image: ' + (assets[key + '.dat'] || assets[key] || 'not included') + ']*'; }
+        return x && typeof x.text === 'string' ? x.text : '';
+      });
+      (meta.attachments || []).forEach(function (a) { if (a && a.name && !/^image\//.test(a.mime_type || '')) bits.unshift('*[file: ' + a.name + ']*'); });
+      // Web search answers carry invisible citation markers (private-use characters); they would show as boxes.
+      var text = bits.join('\n\n').replace(/[^]*/g, '').replace(/[-]/g, '').trim();
+      if (text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
+    });
+    return { title: String(c.title || 'Untitled chat').trim(), date: c.create_time ? new Date(c.create_time * 1000) : null, msgs: msgs };
+  });
+}
+// Claude: chat_messages with sender human or assistant; text blocks only, so its thinking is left out too.
+function fromClaude(list) {
+  return list.map(function (c) {
+    var msgs = [];
+    (c.chat_messages || []).forEach(function (m) {
+      var role = m.sender === 'human' ? 'user' : m.sender === 'assistant' ? 'assistant' : '';
+      if (!role) return;
+      var text = Array.isArray(m.content) ? m.content.filter(function (b) { return b && b.type === 'text' && b.text; }).map(function (b) { return b.text; }).join('\n\n') : '';
+      if (!text) text = m.text || '';
+      var names = (m.attachments || []).concat(m.files || []).map(function (f) { return f && (f.file_name || f.name); }).filter(Boolean);
+      if (names.length) text = names.map(function (x) { return '*[file: ' + x + ']*'; }).join('\n') + (text ? '\n\n' + text : '');
+      text = text.trim();
+      if (text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
+    });
+    return { title: String(c.name || 'Untitled chat').trim(), date: c.created_at ? new Date(c.created_at) : null, msgs: msgs };
+  });
+}
+function fromExport(data, assets) {
+  if (Array.isArray(data) && data.length && data[0].mapping) return { from: 'ChatGPT', items: fromChatGPT(data, assets || {}) };
+  if (Array.isArray(data) && data.length && Array.isArray(data[0].chat_messages)) return { from: 'Claude', items: fromClaude(data) };
+  throw new Error('This file is not a ChatGPT or Claude chat export. For other apps, use the AI prompt in Help.');
+}
+function isoDay(d) { return d && !isNaN(d) ? d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) : ''; }
+function titleFolder(t) { var m = /^\s*\[([^\]\n]{1,60})\]/.exec(t); return m ? m[1].trim() : ''; }
+function openArchive(file) {
+  toast('Reading ' + file.name + '…', false);
+  var job = /\.json$/i.test(file.name)
+    ? readText(file).then(function (t) { return fromExport(JSON.parse(t)); })
+    : file.arrayBuffer().then(function (buf) {
+      var ents = zipEntries(buf), find = function (re) { return ents.filter(function (x) { return re.test(x.name); })[0]; };
+      var conv = find(/(^|\/)conversations\.json$/i);
+      if (conv) {
+        var names = find(/(^|\/)conversation_asset_file_names\.json$/i);
+        return Promise.all([zipText(buf, conv), names ? zipText(buf, names) : '{}']).then(function (r) {
+          var assets = {};
+          try { assets = JSON.parse(r[1]) || {}; } catch (e) { /* image names are optional */ }
+          return fromExport(JSON.parse(r[0]), assets);
+        });
+      }
+      // A .zip of .md files (for example a backup made here): folders come from the paths inside it.
+      var mds = ents.filter(function (x) { return /\.(md|markdown|txt)$/i.test(x.name) && !/(^|\/)(__MACOSX|\.)/.test(x.name); });
+      if (!mds.length) throw new Error('No chats found in this .zip.');
+      return Promise.all(mds.map(function (x) { return zipText(buf, x); })).then(function (texts) {
+        var dirs = mds.map(function (x) { return x.name.split('/').slice(0, -1); }), top = dirs[0][0];
+        var shared = top && dirs.every(function (d) { return d[0] === top; }) && dirs.some(function (d) { return d.length > 1; });
+        return { from: 'a .zip of Markdown files', items: mds.map(function (x, k) {
+          var parsed = parseChat(texts[k]), base = baseName(x.name.split('/').pop()), m = /^(\d{4}-\d{2}-\d{2})\b/.exec(base);
+          return { title: parsed.title || base, date: m ? new Date(m[1] + 'T12:00:00') : null, msgs: parsed.msgs, md: texts[k], fileBase: base, folder: dirs[k].slice(shared ? 1 : 0).join(' / ').replace(/^No project$/, '') };
+        }) };
+      });
+    });
+  job.then(function (r) {
+    var items = r.items.filter(function (it) { return it.msgs.length; });
+    items.forEach(function (it) { if (it.folder === undefined) it.folder = titleFolder(it.title); });
+    items.sort(function (a, b) { return (b.date || 0) - (a.date || 0); });
+    lib = { items: items, sel: {}, from: r.from };
+    var n = r.items.length - items.length;
+    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'empty chat') + ' left out)' : '') + '. Tap a title to read it.';
+    $('libSearch').value = '';
+    $('libBtn').hidden = false;
+    $('libDir').hidden = !window.showDirectoryPicker;
+    renderLibrary();
+    if ($('library').hidden) togglePanel('library');
+    $('toast').hidden = true;
+  }, function (err) {
+    notice.hidden = false;
+    $('noticeText').textContent = (err && err.name === 'SyntaxError') ? 'This file could not be read as a chat export.' : (err && err.message) || 'This file could not be read.';
+    $('toast').hidden = true;
+  });
+}
+function renderLibrary() {
+  var q = $('libSearch').value.trim().toLowerCase(), box = $('libList'), groups = {};
+  box.innerHTML = '';
+  lib.items.forEach(function (it, i) { if (!q || it.title.toLowerCase().indexOf(q) >= 0) (groups[it.folder] = groups[it.folder] || []).push(i); });
+  var names = Object.keys(groups).sort(function (a, b) { return !a ? 1 : !b ? -1 : a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }); });
+  if (!names.length) box.innerHTML = '<p class="hint">No titles match.</p>';
+  names.forEach(function (f) {
+    var sec = document.createElement('section'), h = document.createElement('h3'), ul = document.createElement('ul');
+    sec.className = 'libgroup'; ul.className = 'liblist';
+    h.textContent = (f || 'No project') + ' (' + groups[f].length + ')';
+    groups[f].forEach(function (i) {
+      var it = lib.items[i], li = document.createElement('li');
+      li.className = 'librow';
+      li.innerHTML = '<input type="checkbox"><button class="libopen" type="button"><span class="arrinfo"><b></b><span></span></span></button>';
+      var cb = li.querySelector('input'), b = li.querySelector('.libopen');
+      cb.checked = !!lib.sel[i]; cb.setAttribute('data-i', String(i)); cb.setAttribute('aria-label', 'Select ' + it.title);
+      b.setAttribute('data-i', String(i));
+      li.querySelector('b').textContent = it.title;
+      li.querySelector('.arrinfo span').textContent = (it.date ? isoDay(it.date) + ' · ' : '') + plural(it.msgs.length, 'message');
+      ul.appendChild(li);
+    });
+    sec.appendChild(h); sec.appendChild(ul); box.appendChild(sec);
+  });
+  syncLibBar();
+}
+function shownIdx() { return Array.prototype.map.call($('libList').querySelectorAll('input[data-i]'), function (c) { return +c.getAttribute('data-i'); }); }
+function syncLibBar() {
+  var n = Object.keys(lib.sel).length, shown = shownIdx(), all = shown.length && shown.every(function (i) { return lib.sel[i]; });
+  $('libMove').disabled = !n;
+  $('libMove').textContent = n ? 'Move ' + n + ' to folder' : 'Move to folder';
+  $('libAll').textContent = all ? 'Clear selection' : 'Select all shown';
+}
+$('libSearch').addEventListener('input', function () { if (lib) renderLibrary(); });
+$('libList').addEventListener('change', function (e) {
+  var i = e.target.getAttribute && e.target.getAttribute('data-i');
+  if (i === null || i === undefined) return;
+  if (e.target.checked) lib.sel[i] = true; else delete lib.sel[i];
+  syncLibBar();
+});
+$('libList').addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.libopen');
+  if (!b || !guardDirty()) return;
+  var it = lib.items[+b.getAttribute('data-i')];
+  closePanels();
+  if (it.md) show(it.md, it.fileBase);
+  else show('', it.title, { title: it.title, msgs: it.msgs, pre: '' });
+  doc.fileBase = it.fileBase || libFileBase(it);
+});
+$('libAll').addEventListener('click', function () {
+  var shown = shownIdx(), all = shown.length && shown.every(function (i) { return lib.sel[i]; });
+  shown.forEach(function (i) { if (all) delete lib.sel[i]; else lib.sel[i] = true; });
+  renderLibrary();
+});
+$('libMove').addEventListener('click', function () {
+  var input = textInput('', 'Folder name (leave empty for No project)', false, false), list = document.createElement('datalist');
+  list.id = 'libFolders';
+  lib.items.map(function (it) { return it.folder; }).filter(function (f, k, a) { return f && a.indexOf(f) === k; }).forEach(function (f) { var o = document.createElement('option'); o.value = f; list.appendChild(o); });
+  input.el.setAttribute('list', 'libFolders'); input.box.appendChild(list);
+  openModal({
+    title: 'Move to folder', help: 'Pick a folder or type a new name. The chats keep their titles.', body: input.box, ok: 'Move', focus: input.el,
+    onOk: function () {
+      var f = input.el.value.replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+      Object.keys(lib.sel).forEach(function (i) { lib.items[i].folder = f; });
+      lib.sel = {};
+      renderLibrary();
+    }
+  });
+});
+function libFileBase(it) { return cleanFileName((it.date ? isoDay(it.date) + ' ' : '') + it.title, 'chat').replace(/\.md$/, ''); }
+function libMarkdown(it) {
+  if (it.md) return it.md;
+  var out = ['# ' + it.title, '', '> Converted with Markdown Chat Reader from a ' + lib.from + ' export' + (it.date ? ', chat started ' + isoDay(it.date) : '') + '.', ''];
+  // A line that is exactly a speaker label inside a message gets an invisible zero-width space so it stays text.
+  it.msgs.forEach(function (m, i) { if (i) out.push('---', ''); out.push('**' + m.label + ':**', m.text.replace(/\s+$/, '').replace(/^(\*\*(?:You|AI):\*\*)$/gm, '​$1'), ''); });
+  return out.join('\n');
+}
+// One .md per chat, in a folder per project; names are made unique so nothing is overwritten.
+function libFiles() {
+  var used = {};
+  return lib.items.map(function (it) {
+    var dir = cleanFileName(it.folder || 'No project', 'No project').replace(/\.md$/, ''), base = it.fileBase || libFileBase(it), path = dir + '/' + base + '.md', k = 2;
+    while (used[path.toLowerCase()]) path = dir + '/' + base + ' (' + k++ + ').md';
+    used[path.toLowerCase()] = true;
+    return { path: path, text: libMarkdown(it), date: it.date };
+  });
+}
+$('libZip').addEventListener('click', function () {
+  var files = libFiles(), name = 'Chats ' + isoDay(new Date()) + '.zip';
+  toast('Making ' + name + '…', false);
+  makeZip(files).then(function (blob) {
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    toast('Saving ' + name + ' with ' + plural(files.length, 'chat'), false);
+  }, function () { toast('The .zip could not be made in this browser.', false); });
+});
+// Chrome and Edge on a computer can write real folders, for example straight into a Google Drive for desktop folder.
+$('libDir').addEventListener('click', function () {
+  var files = libFiles();
+  window.showDirectoryPicker({ mode: 'readwrite' }).then(function (dir) {
+    toast('Saving ' + plural(files.length, 'file') + '…', false);
+    return files.reduce(function (p, f) {
+      return p.then(function () {
+        var segs = f.path.split('/'), name = segs.pop();
+        return segs.reduce(function (d, s) { return d.then(function (h) { return h.getDirectoryHandle(s, { create: true }); }); }, Promise.resolve(dir))
+          .then(function (h) { return h.getFileHandle(name, { create: true }); })
+          .then(function (fh) { return fh.createWritable(); })
+          .then(function (w) { return w.write(f.text).then(function () { return w.close(); }); });
+      });
+    }, Promise.resolve()).then(function () { toast('Saved ' + plural(files.length, 'chat') + ' into ' + dir.name, false); });
+  }).catch(function (err) { if (!err || err.name !== 'AbortError') toast('The files could not be saved there.', false); });
+});
 /* ---- the X on notices: info notices and the editing tips are dismissed; the Edited copy notice folds to one line and can be opened again ---- */
 function setBannerCollapsed(on) {
   var b = $('editedBanner'), x = b.querySelector('.nx');
