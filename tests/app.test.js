@@ -100,3 +100,9 @@ test('the colour menu offers Classic, seven colours and White, in colour-wheel o
   const names = await page.$$eval('#accentList [role="option"] span', (spans) => spans.map((s) => s.textContent));
   assert.deepEqual(names, ['Classic', 'Lavender', 'Periwinkle', 'Ice blue', 'Mint', 'Pastel yellow', 'Peach', 'Blush', 'White']);
 });
+
+test('Help panel has a "Why Markdown?" section', async () => {
+  const page = await openApp();
+  const names = await page.$$eval('#info h2', (headings) => headings.map((h) => h.textContent));
+  assert.ok(names.includes('Why Markdown?'));
+});
