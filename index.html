@@ -2578,19 +2578,23 @@ function fromChatGPT(list, assets) {
 // Newer exports may use messages and role instead, so both are read.
 function fromClaude(list) {
   return list.map(function (c) {
-    var msgs = [];
+    var msgs = [], lost = 0;
     (c.chat_messages || c.messages || []).forEach(function (m) {
       var who = m.sender || m.role, role = who === 'human' || who === 'user' ? 'user' : who === 'assistant' ? 'assistant' : '';
       if (!role) return;
       var text = Array.isArray(m.content) ? m.content.filter(function (b) { return b && b.type === 'text' && b.text; }).map(function (b) { return b.text; }).join('\n\n') : typeof m.content === 'string' ? m.content : '';
       if (!text) text = m.text || '';
       var names = (m.attachments || []).concat(m.files || []).map(function (f) { return f && (f.file_name || f.name); }).filter(Boolean);
+      // Some Claude exports list a message with no text at all (empty content). It is kept as a visible gap, so the chat
+      // is not lost and the gap is not mistaken for the whole conversation. A message made only of tool steps is still skipped.
+      var missing = !text.trim() && (!m.content || (Array.isArray(m.content) && !m.content.length));
+      if (missing) { text = '*[No text for this message in the export]*'; lost++; }
       if (names.length) text = names.map(function (x) { return '*[file: ' + x + ']*'; }).join('\n') + (text ? '\n\n' + text : '');
       text = text.trim();
       if (text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
     });
     var when = c.created_at || c.create_time;
-    return { id: String(c.uuid || c.id || ''), title: String(c.name || c.title || 'Untitled chat').trim(), date: when ? new Date(typeof when === 'number' ? when * 1000 : when) : null, msgs: msgs };
+    return { id: String(c.uuid || c.id || ''), title: String(c.name || c.title || 'Untitled chat').trim(), date: when ? new Date(typeof when === 'number' ? when * 1000 : when) : null, msgs: msgs, lost: lost };
   });
 }
 // Claude's data export now arrives as a manifest of download links; the chats are in conversations-000.zip.
@@ -2682,8 +2686,9 @@ function openArchives(files) {
     });
     items.sort(function (a, b) { return (b.date || 0) - (a.date || 0); });
     lib = { items: items, sel: {}, from: r.from };
-    var n = r.items.length - items.length;
-    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'empty chat') + ' left out)' : '') + '. ' +
+    var n = r.items.length - items.length, gaps = items.filter(function (it) { return it.lost; }).length;
+    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'chat') + ' with no messages left out)' : '') + '. ' +
+      (gaps ? 'In ' + plural(gaps, 'chat') + ' some messages have no text in this export; they are marked in the chat. ' : '') +
       (r.skipped ? plural(r.skipped, 'file') + ' could not be read. ' : '') + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
     // A backup .zip already has its folders in it, so the option shows only for exports.
     $('libKeep').hidden = !items.some(function (it) { return it.id; });
@@ -2718,7 +2723,8 @@ function renderLibrary() {
       cb.checked = !!lib.sel[i]; cb.setAttribute('data-i', String(i)); cb.setAttribute('aria-label', 'Select ' + it.title);
       b.setAttribute('data-i', String(i));
       li.querySelector('b').textContent = it.title;
-      li.querySelector('.arrinfo span').textContent = (it.date ? isoDay(it.date) + ' · ' : '') + plural(it.msgs.length, 'message');
+      li.querySelector('.arrinfo span').textContent = (it.date ? isoDay(it.date) + ' · ' : '') + plural(it.msgs.length, 'message') +
+        (it.lost ? (it.lost === it.msgs.length ? ' · no text in export' : ' · ' + it.lost + ' without text') : '');
       ul.appendChild(li);
     });
     sec.appendChild(h); sec.appendChild(ul); box.appendChild(sec);
