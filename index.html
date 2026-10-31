@@ -14,7 +14,6 @@
     if (a && /^(classic|periwinkle|iceblue|mint|yellow|peach|blush|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     if (localStorage.getItem('cr-tint') === 'on') r.setAttribute('data-tint', 'on');
-    localStorage.removeItem('cr-lab'); // left over from testing the export converter
     var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
     [['cr-size', '--chat-fs', 14, 28, 'px'], ['cr-lh', '--chat-lh', 1.2, 2.2, ''], ['cr-ps', '--chat-ps', .2, 2, 'em']].forEach(function (d) {
       var v = localStorage.getItem(d[0]);
@@ -900,8 +899,8 @@ var SAMPLE = [
   'Your messages sit on the **right** and the AI\'s on the **left**. There are three steps:',
   '',
   '1. **Export** your chats from your AI app.',
-  '2. **Convert** the export to Markdown (`.md`) with an AI assistant.',
-  '3. **Read** the `.md` file here. Tap **Open** or **Paste** at the top.',
+  '2. **Open** the export here (ChatGPT, Claude), or **convert** it to `.md` with an AI (other apps).',
+  '3. **Read** your chats here. Tap **Open** or **Paste**.',
   '',
   'Tap **Help** for the full steps and the conversion prompt.'
 ].join('\n');
@@ -1786,7 +1785,7 @@ function baseName(name) { return name.replace(/\.[^.]+$/, ''); }
 // Several files (an export split into parts) are merged into one chat, in natural file name order (part2 before part10).
 function loadFiles(list) {
   var files = Array.prototype.slice.call(list || []);
-  if (files.some(isArchive)) { closePanels(); openArchive(files.filter(isArchive)[0]); return; }
+  if (files.some(isArchive)) { closePanels(); openArchives(files.filter(isArchive)); return; }
   if (!files.length || !guardDirty()) return;
   files.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }); });
   Promise.all(files.map(readText)).then(function (texts) {
@@ -2576,26 +2575,45 @@ function fromChatGPT(list, assets) {
   });
 }
 // Claude: chat_messages with sender human or assistant; text blocks only, so its thinking is left out too.
+// Newer exports may use messages and role instead, so both are read.
 function fromClaude(list) {
   return list.map(function (c) {
     var msgs = [];
-    (c.chat_messages || []).forEach(function (m) {
-      var role = m.sender === 'human' ? 'user' : m.sender === 'assistant' ? 'assistant' : '';
+    (c.chat_messages || c.messages || []).forEach(function (m) {
+      var who = m.sender || m.role, role = who === 'human' || who === 'user' ? 'user' : who === 'assistant' ? 'assistant' : '';
       if (!role) return;
-      var text = Array.isArray(m.content) ? m.content.filter(function (b) { return b && b.type === 'text' && b.text; }).map(function (b) { return b.text; }).join('\n\n') : '';
+      var text = Array.isArray(m.content) ? m.content.filter(function (b) { return b && b.type === 'text' && b.text; }).map(function (b) { return b.text; }).join('\n\n') : typeof m.content === 'string' ? m.content : '';
       if (!text) text = m.text || '';
       var names = (m.attachments || []).concat(m.files || []).map(function (f) { return f && (f.file_name || f.name); }).filter(Boolean);
       if (names.length) text = names.map(function (x) { return '*[file: ' + x + ']*'; }).join('\n') + (text ? '\n\n' + text : '');
       text = text.trim();
       if (text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
     });
-    return { id: String(c.uuid || ''), title: String(c.name || 'Untitled chat').trim(), date: c.created_at ? new Date(c.created_at) : null, msgs: msgs };
+    var when = c.created_at || c.create_time;
+    return { id: String(c.uuid || c.id || ''), title: String(c.name || c.title || 'Untitled chat').trim(), date: when ? new Date(typeof when === 'number' ? when * 1000 : when) : null, msgs: msgs };
   });
 }
+// Claude's data export now arrives as a manifest of download links; the chats are in conversations-000.zip.
+function manifestHelp(d) {
+  var names = d.data_files.map(function (f) { return f.filename || ''; }).filter(function (n) { return /conversation/i.test(n); });
+  return new Error('This is Claude\'s list of download links, not the chats. Download ' + (names.join(' and ') || 'the conversations .zip') +
+    ' from it (each link expires after 24 hours and may work only once), then open that .zip here.');
+}
 function fromExport(data, assets) {
-  if (Array.isArray(data) && data.length && data[0].mapping) return { from: 'ChatGPT', items: fromChatGPT(data, assets || {}) };
-  if (Array.isArray(data) && data.length && Array.isArray(data[0].chat_messages)) return { from: 'Claude', items: fromClaude(data) };
+  if (data && !Array.isArray(data) && Array.isArray(data.data_files)) throw manifestHelp(data);
+  if (data && !Array.isArray(data) && Array.isArray(data.conversations)) data = data.conversations;
+  var c = Array.isArray(data) && data[0];
+  if (c && c.mapping) return { from: 'ChatGPT', items: fromChatGPT(data, assets || {}) };
+  if (c && (Array.isArray(c.chat_messages) || (Array.isArray(c.messages) && c.messages[0] && (c.messages[0].sender || c.messages[0].role)))) return { from: 'Claude', items: fromClaude(data) };
   throw new Error('This file is not a ChatGPT or Claude chat export. For other apps, use the AI prompt in Help.');
+}
+// One JSON value, or JSON Lines (one chat per line).
+function parseJson(t) {
+  try { return JSON.parse(t); } catch (e) {
+    var lines = t.split('\n').filter(function (l) { return l.trim(); });
+    if (lines.length < 2) throw e;
+    return lines.map(function (l) { return JSON.parse(l); });
+  }
 }
 // Remembered folders (opt-in): { chat ID code: folder name } in this browser only. No titles or messages are kept.
 function folderMap() {
@@ -2613,34 +2631,48 @@ function rememberFolders(items) {
 }
 function isoDay(d) { return d && !isNaN(d) ? d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) : ''; }
 function titleFolder(t) { var m = /^\s*\[([^\]\n]{1,60})\]/.exec(t); return m ? m[1].trim() : ''; }
-function openArchive(file) {
-  toast('Reading ' + file.name + '…', false);
-  var job = /\.json$/i.test(file.name)
-    ? readText(file).then(function (t) { return fromExport(JSON.parse(t)); })
-    : file.arrayBuffer().then(function (buf) {
-      var ents = zipEntries(buf), find = function (re) { return ents.filter(function (x) { return re.test(x.name); })[0]; };
-      var conv = find(/(^|\/)conversations\.json$/i);
-      if (conv) {
-        var names = find(/(^|\/)conversation_asset_file_names\.json$/i);
-        return Promise.all([zipText(buf, conv), names ? zipText(buf, names) : '{}']).then(function (r) {
-          var assets = {};
-          try { assets = JSON.parse(r[1]) || {}; } catch (e) { /* image names are optional */ }
-          return fromExport(JSON.parse(r[0]), assets);
+// Reads one export, .json or .zip, into { from, items }. In a .zip, conversations.json comes first; otherwise every
+// .json or .jsonl inside is tried, so an export split into parts or renamed still opens.
+function readArchive(file) {
+  if (/\.json$/i.test(file.name)) return readText(file).then(function (t) { return fromExport(parseJson(t)); });
+  return file.arrayBuffer().then(function (buf) {
+    var ents = zipEntries(buf), find = function (re) { return ents.filter(function (x) { return re.test(x.name); })[0]; };
+    var names = find(/(^|\/)conversation_asset_file_names\.json$/i), conv = find(/(^|\/)conversations\.json$/i);
+    var jsons = conv ? [conv] : ents.filter(function (x) { return /\.jsonl?$/i.test(x.name) && !/(^|\/)(__MACOSX|\.)/.test(x.name); })
+      .sort(function (a, b) { return /conversation/i.test(b.name) - /conversation/i.test(a.name); });
+    if (jsons.length) {
+      return Promise.all([names ? zipText(buf, names) : '{}'].concat(jsons.map(function (x) { return zipText(buf, x); }))).then(function (r) {
+        var assets = {}, found = null, firstErr = null;
+        try { assets = JSON.parse(r[0]) || {}; } catch (e) { /* image names are optional */ }
+        r.slice(1).forEach(function (t) {
+          try { var got = fromExport(parseJson(t), assets); found = found ? { from: found.from, items: found.items.concat(got.items) } : got; } catch (e) { firstErr = firstErr || e; }
         });
-      }
-      // A .zip of .md files (for example a backup made here): folders come from the paths inside it.
-      var mds = ents.filter(function (x) { return /\.(md|markdown|txt)$/i.test(x.name) && !/(^|\/)(__MACOSX|\.)/.test(x.name); });
-      if (!mds.length) throw new Error('No chats found in this .zip.');
-      return Promise.all(mds.map(function (x) { return zipText(buf, x); })).then(function (texts) {
-        var dirs = mds.map(function (x) { return x.name.split('/').slice(0, -1); }), top = dirs[0][0];
-        var shared = top && dirs.every(function (d) { return d[0] === top; }) && dirs.some(function (d) { return d.length > 1; });
-        return { from: 'a .zip of Markdown files', items: mds.map(function (x, k) {
-          var parsed = parseChat(texts[k]), base = baseName(x.name.split('/').pop()), m = /^(\d{4}-\d{2}-\d{2})\b/.exec(base);
-          return { title: parsed.title || base, date: m ? new Date(m[1] + 'T12:00:00') : null, msgs: parsed.msgs, md: texts[k], fileBase: base, folder: dirs[k].slice(shared ? 1 : 0).join(' / ').replace(/^No project$/, '') };
-        }) };
+        if (found) return found;
+        throw firstErr || new Error('No chats found in this .zip.');
       });
+    }
+    // A .zip of .md files (for example a backup made here): folders come from the paths inside it.
+    var mds = ents.filter(function (x) { return /\.(md|markdown|txt)$/i.test(x.name) && !/(^|\/)(__MACOSX|\.)/.test(x.name); });
+    if (!mds.length) throw new Error('No chats found in this .zip. From Claude, open conversations-000.zip.');
+    return Promise.all(mds.map(function (x) { return zipText(buf, x); })).then(function (texts) {
+      var dirs = mds.map(function (x) { return x.name.split('/').slice(0, -1); }), top = dirs[0][0];
+      var shared = top && dirs.every(function (d) { return d[0] === top; }) && dirs.some(function (d) { return d.length > 1; });
+      return { from: 'a .zip of Markdown files', items: mds.map(function (x, k) {
+        var parsed = parseChat(texts[k]), base = baseName(x.name.split('/').pop()), m = /^(\d{4}-\d{2}-\d{2})\b/.exec(base);
+        return { title: parsed.title || base, date: m ? new Date(m[1] + 'T12:00:00') : null, msgs: parsed.msgs, md: texts[k], fileBase: base, folder: dirs[k].slice(shared ? 1 : 0).join(' / ').replace(/^No project$/, '') };
+      }) };
     });
-  job.then(function (r) {
+  });
+}
+// Several files opened together (for example conversations-000.zip and -001.zip) become one list.
+function openArchives(files) {
+  toast('Reading ' + (files.length === 1 ? files[0].name : plural(files.length, 'file')) + '…', false);
+  Promise.all(files.map(function (f) { return readArchive(f).then(null, function (e) { return { err: e }; }); })).then(function (res) {
+    var ok = res.filter(function (x) { return !x.err; });
+    if (!ok.length) throw res[0].err;
+    var froms = ok.map(function (x) { return x.from; }).filter(function (f, k, a) { return a.indexOf(f) === k; });
+    return { from: froms.join(' and '), items: [].concat.apply([], ok.map(function (x) { return x.items; })), skipped: res.length - ok.length };
+  }).then(function (r) {
     var items = r.items.filter(function (it) { return it.msgs.length; });
     var map = folderMap(), kept = 0;
     items.forEach(function (it) {
@@ -2651,7 +2683,8 @@ function openArchive(file) {
     items.sort(function (a, b) { return (b.date || 0) - (a.date || 0); });
     lib = { items: items, sel: {}, from: r.from };
     var n = r.items.length - items.length;
-    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'empty chat') + ' left out)' : '') + '. ' + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
+    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'empty chat') + ' left out)' : '') + '. ' +
+      (r.skipped ? plural(r.skipped, 'file') + ' could not be read. ' : '') + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
     // A backup .zip already has its folders in it, so the option shows only for exports.
     $('libKeep').hidden = !items.some(function (it) { return it.id; });
     $('libRemember').checked = !!map;
@@ -2661,7 +2694,7 @@ function openArchive(file) {
     renderLibrary();
     if ($('library').hidden) togglePanel('library');
     $('toast').hidden = true;
-  }, function (err) {
+  }).then(null, function (err) {
     notice.hidden = false;
     $('noticeText').textContent = (err && err.name === 'SyntaxError') ? 'This file could not be read as a chat export.' : (err && err.message) || 'This file could not be read.';
     $('toast').hidden = true;

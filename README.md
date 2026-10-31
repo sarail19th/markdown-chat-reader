@@ -55,6 +55,7 @@ Then open `http://localhost:8000`. Service workers need `localhost` or HTTPS.
 
 | Path | What it is |
 |---|---|
+| `LICENSE` | MIT licence for this app's own code |
 | `index.html` | The app: HTML, CSS and vanilla JavaScript. The parser sits between the `//#parser-start` and `//#parser-end` markers. |
 | `sample.md` | The sample chat shown on first load. It explains how to use the reader, in the reader's own chat format. Edit it to change the start screen. |
 | `sw.js` | Service worker for offline use. It caches only app files, never chats. |
@@ -64,6 +65,6 @@ Then open `http://localhost:8000`. Service workers need `localhost` or HTTPS.
 | `.github/workflows/pages.yml` | Deploys to GitHub Pages on every push to `main` |
 | `.github/screenshots/`, `.github/social-preview.png` | README screenshots (made with sample data) and the repository's social preview image |
 
-## Third-party licences
+## Licence
 
-Bundled libraries and fonts keep their own licences. The font licences are in `fonts/`. See the marked and DOMPurify projects for theirs.
+MIT, see [LICENSE](LICENSE). Bundled libraries and fonts keep their own licences. The font licences are in `fonts/`. See the marked and DOMPurify projects for theirs.
