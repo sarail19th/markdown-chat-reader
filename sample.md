@@ -89,7 +89,7 @@ My chats were in projects. Why are they all mixed together?
 ChatGPT's export puts every chat into one file, ordered by date, and leaves out the project names. Other apps may do the same, so check your export before you delete anything. Some ways to keep your projects:
 
 1. **Before you export, put the project in the title.** Rename each chat to start with its project, for example *[Travel] Packing list*. Titles are kept in the export, so when you open it here the chat goes straight into the folder Travel.
-2. **Or sort them here.** In the list of chats, tick the chats of one project and tap **Move to folder**. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which.
+2. **Or sort them here.** In the list of chats, tick the chats of one project and tap **Move to folder**. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which. Turn on **Remember my folders** and your next export opens already sorted.
 3. **Only need one project?** Use the one-chat prompt below in each of its chats instead of exporting everything.
 4. **Converting with an AI on a free plan?** Ask for the list of chats first, then convert only the ones you need, 10 at a time. Opening a ChatGPT or Claude export here has no such limit.
 
@@ -253,7 +253,7 @@ Is my chat uploaded or saved anywhere?
 **AI:**
 No. The file is read inside your browser and this page has no server that could receive it. That includes an export you open here. Your chats are never saved or tracked, so reloading or closing the tab clears the chat.
 
-Only your display choices are remembered, on this device. After your first visit the app's own files stay on your device, so it opens without internet. Your chats are never part of that.
+Only your display choices are remembered, on this device. If you turn on **Remember my folders** in the list of chats, it also keeps each chat's ID code and folder name, never titles or messages. After your first visit the app's own files stay on your device, so it opens without internet. Your chats are never part of that.
 
 ---
 

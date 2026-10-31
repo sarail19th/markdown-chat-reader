@@ -329,6 +329,8 @@ body.editing .titleedit { display: inline-flex; }
 .arrinfo span { font-size: .8rem; color: var(--muted); }
 /* Lab: the library of chats from an opened export */
 .libgroup h3 { margin: 4px 0 6px; font-size: .9rem; }
+.libcheck { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 500; cursor: pointer; }
+.libcheck input { width: 20px; height: 20px; margin: 0; accent-color: var(--logo-user, var(--user)); }
 .panel .liblist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .librow { display: flex; align-items: center; gap: 8px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
 .librow input { width: 20px; height: 20px; flex: none; margin: 0; accent-color: var(--logo-user, var(--user)); }
@@ -399,6 +401,7 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
   #appearance.sheet { width: 640px; max-height: none; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
   #info.sheet { width: 520px; max-height: none; }
   #paste.sheet { width: 560px; bottom: auto; max-height: none; }
+  #library.sheet { width: 560px; }
   #appearance .sheethead, #appearance #styleRow { grid-column: 1 / -1; }
   #appearance .choice { min-height: 38px; padding: 4px 12px; }
   body.sheet-open { padding-bottom: 0; }
@@ -589,7 +592,7 @@ Projects (optional, delete if not needed):
     <p>ChatGPT's export puts every chat into one file, ordered by date, and leaves out the project names. Other apps may do the same, so check your export before you delete anything.</p>
     <ul>
       <li><strong>Before you export, put the project in the title.</strong> Rename each chat to start with its project, for example <em>[Travel] Packing list</em>. Titles are kept in the export, so when you open it here the chat goes straight into the folder Travel.</li>
-      <li><strong>Or sort them here.</strong> In the list of chats, tick the chats of one project and use <strong>Move to folder</strong>. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which.</li>
+      <li><strong>Or sort them here.</strong> In the list of chats, tick the chats of one project and use <strong>Move to folder</strong>. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which. Turn on <strong>Remember my folders</strong> and your next export opens already sorted.</li>
       <li><strong>Only need one project?</strong> Use the one-chat prompt below in each of its chats instead of exporting everything.</li>
       <li><strong>Converting with an AI on a free plan?</strong> Ask for the list of chats first, then convert only the ones you need, 10 at a time. Opening a ChatGPT or Claude export here has no such limit.</li>
     </ul>
@@ -621,7 +624,7 @@ Do this for the full conversation history of this chat.</code></pre>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>An export you open here stays in your browser too. Converting with an AI assistant instead sends your export to that service. This reader never does.</li>
-      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font, where you moved the buttons and whether you hid the editing tips) are remembered, on this device. A font file you add stays on this device too.</li>
+      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font, where you moved the buttons and whether you hid the editing tips) are remembered, on this device. A font file you add stays on this device too. If you turn on <strong>Remember my folders</strong>, it also keeps each chat's ID code from the export and its folder name, never titles or messages.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>Install it on your phone</h2>
@@ -646,7 +649,11 @@ Do this for the full conversation history of this chat.</code></pre>
     <p class="hint" id="libInfo"></p>
     <input type="search" id="libSearch" class="modalinput" placeholder="Search chat titles" aria-label="Search chat titles" autocomplete="off">
     <div id="libList"></div>
-    <p class="hint">Everything happens in this browser: nothing is uploaded or saved, and folders last until you close the page. Titles that start with [Name] go into the folder Name.</p>
+    <p class="hint">Everything happens in this browser and nothing is uploaded. Titles that start with [Name] go into the folder Name.</p>
+    <div id="libKeep">
+      <label class="libcheck"><input type="checkbox" id="libRemember"> Remember my folders on this device</label>
+      <p class="hint">Keeps only each chat's ID code from the export and its folder name, never titles or messages, so the next export opens already sorted. Turn it off to forget them.</p>
+    </div>
     <div class="libbar">
       <button class="btn" id="libAll" type="button">Select all shown</button>
       <button class="btn" id="libMove" type="button" disabled>Move to folder</button>
@@ -2253,7 +2260,8 @@ function closeSheet(id, keepFocus) {
   if (btn && !keepFocus) btn.focus({ preventScroll: true });
 }
 document.addEventListener('click', function (e) {
-  if (!WIDE.matches || (accList && !accList.hidden)) return;
+  // A dialog opened from a panel (such as Move to folder) belongs to it, so clicking in the dialog keeps the panel open.
+  if (!WIDE.matches || (accList && !accList.hidden) || (e.target.closest && e.target.closest('#modal'))) return;
   ['appearance', 'info', 'paste', 'library'].forEach(function (id) {
     if (!$(id).hidden && !$(id).contains(e.target) && !e.target.closest('[data-panel="' + id + '"]')) closeSheet(id, true);
   });
@@ -2579,7 +2587,7 @@ function fromChatGPT(list, assets) {
       var text = bits.join('\n\n').replace(/[^]*/g, '').replace(/[-]/g, '').trim();
       if (text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
     });
-    return { title: String(c.title || 'Untitled chat').trim(), date: c.create_time ? new Date(c.create_time * 1000) : null, msgs: msgs };
+    return { id: String(c.conversation_id || c.id || ''), title: String(c.title || 'Untitled chat').trim(), date: c.create_time ? new Date(c.create_time * 1000) : null, msgs: msgs };
   });
 }
 // Claude: chat_messages with sender human or assistant; text blocks only, so its thinking is left out too.
@@ -2596,13 +2604,27 @@ function fromClaude(list) {
       text = text.trim();
       if (text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
     });
-    return { title: String(c.name || 'Untitled chat').trim(), date: c.created_at ? new Date(c.created_at) : null, msgs: msgs };
+    return { id: String(c.uuid || ''), title: String(c.name || 'Untitled chat').trim(), date: c.created_at ? new Date(c.created_at) : null, msgs: msgs };
   });
 }
 function fromExport(data, assets) {
   if (Array.isArray(data) && data.length && data[0].mapping) return { from: 'ChatGPT', items: fromChatGPT(data, assets || {}) };
   if (Array.isArray(data) && data.length && Array.isArray(data[0].chat_messages)) return { from: 'Claude', items: fromClaude(data) };
   throw new Error('This file is not a ChatGPT or Claude chat export. For other apps, use the AI prompt in Help.');
+}
+// Remembered folders (opt-in): { chat ID code: folder name } in this browser only. No titles or messages are kept.
+function folderMap() {
+  try { var v = localStorage.getItem('cr-folders'); return v ? JSON.parse(v) : null; } catch (e) { return null; }
+}
+function saveFolderMap(map) {
+  try { if (map) localStorage.setItem('cr-folders', JSON.stringify(map)); else localStorage.removeItem('cr-folders'); } catch (e) { /* storage blocked: folders last until the page closes */ }
+}
+// Only folders that differ from the [Name] title rule are kept, so the saved list stays small.
+function rememberFolders(items) {
+  var map = folderMap();
+  if (!map) return;
+  items.forEach(function (it) { if (!it.id) return; if (it.folder === titleFolder(it.title)) delete map[it.id]; else map[it.id] = it.folder; });
+  saveFolderMap(map);
 }
 function isoDay(d) { return d && !isNaN(d) ? d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) : ''; }
 function titleFolder(t) { var m = /^\s*\[([^\]\n]{1,60})\]/.exec(t); return m ? m[1].trim() : ''; }
@@ -2635,11 +2657,19 @@ function openArchive(file) {
     });
   job.then(function (r) {
     var items = r.items.filter(function (it) { return it.msgs.length; });
-    items.forEach(function (it) { if (it.folder === undefined) it.folder = titleFolder(it.title); });
+    var map = folderMap(), kept = 0;
+    items.forEach(function (it) {
+      if (it.folder !== undefined) return;
+      if (map && it.id && Object.prototype.hasOwnProperty.call(map, it.id)) { it.folder = map[it.id]; kept++; }
+      else it.folder = titleFolder(it.title);
+    });
     items.sort(function (a, b) { return (b.date || 0) - (a.date || 0); });
     lib = { items: items, sel: {}, from: r.from };
     var n = r.items.length - items.length;
-    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'empty chat') + ' left out)' : '') + '. Tap a title to read it.';
+    $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'empty chat') + ' left out)' : '') + '. ' + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
+    // A backup .zip already has its folders in it, so the option shows only for exports.
+    $('libKeep').hidden = !items.some(function (it) { return it.id; });
+    $('libRemember').checked = !!map;
     $('libSearch').value = '';
     $('libBtn').hidden = false;
     $('libDir').hidden = !window.showDirectoryPicker;
@@ -2685,6 +2715,10 @@ function syncLibBar() {
   $('libAll').textContent = all ? 'Clear selection' : 'Select all shown';
 }
 $('libSearch').addEventListener('input', function () { if (lib) renderLibrary(); });
+$('libRemember').addEventListener('change', function () {
+  if (this.checked) { saveFolderMap({}); rememberFolders(lib.items); toast('Your folders will be remembered on this device.', false); }
+  else { saveFolderMap(null); toast('Saved folders forgotten.', false); }
+});
 $('libList').addEventListener('change', function (e) {
   var i = e.target.getAttribute && e.target.getAttribute('data-i');
   if (i === null || i === undefined) return;
@@ -2714,7 +2748,8 @@ $('libMove').addEventListener('click', function () {
     title: 'Move to folder', help: 'Pick a folder or type a new name. The chats keep their titles.', body: input.box, ok: 'Move', focus: input.el,
     onOk: function () {
       var f = input.el.value.replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
-      Object.keys(lib.sel).forEach(function (i) { lib.items[i].folder = f; });
+      var moved = Object.keys(lib.sel).map(function (i) { lib.items[i].folder = f; return lib.items[i]; });
+      rememberFolders(moved);
       lib.sel = {};
       renderLibrary();
     }
@@ -2789,6 +2824,7 @@ $('resetPrefs').addEventListener('click', function () {
   setFont('d');
   setLong('full');
   setTint('off');
+  saveFolderMap(null); $('libRemember').checked = false;
   savePref('cr-accent', null); savePref('cr-mode', null);
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
   setAccent('lavender');
