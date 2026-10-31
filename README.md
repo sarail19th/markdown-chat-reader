@@ -18,6 +18,8 @@ I wanted a backup of my ChatGPT chats that I could read on Google Drive. The exp
 
 So I made this. It opens the export on my own phone, lets me put chats back into folders, and saves them as `.md` files that Google Drive shows as plain text and this app shows as a chat. Nothing leaves the device.
 
+I built it with help from Claude (Claude Code), and I test each change on my own phone.
+
 ## How it works
 
 1. **Export** your chats from ChatGPT, Claude or another AI app (Help in the app lists the steps).
