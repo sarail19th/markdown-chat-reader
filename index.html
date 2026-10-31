@@ -10,6 +10,7 @@
     var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
     if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|lavender|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
+    if (localStorage.getItem('cr-tint') === 'on') r.setAttribute('data-tint', 'on');
     var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
     [['cr-size', '--chat-fs', 14, 28, 'px'], ['cr-lh', '--chat-lh', 1.2, 2.2, ''], ['cr-ps', '--chat-ps', .2, 2, 'em']].forEach(function (d) {
       var v = localStorage.getItem(d[0]);
@@ -194,6 +195,7 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .choice { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 14px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
 .choice i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128, 128, 128, .45); flex: none; }
 .choice[aria-checked="true"] { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.choice:disabled { opacity: .5; cursor: not-allowed; }
 .dd { position: relative; max-width: 420px; }
 .ddbtn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; box-sizing: border-box; padding: 6px 12px; font: 500 .95rem var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; text-align: left; }
 .ddbtn span { flex: 1; }
@@ -449,6 +451,17 @@ body.searching .fabs { display: none; }
   --logo-base: #e4dac0; --logo-tint: 0; --logo-ai: #60584a; --logo-eye: #e4dac0;
 }
 :root[data-theme="green"][data-accent="classic"] { --user: #d6c9a8; --user-fg: #342d22; --logo-user: #a8987a; }
+/* Tinted background: an 8% wash of the chat colour in Light mode. Grey text goes a shade darker so it keeps 4.5:1. */
+@supports (color: color-mix(in srgb, red, blue)) {
+  :root[data-tint="on"][data-theme="light"]:not([data-accent="classic"]):not([data-accent="white"]) {
+    --bg: color-mix(in srgb, var(--user) 8%, #f2f5f3); --bar: color-mix(in srgb, var(--user) 8%, #f2f5f3); --muted: #5a6862;
+  }
+  @media (prefers-color-scheme: light) {
+    :root[data-tint="on"]:not([data-theme]):not([data-accent="classic"]):not([data-accent="white"]) {
+      --bg: color-mix(in srgb, var(--user) 8%, #f2f5f3); --bar: color-mix(in srgb, var(--user) 8%, #f2f5f3); --muted: #5a6862;
+    }
+  }
+}
 /* A white bubble needs a grey tile behind it to show. */
 :root[data-accent="white"] { --logo-base: var(--line); --logo-tint: 0; }
 </style>
@@ -491,6 +504,14 @@ body.searching .fabs { display: none; }
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="dark">Dark</button>
         <button class="choice" type="button" role="radio" aria-checked="false" data-mode="green" title="Recycled-paper tones that are easy on the eyes">Green Read</button>
       </div>
+    </div>
+    <div id="tintRow">
+      <span class="lbl" id="tintLbl">Background</span>
+      <div class="choices" id="tintGroup" role="radiogroup" aria-labelledby="tintLbl" aria-describedby="tintHint">
+        <button class="choice" type="button" role="radio" aria-checked="true" data-tint="off">Plain</button>
+        <button class="choice" type="button" role="radio" aria-checked="false" data-tint="on" title="A light wash of your chat colour behind the chat">Tinted</button>
+      </div>
+      <p class="hint" id="tintHint">A light wash of your chat colour. Light mode only.</p>
     </div>
     <div class="slider">
       <label class="lbl" for="fsRange">Text size <output id="fsVal">17 px</output></label>
@@ -1970,9 +1991,32 @@ function setChecked(group, attr, val) {
 }
 function syncThemeColor() {
   var meta = document.querySelector('meta[name="theme-color"]');
-  var c = getComputedStyle(root).getPropertyValue('--bg').trim();
+  var c = cssHex(getComputedStyle(document.body).backgroundColor);
   if (meta && c) meta.setAttribute('content', c);
   syncTabIcon();
+  syncTintRow();
+}
+// Browsers report a mixed colour as color(srgb 0.9 0.9 0.95); the browser bar is safest with #rrggbb.
+function cssHex(c) {
+  var n = (c.match(/[\d.]+/g) || []).map(Number), unit = /^color\(/.test(c);
+  if (n.length < 3) return c;
+  return '#' + n.slice(0, 3).map(function (v) { return ('0' + Math.round(unit ? v * 255 : v).toString(16)).slice(-2); }).join('');
+}
+// The tint shows only in Light mode (picked, or Auto on a light device) and not with Classic or White, so the choice is greyed out elsewhere.
+function syncTintRow() {
+  var g = $('tintGroup');
+  if (!g) return;
+  var t = root.getAttribute('data-theme'), a = root.getAttribute('data-accent');
+  var light = t === 'light' || (!t && !(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches));
+  var flat = a === 'classic' || a === 'white';
+  g.querySelectorAll('button').forEach(function (b) { b.disabled = !light || flat; });
+  $('tintHint').textContent = !light ? 'Shows in Light mode only.' : flat ? 'Not available with Classic or White. Pick a colour to use it.' : 'A light wash of your chat colour. Light mode only.';
+}
+function setTint(v) {
+  if (v === 'on') root.setAttribute('data-tint', 'on'); else root.removeAttribute('data-tint');
+  savePref('cr-tint', v === 'on' ? 'on' : null);
+  setChecked($('tintGroup'), 'data-tint', v === 'on' ? 'on' : 'off');
+  syncThemeColor();
 }
 // Browsers that take SVG tab icons get a copy of the header logo with its current colours written in; others keep icon-192.png.
 function syncTabIcon() {
@@ -2254,6 +2298,9 @@ document.querySelectorAll('#modeGroup button').forEach(function (b) {
     syncThemeColor();
   });
 });
+document.querySelectorAll('#tintGroup button').forEach(function (b) {
+  b.addEventListener('click', function () { setTint(b.getAttribute('data-tint')); });
+});
 document.querySelectorAll('#longGroup button').forEach(function (b) {
   b.addEventListener('click', function () { setLong(b.getAttribute('data-long')); });
 });
@@ -2374,6 +2421,7 @@ if (window.indexedDB && window.FontFace) {
   $('fontGroup').querySelector('[data-font="custom"]').hidden = true;
 }
 if (!(window.CSS && CSS.supports && CSS.supports('color', 'light-dark(red, blue)'))) $('styleRow').hidden = true;
+if (!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red, blue)'))) $('tintRow').hidden = true;
 if (window.matchMedia) {
   var mq = window.matchMedia('(prefers-color-scheme: dark)');
   if (mq.addEventListener) mq.addEventListener('change', syncThemeColor);
@@ -2384,6 +2432,7 @@ function savePref(k, v) {
 setAccent(root.getAttribute('data-accent') || 'green');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
+setChecked($('tintGroup'), 'data-tint', root.getAttribute('data-tint') === 'on' ? 'on' : 'off');
 /* ---- the X on notices: info notices and the editing tips are dismissed; the Edited copy notice folds to one line and can be opened again ---- */
 function setBannerCollapsed(on) {
   var b = $('editedBanner'), x = b.querySelector('.nx');
@@ -2407,6 +2456,7 @@ $('resetPrefs').addEventListener('click', function () {
   SLIDERS.forEach(function (c) { c.reset(); });
   setFont('d');
   setLong('full');
+  setTint('off');
   savePref('cr-accent', null); savePref('cr-mode', null);
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
   setAccent('green');
