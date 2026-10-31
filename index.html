@@ -1511,35 +1511,38 @@ function splitChatAfter(i) {
   if (!doc || !commitEdit()) return;
   var total = doc.msgs.length;
   if (i < 0 || i >= total - 1) return;
-  var base = cleanFileName(doc.title, 'chat').replace(/\.md$/, '');
+  // A chat that is already a part ("Title (part 2)") nests: its halves are "Title (part 2.1)" and "Title (part 2.2)", which still sort between parts 1 and 3.
+  var was = doc.title.match(/^(.*?)\s*\(part (\d+(?:\.\d+)*)\)\s*$/), stem = was && was[1] ? was[1] : doc.title, pre = was && was[1] ? was[2] + '.' : '';
+  var base = cleanFileName(stem, 'chat').replace(/\.md$/, '');
   var parts = [{ n: 1, from: 0, to: i + 1 }, { n: 2, from: i + 1, to: total }];
   var box = document.createElement('div');
   parts.forEach(function (p) {
-    p.def = base + ' (part ' + p.n + ')';
-    p.field = textInput(p.def, 'Part ' + p.n + ' of 2: messages ' + (p.from + 1) + ' to ' + p.to + ' (' + plural(p.to - p.from, 'message') + ')', true, false);
+    p.label = pre + p.n;
+    p.def = base + ' (part ' + p.label + ')';
+    p.field = textInput(p.def, 'Part ' + p.label + ': messages ' + (p.from + 1) + ' to ' + p.to + ' (' + plural(p.to - p.from, 'message') + ')', true, false);
     p.field.box.className = 'splitpart';
     var edge = doc.msgs[p.n === 1 ? p.to - 1 : p.from], note = document.createElement('p');
     note.className = 'splitnote';
     note.textContent = (p.n === 1 ? 'Ends with ' : 'Starts with ') + nameOf(edge.role) + ': "' + snippet(edge.text) + '"';
     p.field.box.insertBefore(note, p.field.box.firstChild.nextSibling);
     p.btn = document.createElement('button');
-    p.btn.type = 'button'; p.btn.className = 'btn'; p.btn.textContent = 'Download part ' + p.n;
-    p.btn.addEventListener('click', function () { savePart(p); p.btn.textContent = 'Saved. Download part ' + p.n + ' again'; });
+    p.btn.type = 'button'; p.btn.className = 'btn'; p.btn.textContent = 'Download part ' + p.label;
+    p.btn.addEventListener('click', function () { savePart(p); p.btn.textContent = 'Saved. Download part ' + p.label + ' again'; });
     p.field.box.appendChild(p.btn);
     box.appendChild(p.field.box);
   });
   function savePart(p) {
     var name = cleanFileName(p.field.el.value, p.def);
     saveFile(name, toMarkdown({
-      title: doc.title + ' (part ' + p.n + ')',
+      title: stem + ' (part ' + p.label + ')',
       msgs: doc.msgs.slice(p.from, p.to),
-      note: 'Made with Markdown Chat Reader. Part ' + p.n + ' of 2 of "' + doc.title + '", messages ' + (p.from + 1) + ' to ' + p.to + ' of ' + total + '. The other part is a separate file. Select both files in Open to read them as one chat again.'
+      note: 'Made with Markdown Chat Reader. Part ' + p.label + ' of "' + stem + '" (the ' + (p.n === 1 ? 'first' : 'second') + ' half of ' + (pre ? 'part ' + pre.slice(0, -1) : 'the chat') + '), messages ' + (p.from + 1) + ' to ' + p.to + ' of ' + total + '. The other part is a separate file. Select both files in Open to read them as one chat again.'
     }));
     return name;
   }
   openModal({
     title: 'Split chat after message ' + (i + 1), cancel: 'Close',
-    help: 'The cut is right after the message you tapped: it is the last message of part 1, and the next message starts part 2. To start part 2 with a message instead, tap the message just above it. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.',
+    help: 'The cut is right after the message you tapped: it is the last message of the first file, and the next message starts the second file. To start the second file with a message instead, tap the message just above it. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.',
     body: box, ok: 'Download both', focus: parts[0].field.el,
     onOk: function () {
       var a = cleanFileName(parts[0].field.el.value, parts[0].def), b = cleanFileName(parts[1].field.el.value, parts[1].def);
