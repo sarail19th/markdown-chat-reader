@@ -144,6 +144,26 @@ The icons at the bottom are <svg class="gi" viewBox="0 0 24 24" aria-hidden="tru
 ---
 
 **You:**
+I use AI to write fanfiction and story collections. How do I use this?
+
+---
+
+**AI:**
+It works well for a chat that holds a setup and then many separate scenes: one-shots, AUs, flashbacks, readers' reactions and so on. The reader does not know where one scene ends and the next begins, so you choose the cuts. Here is a way to do it:
+
+1. **Open the chat.** Each scene shows as your prompt on the right and the AI's story on the left.
+2. **Set the first part aside.** Your first prompt (characters, personality, background, an interaction test) was for the AI, not for readers. Turn on **Edit**, tap the last message of that setup, tap **Split after this**, and save part 1 under a name you like. It shows how each file ends and starts so you can check the cut.
+3. **Take a scene out.** Tap the message just before the scene starts, tap **Split after this**, then switch to **Excerpt only**. The first message number is already filled in. Change the last number to where the scene ends, name the file after the scene (for example "AU coffee shop"), and tap **Download excerpt**.
+4. **Repeat for each scene.** Your open chat is not changed, so you can take out as many scenes as you like. Each prompt carries its own setup, so every file stands on its own and can be read in any order. If a range starts on the AI's reply, a button adds your prompt before it.
+5. **Tidy up if you want.** Edit can remove private details or fix wrong bold and italics before you save.
+
+If you would rather keep the scenes together, **Two parts** splits a very long chat in two, and selecting both files in **Open** merges them back.
+
+Saved copies say they are an excerpt or an edited copy, so a trimmed chat is never mistaken for the whole conversation. Your own story is yours to share; just keep that label.
+
+---
+
+**You:**
 How do I change how it looks?
 
 ---
