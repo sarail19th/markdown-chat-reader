@@ -450,12 +450,17 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .menubtn svg { width: 22px; height: 22px; }
 .menubtn:hover { background: var(--code); }
 .menubtn[aria-expanded="true"], .menubtn:active { color: var(--user-fg); background: var(--user); box-shadow: none; }
-.topmenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 230px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
+.topmenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 250px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
 .mitem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; color: var(--fg); background: none; border: 0; border-radius: 10px; font: 600 1rem var(--ff); text-align: left; cursor: pointer; }
 .mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mitem:hover { background: var(--code); }
 .mitem span { display: grid; }
 .mitem small { font-weight: 400; font-size: .78rem; color: var(--muted); }
+.mitem .sw { position: relative; flex: none; width: 40px; height: 24px; margin-left: auto; padding-left: 8px; box-sizing: content-box; border-radius: 12px; background: rgba(128, 128, 128, .5); transition: background .15s; }
+.mitem .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: transform .15s; }
+.mitem[aria-checked="true"] .sw { background: var(--logo-user, var(--user)); }
+.mitem[aria-checked="true"] .sw::after { transform: translateX(16px); }
+@media (prefers-reduced-motion: reduce) { .mitem .sw, .mitem .sw::after { transition: none; } }
 .menusep { height: 1px; margin: 4px 8px; background: var(--line); }
 :root[data-hide-tools] .fabs, :root[data-hide-arrows] .navfabs { display: none; }
 .mitem:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
@@ -522,8 +527,8 @@ body.searching .fabs, body.searching .navfabs { display: none; }
         <button class="mitem" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span>Paste text</span></button>
         <button class="mitem" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span>Help</span></button>
         <div class="menusep" role="separator"></div>
-        <button class="mitem" id="hideToolsBtn" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span><b>Hide the tools</b><small>Edit, Style, Search</small></span></button>
-        <button class="mitem" id="hideArrowsBtn" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span><b>Hide the arrows</b><small>Jump, previous, next</small></span></button>
+        <button class="mitem" id="hideToolsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Show the tools<small>Edit, Style, Search</small></span><i class="sw" aria-hidden="true"></i></button>
+        <button class="mitem" id="hideArrowsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Show the arrows<small>Jump, previous, next</small></span><i class="sw" aria-hidden="true"></i></button>
       </div>
     </div>
   </header>
@@ -2028,15 +2033,11 @@ $('file').addEventListener('change', function (e) { loadFiles(e.target.files); e
 $('openBtn').addEventListener('click', function () { $('file').click(); });
 function setTopMenu(open) { $('topMenu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
 $('menuBtn').addEventListener('click', function () { var open = $('topMenu').hidden; setTopMenu(open); if (open) $('openBtn').focus({ preventScroll: true }); });
-$('topMenu').addEventListener('click', function (e) { if (e.target.closest('.mitem')) setTopMenu(false); });
+$('topMenu').addEventListener('click', function (e) { if (e.target.closest('.mitem:not([role="switch"])')) setTopMenu(false); }); // the switches stay open so both can be set
 // The menu can hide each floating group completely; the choice is remembered on this device and cleared by Reset all settings.
-var HIDES = [['hideToolsBtn', 'data-hide-tools', 'cr-hide-tools', 'the tools'], ['hideArrowsBtn', 'data-hide-arrows', 'cr-hide-arrows', 'the arrows']];
+var HIDES = [['hideToolsBtn', 'data-hide-tools', 'cr-hide-tools'], ['hideArrowsBtn', 'data-hide-arrows', 'cr-hide-arrows']];
 function syncHides() {
-  HIDES.forEach(function (h) {
-    var hidden = document.documentElement.hasAttribute(h[1]), b = $(h[0]);
-    b.setAttribute('aria-pressed', String(hidden));
-    b.querySelector('b').textContent = (hidden ? 'Show ' : 'Hide ') + h[3];
-  });
+  HIDES.forEach(function (h) { $(h[0]).setAttribute('aria-checked', String(!document.documentElement.hasAttribute(h[1]))); });
 }
 HIDES.forEach(function (h) {
   try { if (localStorage.getItem(h[2]) === '1') document.documentElement.setAttribute(h[1], ''); } catch (e) { /* storage blocked: both groups start shown */ }

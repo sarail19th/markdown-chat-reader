@@ -144,7 +144,7 @@ What can I do once a chat is open?
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg> **Style** | Colours, mode, text size, spacing and font. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg> **Help** (top-right menu) | The steps, and what happens to your file. |
 
-The round button (<svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>) folds and unfolds the Edit, Style and Search buttons. Drag it to move them; the round button in the other corner folds the jump and previous / next arrows, and you can drag it too; the bottom of the top-right menu hides or shows either group completely; **Reset all settings** in Style puts it back. Every code block has a **Copy** button.
+The round button (<svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>) folds and unfolds the Edit, Style and Search buttons. Drag it to move them; the round button in the other corner folds the jump and previous / next arrows, and you can drag it too; the switches at the bottom of the top-right menu hide or show either group completely; **Reset all settings** in Style puts it back. Every code block has a **Copy** button.
 
 ---
 
