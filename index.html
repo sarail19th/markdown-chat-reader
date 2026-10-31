@@ -366,8 +366,8 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .etag { display: block; margin-top: 4px; font-size: .72rem; opacity: .7; text-align: right; }
 .unofficial { margin: 10px 0 0; padding: 6px 10px; border-left: 4px solid var(--warn-bar); border-radius: 4px; background: var(--warn-bg); font-size: .78rem; line-height: 1.45; color: var(--warn-fg); }
 .hint { margin: 8px 0 0; font-size: .82rem; color: var(--muted); }
-.bar { display: grid; gap: 12px; }
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bar { display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 auto; }
 .logo { width: 36px; height: 36px; flex: none; }
 /* App logo: the user's bubble (accent colour) above the AI robot, in the current mode's colours. The tab icon is copied from it. */
 .lg-base { fill: var(--logo-base); }
@@ -393,7 +393,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .sheetx:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .scrim { position: fixed; inset: 0; z-index: 24; background: rgba(0, 0, 0, .4); }
 body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
-/* Wide screens: Appearance pops up beside the floating buttons, and Help, Paste and the chat list pop up under the top-left menu, instead of docking at the bottom. */
+/* Wide screens: Appearance pops up beside the floating buttons, and Help, Paste and the chat list pop up beside the top-right column, instead of docking at the bottom. */
 @media (min-width: 760px) {
   .sheet { right: auto; bottom: auto; margin: 0; max-width: none; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
   #appearance.sheet { width: 640px; max-height: none; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
@@ -438,14 +438,9 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .fabpair .fabbtn:last-child { border-radius: 0 0 22px 22px; border-top: 1px solid var(--line); }
 .fabpair .fabbtn:hover { background: var(--code); }
 .fabbtn:disabled { opacity: .45; cursor: not-allowed; }
-/* Top-left menu: Open, Paste, Chats and Help. It is part of the header, so it scrolls away with it. */
-.menuwrap { position: relative; flex: none; }
-.menubtn { width: 40px; height: 40px; box-shadow: none; }
-.topmenu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; display: grid; min-width: 230px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
-.mitem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; color: var(--fg); background: none; border: 0; border-radius: 10px; font: 600 1rem var(--ff); text-align: left; cursor: pointer; }
-.mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.mitem:hover { background: var(--code); }
-.mitem:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+/* Top-right column: Open, Chats, Paste and Help. It is part of the header, so it scrolls away with it. */
+.topbtns { display: grid; align-content: start; justify-items: center; gap: 8px; flex: none; }
+.topbtns .fabbtn { width: 40px; height: 40px; }
 /* Second group: move around the chat. It sits in the opposite bottom corner from the tools, and swaps sides if the tools are dragged across. */
 .navfabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .fabs[data-h="left"] ~ .navfabs { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); }
@@ -486,20 +481,17 @@ body.searching .fabs, body.searching .navfabs { display: none; }
 <div class="wrap">
   <header class="bar">
     <div class="brand">
-      <div class="menuwrap" id="menuWrap">
-        <button class="fabbtn menubtn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="topMenu" aria-label="Menu" title="Open a file, paste text, or read the help"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
-        <div class="topmenu" id="topMenu" role="group" aria-label="Open or paste" hidden>
-        <button class="mitem" id="openBtn" type="button" aria-label="Open a file" title="Open a .md file, a backup .zip, or a ChatGPT or Claude export (.zip or .json). Select several .md parts to merge them into one chat. Files are read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open a file</span></button>
-        <button class="mitem" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg><span>Chats in this export</span></button>
-        <button class="mitem" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span>Paste text</span></button>
-        <button class="mitem" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span>Help</span></button>
-        </div>
-      </div>
       <svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><defs><clipPath id="logoClip"><rect width="512" height="512" rx="115"/></clipPath></defs><g clip-path="url(#logoClip)"><rect class="lg-base" width="512" height="512"/><rect class="lg-tint" width="512" height="512"/><path class="lg-user" d="M128 -40 H560 V222 H380 C376 244 380 266 392 284 C360 274 338 252 330 222 H184 C153 222 128 197 128 166 Z"/><path class="lg-line" d="M200 96H370M190 154L420 156"/><path class="lg-ai" d="M136 312 C130 292 116 276 98 266 L106 256 C146 268 190 284 228 306 Z"/><circle class="lg-ai" cx="92" cy="254" r="25"/><path class="lg-ai" d="M-40 336 C30 318 100 306 150 304 H300 C356 304 394 328 412 368 C424 396 428 426 428 456 V560 H-40 Z"/><ellipse class="lg-eye" cx="186" cy="410" rx="19" ry="32"/><ellipse class="lg-eye" cx="290" cy="410" rx="19" ry="32"/></g></svg>
       <div class="heading">
         <div class="titlerow"><h1 id="title">Chat export</h1><button class="titleedit" id="renameBtn" type="button" aria-label="Rename this chat" title="Rename this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button></div>
         <p class="meta" id="meta"></p>
       </div>
+    </div>
+    <div class="topbtns" id="topBtns" role="group" aria-label="Open, paste or help">
+      <button class="fabbtn" id="openBtn" type="button" aria-label="Open a file" title="Open a .md file, a backup .zip, or a ChatGPT or Claude export (.zip or .json). Select several .md parts to merge them into one chat. Files are read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+      <button class="fabbtn" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg></button>
+      <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
+      <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
     </div>
   </header>
   <section id="search" class="panel" hidden aria-label="Search this chat">
@@ -1977,14 +1969,6 @@ document.addEventListener('keydown', function (e) {
 
 $('file').addEventListener('change', function (e) { loadFiles(e.target.files); e.target.value = ''; });
 $('openBtn').addEventListener('click', function () { $('file').click(); });
-function setTopMenu(open) { $('topMenu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
-$('menuBtn').addEventListener('click', function () { var open = $('topMenu').hidden; setTopMenu(open); if (open) $('openBtn').focus({ preventScroll: true }); });
-$('topMenu').addEventListener('click', function (e) { if (e.target.closest('.mitem')) setTopMenu(false); });
-document.addEventListener('click', function (e) { if (!$('topMenu').hidden && !e.target.closest('#menuWrap')) setTopMenu(false); });
-document.addEventListener('keydown', function (e) {
-  if (e.key !== 'Escape' || e.defaultPrevented || $('topMenu').hidden) return;
-  e.preventDefault(); setTopMenu(false); $('menuBtn').focus({ preventScroll: true });
-});
 $('fabToggle').addEventListener('click', function () {
   if (justDragged) { justDragged = false; return; }
   var hide = !document.documentElement.hasAttribute('data-menu');
@@ -2141,10 +2125,10 @@ function placeSheets() {
   ['appearance', 'info', 'paste', 'library'].forEach(function (id) {
     var el = $(id);
     if (el.hidden || !WIDE.matches) { el.style.top = el.style.bottom = el.style.left = el.style.maxHeight = ''; return; }
-    if (id !== 'appearance') { // opened from the top-left menu, so it drops down from there
-      el.style.left = Math.max(8, Math.min($('menuBtn').getBoundingClientRect().left, window.innerWidth - el.offsetWidth - 8)) + 'px';
-      el.style.bottom = 'auto'; el.style.top = '64px';
-      el.style.maxHeight = Math.max(240, window.innerHeight - 64 - 16) + 'px';
+    if (id !== 'appearance') { // opened from the top-right column, so it opens to the left of it
+      el.style.left = Math.max(8, $('topBtns').getBoundingClientRect().left - 12 - el.offsetWidth) + 'px';
+      el.style.bottom = 'auto'; el.style.top = '16px';
+      el.style.maxHeight = Math.max(240, window.innerHeight - 16 - 16) + 'px';
       return;
     }
     var f = $('fabToggle').getBoundingClientRect(), side = $('fabs').dataset;

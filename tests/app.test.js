@@ -107,17 +107,17 @@ test('Help panel has a "Why Markdown?" section', async () => {
   assert.ok(names.includes('Why Markdown?'));
 });
 
-test('the buttons are in groups: Open, Paste and Help in the top-left menu, Edit, Style and Search near the round button, moving around in the other corner', async () => {
+test('the buttons are in groups: Open, Paste and Help down the top right, Edit, Style and Search near the round button, moving around in the other corner', async () => {
   const page = await openApp();
   if (await page.evaluate(() => document.documentElement.hasAttribute('data-menu'))) await page.click('#fabToggle');
   const tools = await page.$$eval('#fabMenu > button', (bs) => bs.filter((b) => !b.hidden).map((b) => ({ name: b.getAttribute('aria-label'), top: b.getBoundingClientRect().top })));
   assert.deepEqual(tools.sort((a, b) => b.top - a.top).map((b) => b.name), ['Edit messages', 'Style', 'Search this chat'], 'nearest the round button first');
-  assert.ok(await page.locator('#topMenu').isHidden(), 'the top-left menu starts closed');
-  await page.click('#menuBtn');
-  assert.deepEqual(await page.$$eval('#topMenu button', (bs) => bs.filter((b) => !b.hidden).map((b) => b.textContent)), ['Open a file', 'Paste text', 'Help']);
+  const top = await page.$$eval('#topBtns button', (bs) => bs.filter((b) => !b.hidden).map((b) => { const r = b.getBoundingClientRect(); return { name: b.getAttribute('aria-label'), x: Math.round(r.left), y: r.top }; }));
+  assert.deepEqual(top.map((b) => b.name), ['Open a file', 'Paste .md text', 'Help']);
+  assert.ok(top.every((b) => b.x === top[0].x) && top[0].y < top[1].y && top[1].y < top[2].y, 'one vertical column');
+  assert.ok(top[0].x > (await page.evaluate(() => innerWidth)) / 2, 'on the right');
   await page.click('#pasteBtn');
-  assert.ok(await page.locator('#topMenu').isHidden(), 'choosing an item closes the menu');
-  assert.ok(await page.locator('#paste').isVisible(), 'and opens what was chosen');
+  assert.ok(await page.locator('#paste').isVisible(), 'Paste opens from it');
   assert.deepEqual(await page.$$eval('#navFabs button', (bs) => bs.map((b) => b.id)), ['topBtn', 'jumpBtn', 'prevMsgBtn', 'nextMsgBtn'], 'top and bottom are both there');
   const sides = await page.evaluate(() => ({ nav: document.getElementById('navFabs').getBoundingClientRect().left, fab: document.getElementById('fabToggle').getBoundingClientRect().left }));
   assert.ok(sides.nav < sides.fab, 'the two floating groups are in opposite corners');
