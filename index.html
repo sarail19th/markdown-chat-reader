@@ -468,8 +468,20 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .menuwrap { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px), calc((100% - 720px) / 2)); z-index: 30; }
 body.searching .menuwrap { display: none; }
 .menubtn { width: 44px; height: 44px; background: none; border: 0; box-shadow: none; }
-/* The button stays on screen while you read. Once the page has scrolled it gets a background, so the dots never sit bare on top of the text. */
-body.scrolled .menubtn { background: var(--surface); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(0, 0, 0, .18); }
+/* Slim bar: once the full header has scrolled away, a 52px bar keeps the chat title (tap it to go to the top) and the kebab on screen. */
+.slimbar { position: fixed; top: 0; left: 0; right: 0; z-index: 23; box-sizing: border-box; height: calc(52px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 8px; padding: env(safe-area-inset-top, 0px) calc(max(16px, env(safe-area-inset-right, 0px), calc((100% - 720px) / 2)) + 52px) 0 max(16px, env(safe-area-inset-left, 0px), calc((100% - 720px) / 2)); background: var(--bar); border-bottom: 1px solid var(--line); transform: translateY(-100%); visibility: hidden; }
+body.slim .slimbar { transform: none; visibility: visible; }
+.slimbar .sl-title { min-width: 0; padding: 8px 0; font: 700 1rem var(--ff); color: var(--fg); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: none; border: 0; cursor: pointer; }
+.slimbar .sl-title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+.slimbar .sl-dot { display: none; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--logo-user, var(--user)); }
+body.unsaved .slimbar .sl-dot { display: inline-block; }
+body.slim .menuwrap { top: calc(4px + env(safe-area-inset-top, 0px)); }
+body.searching .slimbar { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .slimbar { transition: transform .18s, visibility 0s .18s; }
+  body.slim .slimbar { transition: transform .18s, visibility 0s; }
+  .menuwrap { transition: top .18s; }
+}
 .menubtn svg { width: 22px; height: 22px; }
 .menubtn:hover { background: var(--code); }
 body .menubtn[aria-expanded="true"], body .menubtn:active { color: var(--user-fg); background: var(--user); box-shadow: none; }
@@ -536,6 +548,7 @@ body.searching .fabs, body.searching .navfabs { display: none; }
 </head>
 <body>
 
+<div class="slimbar" id="slimBar"><button class="sl-title" id="slTitle" type="button" title="Go to the top of the chat">Chat export</button><i class="sl-dot" id="slDot" role="img" aria-label="Unsaved edits" title="You have unsaved edits"></i></div>
 <div class="wrap">
   <header class="bar">
     <div class="brand">
@@ -1002,6 +1015,7 @@ var SAMPLE = [
 
 var $ = function (id) { return document.getElementById(id); };
 var chat = $('chat'), titleEl = $('title'), metaEl = $('meta'), notice = $('notice');
+function setTitle(t) { titleEl.textContent = titleEl.title = t; $('slTitle').textContent = t; $('slTitle').title = t + '. Tap to go to the top.'; }
 var state = 'sample'; // 'sample' | 'chat'
 
 function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -1058,7 +1072,7 @@ function show(text, fallbackTitle, merged, origin) { // origin: 'paste' for a pa
     loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
   };
   if (!doc.editable) {
-    titleEl.textContent = titleEl.title = doc.title;
+    setTitle(doc.title);
     metaEl.textContent = 'No messages found';
     notice.hidden = false;
     $('noticeText').textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**AI:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
@@ -1216,7 +1230,7 @@ function render() {
   chat.innerHTML = '';
   moreEl = null;
   selIdx = -1; pickIdx = -1;
-  titleEl.textContent = titleEl.title = doc.title;
+  setTitle(doc.title);
   var u = 0, a = 0;
   doc.msgs.forEach(function (m) { if (m.role === 'user') u++; else if (m.role === 'assistant') a++; });
   if (shown < INITIAL) shown = INITIAL;
@@ -1241,6 +1255,7 @@ function render() {
   $('undoBtn').disabled = !undoStack.length;
   $('redoBtn').disabled = !redoStack.length;
   syncSave();
+  syncSlim();
   if (q) runSearch();
   requestAnimationFrame(maybeLoad);
 }
@@ -2167,7 +2182,11 @@ document.addEventListener('keydown', function (e) {
 
 $('file').addEventListener('change', function (e) { loadFiles(e.target.files); e.target.value = ''; });
 $('openBtn').addEventListener('click', function () { $('file').click(); });
-window.addEventListener('scroll', function () { document.body.classList.toggle('scrolled', window.scrollY > 8); }, { passive: true });
+// The slim bar shows once the full header has scrolled out of sight.
+function syncSlim() { var h = document.querySelector('header.bar'); document.body.classList.toggle('slim', !!h && h.getBoundingClientRect().bottom < 52); }
+window.addEventListener('scroll', syncSlim, { passive: true });
+window.addEventListener('resize', syncSlim);
+$('slTitle').addEventListener('click', function () { jumpTo(0); });
 function setTopMenu(open) { $('topMenu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
 $('menuBtn').addEventListener('click', function () { var open = $('topMenu').hidden; setTopMenu(open); if (open) $('openBtn').focus({ preventScroll: true }); });
 $('topMenu').addEventListener('click', function (e) { if (e.target.closest('.mitem:not([role="switch"])')) setTopMenu(false); }); // the switches stay open so both can be set

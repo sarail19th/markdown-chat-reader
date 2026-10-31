@@ -341,17 +341,41 @@ test('the top-right menu has switches that hide and show the floating tools and 
   assert.equal(await hidden('#navFabs'), false);
 });
 
-test('the kebab menu button stays on screen while you read, and still opens the menu', async () => {
+test('a slim bar with the title and the kebab appears once the header has scrolled away, and the title goes back to the top', async () => {
   const page = await openApp();
-  const box = () => page.locator('#menuBtn').boundingBox();
-  const top = await box();
+  const visible = () => page.evaluate(() => getComputedStyle(document.getElementById('slimBar')).visibility === 'visible');
+  assert.equal(await visible(), false, 'at the top the full header is enough');
+  assert.equal(await page.evaluate(() => document.getElementById('slTitle').textContent), await page.textContent('#title'), 'the bar carries the same title');
   await page.evaluate(() => window.scrollTo(0, 1500));
-  await page.waitForFunction(() => document.body.classList.contains('scrolled'));
-  const later = await box();
-  assert.deepEqual([Math.round(later.x), Math.round(later.y)], [Math.round(top.x), Math.round(top.y)], 'it has not moved, even far down the chat');
+  await page.waitForFunction(() => document.body.classList.contains('slim'));
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('slimBar')).visibility === 'visible');
+  // the bar slides down and the kebab slides up into it; measure once both have settled
+  await page.waitForFunction(() => document.getElementById('slimBar').getBoundingClientRect().top > -0.5 && document.getElementById('menuBtn').getBoundingClientRect().top < 4.5);
+  const bar = await page.locator('#slimBar').boundingBox(), kebab = await page.locator('#menuBtn').boundingBox();
+  assert.ok(Math.round(bar.height) === 52, 'it is a slim bar, about 52px');
+  assert.ok(kebab.y >= bar.y && kebab.y + kebab.height <= bar.y + bar.height, 'the kebab sits inside it');
   await page.click('#menuBtn');
   assert.ok(await page.locator('#topMenu').isVisible(), 'and the menu opens from there');
-  assert.ok(await page.locator('#hideToolsBtn').isVisible());
+  await page.click('#menuBtn');
+  await page.click('#slTitle');
+  await page.waitForFunction(() => window.scrollY === 0);
+  await page.waitForFunction(() => !document.body.classList.contains('slim'));
+});
+
+test('the slim bar shows a dot for unsaved edits, follows a renamed title, and steps aside for search', async () => {
+  const page = await openApp();
+  const shown = (sel) => page.evaluate((s) => getComputedStyle(document.querySelector(s)).display !== 'none', sel);
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  await page.waitForFunction(() => document.body.classList.contains('slim'));
+  assert.equal(await shown('#slDot'), false, 'no dot while nothing is unsaved');
+  await page.evaluate(() => { mutate(function () { doc.msgs[0].text = 'Changed'; }); window.scrollTo(0, 1500); });
+  assert.equal(await shown('#slDot'), true, 'a dot once there are unsaved edits');
+  await page.evaluate(() => { mutate(function () { doc.title = 'My Trip to Rome'; }); });
+  assert.equal(await page.textContent('#slTitle'), 'My Trip to Rome', 'a renamed chat updates the bar');
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  await page.click('#fabToggle');
+  await page.click('[data-panel="search"]');
+  assert.equal(await shown('#slimBar'), false, 'the search bar takes the top of the screen, so the slim bar leaves');
 });
 
 test('unsaved edits show a Save button in the tools and a dot on the folded round button, and saving clears them', async () => {
