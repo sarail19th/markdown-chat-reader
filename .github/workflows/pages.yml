@@ -27,7 +27,7 @@ jobs:
       - name: Stage site files
         run: |
           mkdir _site
-          cp -r index.html sample.md manifest.webmanifest sw.js icon-192.png icon-512.png vendor fonts _site/
+          cp -r index.html sample.md manifest.webmanifest sw.js icon-192.png icon-512.png icon-maskable-512.png apple-touch-icon.png vendor fonts _site/
           sed -i "s/__VERSION__/${GITHUB_SHA::8}/" _site/sw.js _site/index.html
 
       - name: Configure Pages

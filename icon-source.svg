@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<!-- Markdown Chat Reader app icon (Lavender, light). Rendered to the PNG icons. -->
+<defs><clipPath id="c"><rect width="512" height="512"/></clipPath></defs>
+<g clip-path="url(#c)"><rect width="512" height="512" fill="#e3dafd"/>
+<path d="M128 -40 H560 V222 H380 C376 244 380 266 392 284 C360 274 338 252 330 222 H184 C153 222 128 197 128 166 Z" fill="#a78bfa" stroke="#a78bfa" stroke-width="6" stroke-linejoin="round"/>
+<path d="M200 96H370M190 154L420 156" fill="none" stroke="#7b68b8" stroke-width="22" stroke-linecap="round"/>
+<path d="M136 312 C130 292 116 276 98 266 L106 256 C146 268 190 284 228 306 Z" fill="#ffffff" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/><circle cx="92" cy="254" r="25" fill="#ffffff"/>
+<path d="M-40 336 C30 318 100 306 150 304 H300 C356 304 394 328 412 368 C424 396 428 426 428 456 V560 H-40 Z" fill="#ffffff"/>
+<ellipse cx="186" cy="410" rx="19" ry="32" fill="#1f1b2e"/><ellipse cx="290" cy="410" rx="19" ry="32" fill="#1f1b2e"/></g></svg>
