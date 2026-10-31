@@ -121,7 +121,7 @@ body {
 }
 .heading { flex: 1 1 200px; min-width: 0; }
 h1 { margin: 0; min-width: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.meta { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
+.meta { margin: 2px 0 0; font-size: .85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn {
   font: 500 .95rem var(--ff); min-height: 44px; color: var(--fg); background: var(--surface);
@@ -1184,7 +1184,7 @@ function render() {
     chat.appendChild(d);
   }
   syncMore();
-  metaEl.textContent = doc.msgs.length + ' messages · ' + u + ' from you · ' + a + ' from AI' + (dirty ? ' · edited' : '');
+  metaEl.textContent = metaEl.title = doc.msgs.length + (doc.msgs.length === 1 ? ' message · ' : ' messages · ') + u + ' you · ' + a + ' AI' + (dirty ? ' · edited' : '');
   decorateCode(chat);
   applyClip(chat, true);
   $('editedBanner').hidden = !isModified();
