@@ -113,7 +113,7 @@ What can I do once a chat is open?
 | **Scroll handle** | On a touch screen, a handle appears on the right edge while you scroll. Drag it to move through a long chat quickly; a counter shows which message you are at. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7l4-4 4 4"/><path d="M6 10h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V19H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/></svg> <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V11.5H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/><path d="M8 17l4 4 4-4"/></svg> **Previous / next message** | The pair of speech-bubble buttons moves up or down exactly one message per tap. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/><path d="M6 5h12"/></svg> <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/><path d="M6 19h12"/></svg> **Up or down arrow** | Jumps to the end of a long chat, or back to the start once you are past the middle. |
-| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg> **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it, swap its side or split it between both speakers. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg> **Edit** | Tap a message to change its text and style (bold, italic, strikethrough, heading), delete it, swap its side, split it between both speakers or split a long chat into two files. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg> **Style** | Chat colours, light or dark mode, text size, spacing, font and whether long messages are collapsed. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg> **Help** | The full steps and what happens to your file. |
 
@@ -135,6 +135,7 @@ No. Your original file is never changed. Turn on **Edit**, tap a message, then:
 2. Delete it.
 3. Use **Swap side** to move it to the other speaker, for when a speaker was mixed up.
 4. Use **Split speaker** when one message holds both speakers' words. Tap in the text where the other speaker starts, or select the part that is theirs, then tap **Split speaker**. The message becomes separate messages on the correct sides. **Undo** brings it back.
+5. Use **Split chat** to cut a very long chat in two. The chat is cut after the message you tapped and saved as two new `.md` files, named "(part 1)" and "(part 2)" unless you rename them. Your open chat is not changed, and selecting both files in **Open** merges them back into one chat.
 
 While editing, a pencil appears beside the chat title so you can rename the chat.
 

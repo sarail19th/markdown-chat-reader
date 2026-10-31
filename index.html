@@ -298,6 +298,8 @@ body.editing .titleedit { display: inline-flex; }
 .fieldrow span { flex: none; color: var(--muted); }
 .modalinput { display: block; flex: 1; min-width: 0; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: 400 max(16px, 1rem) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
 .modalinput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.splitpart { margin: 0 0 14px; }
+.splitpart .btn { margin-top: 8px; }
 .modalactions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .arrlist { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 42vh; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; }
 .arrlist li { display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
@@ -559,7 +561,7 @@ Do this for the full conversation history of this chat.</code></pre>
   </section>
   <p class="notice" id="notice" hidden></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the whole chat into two files or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved. <a href="https://github.com/sarail19th/markdown-chat-reader" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
@@ -1049,6 +1051,7 @@ var MENU_ICONS = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   split: '<path d="M12 4v16M8 8l-4 4 4 4M16 8l4 4-4 4"/>',
   swap: '<path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',
+  cut: '<path d="M3 12h4M10 12h4M17 12h4M8 7l4-4 4 4M8 17l4 4 4-4"/>',
   del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
 };
 function buildMenu(i, role) {
@@ -1059,6 +1062,7 @@ function buildMenu(i, role) {
   var defs = [['edit', 'Edit text', 'Edit message ' + (i + 1)]];
   if (role !== 'system') defs.push(['split', 'Split speaker', 'Split message ' + (i + 1) + ' between both speakers']);
   if (role !== 'system') defs.push(['swap', 'Swap side', 'Switch message ' + (i + 1) + ' to the other speaker']);
+  if (i < doc.msgs.length - 1) defs.push(['cut', 'Split chat', 'Split the chat into two files after message ' + (i + 1)]);
   defs.push(['del', 'Delete', 'Delete message ' + (i + 1)]);
   defs.forEach(function (d) {
     var b = document.createElement('button');
@@ -1418,6 +1422,7 @@ chat.addEventListener('click', function (e) {
   else if (act === 'cancel') { editingIdx = -1; render(); }
   else if (act === 'save') { saveEdit(i); }
   else if (act === 'split') { editingIdx = i; render(); toast(SPLIT_HINT, false); }
+  else if (act === 'cut') { splitChatAfter(i); }
   else if (act === 'swap') { mutate(function () { doc.msgs[i].role = doc.msgs[i].role === 'user' ? 'assistant' : 'user'; }); }
   else if (act === 'del') { mutate(function () { doc.msgs.splice(i, 1); }, 'Message deleted'); }
 });
@@ -1454,8 +1459,10 @@ $('renameBtn').addEventListener('click', function () {
 window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---- save a new copy (always a new file; the original is never changed) ---- */
-function toMarkdown() {
-  var out = ['# ' + (doc.title || 'Chat export'), ''];
+// part: { title, msgs, note } for one half of a split chat; omitted, it writes the whole chat.
+function toMarkdown(part) {
+  var msgs = part ? part.msgs : doc.msgs;
+  var out = ['# ' + ((part ? part.title : doc.title) || 'Chat export'), ''];
   if (isModified()) {
     out.push('> **Edited copy.** Made with Markdown Chat Reader. Some messages or the title were changed or removed, so this may not match the original conversation.');
     var cs = changeSummary();
@@ -1463,7 +1470,8 @@ function toMarkdown() {
     out.push('');
   }
   if (doc.mergedFrom) out.push('> **Merged copy.** Made with Markdown Chat Reader from ' + doc.mergedFrom.length + ' files, in this order: ' + doc.mergedFrom.join(', ') + '.', '');
-  doc.msgs.forEach(function (m, i) {
+  if (part) out.push('> **Split copy.** ' + part.note, '');
+  msgs.forEach(function (m, i) {
     if (i) out.push('---', '');
     var lab = m.role === 'user' ? doc.names.user : m.role === 'system' ? 'System' : doc.names.assistant;
     out.push('**' + lab + ':**', m.text.replace(/\s+$/, ''), '');
@@ -1486,12 +1494,55 @@ function askSaveName() {
     onOk: function () { var name = cleanFileName(input.el.value, def); doc.saveName = name.replace(/\.md$/, ''); downloadMd(name); }
   });
 }
-function downloadMd(name) {
-  var url = URL.createObjectURL(new Blob([toMarkdown()], { type: 'text/markdown;charset=utf-8' }));
+function saveFile(name, text) {
+  var url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
   var a = document.createElement('a');
   a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+}
+/* ---- split chat: a long chat is saved as two files, cut after the chosen message; the open chat is not changed ---- */
+function splitChatAfter(i) {
+  if (!doc || !commitEdit()) return;
+  var total = doc.msgs.length;
+  if (i < 0 || i >= total - 1) return;
+  var base = cleanFileName(doc.title, 'chat').replace(/\.md$/, '');
+  var parts = [{ n: 1, from: 0, to: i + 1 }, { n: 2, from: i + 1, to: total }];
+  var box = document.createElement('div');
+  parts.forEach(function (p) {
+    p.def = base + ' (part ' + p.n + ')';
+    p.field = textInput(p.def, 'Part ' + p.n + ' of 2: messages ' + (p.from + 1) + ' to ' + p.to + ' (' + plural(p.to - p.from, 'message') + ')', true, false);
+    p.field.box.className = 'splitpart';
+    p.btn = document.createElement('button');
+    p.btn.type = 'button'; p.btn.className = 'btn'; p.btn.textContent = 'Download part ' + p.n;
+    p.btn.addEventListener('click', function () { savePart(p); p.btn.textContent = 'Saved. Download part ' + p.n + ' again'; });
+    p.field.box.appendChild(p.btn);
+    box.appendChild(p.field.box);
+  });
+  function savePart(p) {
+    var name = cleanFileName(p.field.el.value, p.def);
+    saveFile(name, toMarkdown({
+      title: doc.title + ' (part ' + p.n + ')',
+      msgs: doc.msgs.slice(p.from, p.to),
+      note: 'Made with Markdown Chat Reader. Part ' + p.n + ' of 2 of "' + doc.title + '", messages ' + (p.from + 1) + ' to ' + p.to + ' of ' + total + '. The other part is a separate file. Select both files in Open to read them as one chat again.'
+    }));
+    return name;
+  }
+  openModal({
+    title: 'Split chat after message ' + (i + 1), cancel: 'Close',
+    help: 'The chat is cut after this message and saved as two new .md files. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.',
+    body: box, ok: 'Download both', focus: parts[0].field.el,
+    onOk: function () {
+      var a = cleanFileName(parts[0].field.el.value, parts[0].def), b = cleanFileName(parts[1].field.el.value, parts[1].def);
+      if (a.toLowerCase() === b.toLowerCase()) { toast('Give the two parts different names.', false); parts[1].field.el.focus(); return false; }
+      savePart(parts[0]);
+      setTimeout(function () { savePart(parts[1]); }, 500);
+      toast('Saving 2 files: ' + a + ' and ' + b, false);
+    }
+  });
+}
+function downloadMd(name) {
+  saveFile(name, toMarkdown());
   dirty = false;
   toast('Saving a copy as ' + name + (isModified() ? ' (marked as an edited copy)' : ''), false);
   render();
@@ -1643,6 +1694,7 @@ function openModal(o) {
   $('modalBody').innerHTML = '';
   $('modalBody').appendChild(o.body);
   $('modalOk').textContent = o.ok;
+  $('modalCancel').textContent = o.cancel || 'Cancel';
   modalOnOk = o.onOk;
   $('modal').hidden = false;
   var f = o.focus || $('modalOk');
