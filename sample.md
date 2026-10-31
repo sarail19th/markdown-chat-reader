@@ -49,7 +49,7 @@ It all happens in your browser: no AI, nothing uploaded, and every word kept exa
 **Other apps** (Grok, Copilot and so on): upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. You get Markdown files back, one per chat, in project folders if you list your projects at the end.
 
 ```text
-Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-08-21 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
+Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-03-14 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
 
 The export may not say which project a chat was in. If I list projects below, put each chat in a folder named after its project, and the rest in a folder called No project. If I do not, suggest folders from the chat titles and show me the list before you convert.
 
@@ -221,7 +221,7 @@ Open **Style**:
 
 | Setting | Choices |
 |---|---|
-| Chat style | Classic, White and eight soft colours, from Lavender (the default) to Peach |
+| Chat style | Classic, White and seven soft colours, from Lavender (the default) round to Blush |
 | Mode | Auto, Light, Dark or Green Read |
 | Background | Plain, or Tinted: a light wash of your chat colour (Light mode only) |
 | Text size | A slider from 14 to 28 px |

@@ -9,9 +9,9 @@
   try {
     var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
     // The first colour set was replaced in 2026; a saved old colour moves to the nearest new one.
-    var MOVED = { blue: 'periwinkle', cyan: 'iceblue', green: 'teal', lime: 'mint', yellow: 'peach', orange: 'peach', pink: 'blush', magenta: 'rose', purple: null, lavender: null };
+    var MOVED = { blue: 'periwinkle', cyan: 'iceblue', green: 'mint', teal: 'mint', lime: 'mint', orange: 'peach', pink: 'blush', magenta: 'blush', rose: 'blush', purple: null, lavender: null };
     if (a && a in MOVED) { a = MOVED[a]; if (a) localStorage.setItem('cr-accent', a); else localStorage.removeItem('cr-accent'); }
-    if (a && /^(classic|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
+    if (a && /^(classic|periwinkle|iceblue|mint|yellow|peach|blush|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     if (localStorage.getItem('cr-tint') === 'on') r.setAttribute('data-tint', 'on');
     localStorage.removeItem('cr-lab'); // left over from testing the export converter
@@ -262,10 +262,9 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .panel pre code { background: none; padding: 0; font-size: inherit; }
 :root[data-accent="periwinkle"] { --user: #818cf8; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="blush"] { --user: #f28ab2; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="rose"] { --user: #e879a9; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="iceblue"] { --user: #67c8ed; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="mint"] { --user: #5bc9b1; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="teal"] { --user: #16b9a5; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="yellow"] { --user: #f6d365; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="peach"] { --user: #f5a17d; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="white"] { --user: #ffffff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="white"] .user .bubble { border: 1px solid var(--line); }
@@ -572,7 +571,7 @@ body.searching .fabs { display: none; }
     </ol>
     <h2>Other apps: convert with an AI</h2>
     <p>For Grok, Copilot and other exports this reader cannot open yet, upload the export to an AI assistant you trust, such as Claude, and paste this prompt. It gives you Markdown files, one per chat, in project folders if you list your projects. This sends your export to that assistant.</p>
-    <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-08-21 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
+    <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-03-14 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
 
 The export may not say which project a chat was in. If I list projects below, put each chat in a folder named after its project, and the rest in a folder called No project. If I do not, suggest folders from the chat titles and show me the list before you convert.
 
@@ -2280,8 +2279,8 @@ document.addEventListener('keydown', function (e) {
 });
 var ACCENT_LIST = [
   ['classic', 'Classic', '#ececec', 'Grey bubble, plain AI text'],
-  ['lavender', 'Lavender', '#a78bfa'], ['periwinkle', 'Periwinkle', '#818cf8'], ['blush', 'Blush', '#f28ab2'], ['rose', 'Rose', '#e879a9'],
-  ['iceblue', 'Ice blue', '#67c8ed'], ['mint', 'Mint', '#5bc9b1'], ['teal', 'Teal', '#16b9a5'], ['peach', 'Peach', '#f5a17d'],
+  ['lavender', 'Lavender', '#a78bfa'], ['periwinkle', 'Periwinkle', '#818cf8'], ['iceblue', 'Ice blue', '#67c8ed'], ['mint', 'Mint', '#5bc9b1'],
+  ['yellow', 'Pastel yellow', '#f6d365'], ['peach', 'Peach', '#f5a17d'], ['blush', 'Blush', '#f28ab2'],
   ['white', 'White', '#ffffff']
 ];
 var ACC = {}, ACC_KEYS = ACCENT_LIST.map(function (a) { ACC[a[0]] = a; return a[0]; });
