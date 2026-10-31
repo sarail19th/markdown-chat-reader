@@ -353,3 +353,44 @@ test('the kebab menu button stays on screen while you read, and still opens the 
   assert.ok(await page.locator('#topMenu').isVisible(), 'and the menu opens from there');
   assert.ok(await page.locator('#hideToolsBtn').isVisible());
 });
+
+test('unsaved edits show a Save button in the tools and a dot on the folded round button, and saving clears them', async () => {
+  const page = await openApp();
+  const shown = (sel) => page.evaluate((s) => getComputedStyle(document.querySelector(s)).display !== 'none', sel);
+  assert.equal(await shown('#saveFabBtn'), false, 'nothing to save yet, so no Save button');
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.evaluate(() => { mutate(function () { doc.msgs[0].text = 'Changed text'; }); });
+  assert.equal(await shown('#saveFabBtn'), true, 'the Save button appears with the first change');
+  await page.click('#doneBtn');
+  assert.equal(await shown('#saveFabBtn'), true, 'and is still there after exiting Edit mode');
+  assert.match(await page.textContent('#toastMsg'), /not saved yet/);
+  assert.equal(await page.textContent('#toastAct'), 'Save copy', 'the note after exiting offers to save');
+  await page.click('#fabToggle');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#fabToggle .badge')).display), 'block', 'a dot shows on the folded round button');
+  assert.match(await page.getAttribute('#fabToggle', 'aria-label'), /unsaved edits/);
+  await page.click('#fabToggle');
+  await page.click('#saveFabBtn');
+  assert.ok(await page.locator('#modal input').isVisible(), 'Save asks for a file name');
+  const download = page.waitForEvent('download');
+  await page.click('#modalOk');
+  await download;
+  assert.equal(await shown('#saveFabBtn'), false, 'after saving there is nothing left to save');
+  await page.click('#fabToggle');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#fabToggle .badge')).display), 'none', 'and the dot is gone');
+});
+
+test('the note after exiting Edit mode has a Save copy button that opens the save box', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.evaluate(() => { mutate(function () { doc.msgs[0].text = 'Changed text'; }); });
+  await page.click('#doneBtn');
+  await page.click('#toastAct');
+  assert.ok(await page.locator('#modal input').isVisible(), 'Save copy opens the file name box');
+  await page.click('#modalCancel');
+  await page.click('#editBtn');
+  await page.click('#undoBtn');
+  await page.click('#doneBtn');
+  assert.ok(await page.locator('#toast').isHidden(), 'no reminder when there is nothing unsaved');
+});

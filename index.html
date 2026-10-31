@@ -358,7 +358,7 @@ body.editing .titleedit { display: inline-flex; }
 .iconbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 body.editing .chat { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
 body.editing .foot { display: none; }
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: min(92vw, 420px); display: flex; align-items: center; gap: 12px; background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: .92rem; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30; width: max-content; max-width: min(92vw, 420px); display: flex; align-items: center; gap: 12px; background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: .92rem; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
 body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .toastbtn { font: 600 .9rem var(--ff); color: inherit; background: none; border: 0; text-decoration: underline; padding: 6px 4px; min-height: 36px; cursor: pointer; }
 @supports (color: light-dark(red, blue)) {
@@ -433,6 +433,10 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 :root[data-menu="collapsed"] #fabToggle .ic-show { display: block; }
 .fab { touch-action: none; width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; }
 .fab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.fab { position: relative; }
+.fab .badge { display: none; position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: var(--logo-user, var(--user)); border: 2px solid var(--bg); }
+:root[data-menu="collapsed"] body.unsaved #fabToggle .badge { display: block; }
+.fabbtn.savefab { color: var(--user-fg); background: var(--user); border-color: transparent; }
 .fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .fabs.dragging .fab { cursor: grabbing; box-shadow: 0 10px 26px rgba(0, 0, 0, .35); }
 .fabs.dragging .fabmenu { opacity: .6; }
@@ -733,9 +737,10 @@ Do this for the full conversation history of this chat.</code></pre>
 </div>
 <div class="rail" id="rail" aria-hidden="true"><div class="thumb" id="railThumb"><span class="tip" id="railTip"></span></div></div>
 <div class="fabs" id="fabs" data-h="right" data-v="up">
-  <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+  <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><i class="badge" aria-hidden="true"></i><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
     <button class="fabbtn" id="editBtn" type="button" aria-pressed="false" aria-label="Edit messages" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
+    <button class="fabbtn savefab" id="saveFabBtn" type="button" hidden aria-label="Save a copy to your device" title="You have unsaved edits. Save them as a new .md file; your original is not changed."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
   </div>
@@ -766,6 +771,7 @@ Do this for the full conversation history of this chat.</code></pre>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden>
   <span id="toastMsg"></span>
   <button class="toastbtn" id="toastUndo" type="button">Undo</button>
+  <button class="toastbtn" id="toastAct" type="button" hidden></button>
 </div>
 
 <script src="vendor/marked.min.js"></script>
@@ -1216,6 +1222,7 @@ function render() {
   $('bannerChanges').hidden = !cs;
   $('undoBtn').disabled = !undoStack.length;
   $('redoBtn').disabled = !redoStack.length;
+  syncSave();
   if (q) runSearch();
   requestAnimationFrame(maybeLoad);
 }
@@ -1232,6 +1239,7 @@ function setEdit(on, quiet) {
   $('editCaution').hidden = !on || tipsHidden;
   $('editBtn').setAttribute('aria-pressed', String(on));
   if (!quiet && doc) render();
+  if (!on && !quiet && dirty) toast('Your edits are kept in this chat, but not saved yet.', false, { label: 'Save copy', fn: askSaveName });
 }
 function syncEditUI() {
   var can = !!doc && doc.editable;
@@ -1564,14 +1572,19 @@ function redo() {
   render();
   $('toast').hidden = true;
 }
-function toast(msg, withUndo) {
+var toastAction = null;
+function toast(msg, withUndo, action) { // action: { label, fn } adds a second button to the toast
   var t = $('toast');
   $('toastMsg').textContent = msg;
   $('toastUndo').hidden = !withUndo;
+  $('toastAct').hidden = !action;
+  toastAction = action ? action.fn : null;
+  if (action) $('toastAct').textContent = action.label;
   t.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { t.hidden = true; }, withUndo ? 7000 : 3500);
+  toastTimer = setTimeout(function () { t.hidden = true; }, action ? 9000 : withUndo ? 7000 : 3500);
 }
+$('toastAct').addEventListener('click', function () { var f = toastAction; $('toast').hidden = true; if (f) f(); });
 function nameOf(role) { return role === 'user' ? doc.names.user : role === 'system' ? 'System' : doc.names.assistant; }
 function changeLabel(m) {
   if (m.split) return 'split';
@@ -1643,6 +1656,13 @@ $('redoBtn').addEventListener('click', redo);
 $('toastUndo').addEventListener('click', undo);
 $('copyMdBtn').addEventListener('click', function () { if (commitEdit()) copyText(toMarkdown(), this); });
 $('dlBtn').addEventListener('click', function () { if (commitEdit()) askSaveName(); });
+$('saveFabBtn').addEventListener('click', function () { if (commitEdit()) askSaveName(); });
+// Unsaved edits show a Save button in the tools, and a dot on the round tools button while the tools are folded.
+function syncSave() {
+  $('saveFabBtn').hidden = !dirty;
+  document.body.classList.toggle('unsaved', !!dirty);
+  syncFabToggle();
+}
 $('renameBtn').addEventListener('click', function () {
   if (!doc || !commitEdit()) return;
   var input = textInput(doc.title, 'Chat title', '', false);
@@ -2075,8 +2095,9 @@ $('fabToggle').addEventListener('click', function () {
 function syncFabToggle() {
   var open = !document.documentElement.hasAttribute('data-menu'), t = $('fabToggle');
   t.setAttribute('aria-expanded', String(open));
-  t.setAttribute('aria-label', open ? 'Hide the tools' : 'Show the tools');
-  t.title = (open ? 'Hide the tools' : 'Show the tools') + '. Drag to move.';
+  var unsaved = dirty && !open ? ' (you have unsaved edits)' : '';
+  t.setAttribute('aria-label', (open ? 'Hide the tools' : 'Show the tools') + unsaved);
+  t.title = (open ? 'Hide the tools' : 'Show the tools') + unsaved + '. Drag to move.';
 }
 syncFabToggle();
 // The navigation buttons in the bottom corner fold the same way, and the choice is remembered on this device.
