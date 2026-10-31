@@ -147,7 +147,7 @@ test('the top and bottom buttons both work, wherever you are in the chat', async
   await page.waitForFunction(() => window.scrollY === 0);
 });
 
-test('the arrows can be dragged on their own, and stay where you put them', async () => {
+test('the navigation buttons can be dragged on their own, and stay where you put them', async () => {
   const page = await openApp();
   const box = () => page.locator('#navToggle').boundingBox();
   const start = await box();
@@ -157,7 +157,7 @@ test('the arrows can be dragged on their own, and stay where you put them', asyn
   await page.mouse.up();
   const moved = await box();
   assert.ok(Math.abs(moved.x + 26 - 150) < 4 && Math.abs(moved.y + 26 - 300) < 4, 'the button follows the finger');
-  assert.ok(await page.locator('#navMenu').isVisible(), 'dragging does not fold the arrows');
+  assert.ok(await page.locator('#navMenu').isVisible(), 'dragging does not fold the navigation buttons');
   const tools = await page.locator('#fabToggle').boundingBox();
   assert.ok(tools.x > 200, 'the tools stay where they were');
   await page.reload();
@@ -312,7 +312,7 @@ test('the suggested file name follows the chat title, and a name you chose is ke
   assert.equal(await suggested(), 'my-trip-to-paris-edited', 'but not after the title changes');
 });
 
-test('the top-right menu has switches that hide and show the floating tools and arrows, and remembers them', async () => {
+test('the top-right menu has switches that hide and show the floating tools and navigation, and remembers them', async () => {
   const page = await openApp();
   const hidden = (sel) => page.evaluate((s) => getComputedStyle(document.querySelector(s)).display === 'none', sel);
   const on = (id) => page.getAttribute(id, 'aria-checked');
@@ -323,10 +323,10 @@ test('the top-right menu has switches that hide and show the floating tools and 
   assert.equal(await on('#hideArrowsBtn'), 'true');
   await page.click('#hideToolsBtn');
   assert.equal(await hidden('#fabs'), true, 'switching the tools off hides them');
-  assert.equal(await hidden('#navFabs'), false, 'the arrows stay');
+  assert.equal(await hidden('#navFabs'), false, 'navigation stays');
   assert.ok(await page.locator('#topMenu').isVisible(), 'the menu stays open so the other switch can be set');
   await page.click('#hideArrowsBtn');
-  assert.equal(await hidden('#navFabs'), true, 'now the arrows are gone too');
+  assert.equal(await hidden('#navFabs'), true, 'now navigation is gone too');
   assert.equal(await on('#hideToolsBtn'), 'false');
   assert.equal(await on('#hideArrowsBtn'), 'false');
   await page.reload();

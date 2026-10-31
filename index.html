@@ -121,6 +121,10 @@ body {
 }
 .heading { flex: 1 1 200px; min-width: 0; }
 h1 { margin: 0; min-width: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dot { display: inline-block; width: .7em; height: .7em; margin: 0 .1em; border-radius: 50%; vertical-align: -.05em; box-sizing: border-box; }
+.dot.you { background: var(--user); }
+.dot.ai { background: var(--surface); border: 1.5px solid var(--muted); }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .meta { margin: 2px 0 0; font-size: .85rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn {
@@ -450,16 +454,18 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .menubtn svg { width: 22px; height: 22px; }
 .menubtn:hover { background: var(--code); }
 .menubtn[aria-expanded="true"], .menubtn:active { color: var(--user-fg); background: var(--user); box-shadow: none; }
-.topmenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 250px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
+.topmenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 260px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
 .mitem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; color: var(--fg); background: none; border: 0; border-radius: 10px; font: 600 1rem var(--ff); text-align: left; cursor: pointer; }
 .mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mitem:hover { background: var(--code); }
 .mitem span { display: grid; }
 .mitem small { font-weight: 400; font-size: .78rem; color: var(--muted); }
-.mitem .sw { position: relative; flex: none; width: 40px; height: 24px; margin-left: auto; padding-left: 8px; box-sizing: content-box; border-radius: 12px; background: rgba(128, 128, 128, .5); transition: background .15s; }
-.mitem .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: transform .15s; }
+.mitem .sw { position: relative; flex: none; width: 74px; height: 30px; margin-left: auto; border-radius: 15px; background: rgba(128, 128, 128, .5); transition: background .15s; }
+.mitem .sw::before { content: 'Hide'; position: absolute; top: 0; right: 10px; line-height: 30px; font: 600 .72rem/30px var(--ff); color: var(--fg); opacity: .8; }
+.mitem .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: transform .15s; }
 .mitem[aria-checked="true"] .sw { background: var(--logo-user, var(--user)); }
-.mitem[aria-checked="true"] .sw::after { transform: translateX(16px); }
+.mitem[aria-checked="true"] .sw::before { content: 'Show'; right: auto; left: 10px; color: var(--user-fg); opacity: 1; }
+.mitem[aria-checked="true"] .sw::after { transform: translateX(44px); }
 @media (prefers-reduced-motion: reduce) { .mitem .sw, .mitem .sw::after { transition: none; } }
 .menusep { height: 1px; margin: 4px 8px; background: var(--line); }
 :root[data-hide-tools] .fabs, :root[data-hide-arrows] .navfabs { display: none; }
@@ -527,8 +533,8 @@ body.searching .fabs, body.searching .navfabs { display: none; }
         <button class="mitem" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span>Paste text</span></button>
         <button class="mitem" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span>Help</span></button>
         <div class="menusep" role="separator"></div>
-        <button class="mitem" id="hideToolsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Show the tools<small>Edit, Style, Search</small></span><i class="sw" aria-hidden="true"></i></button>
-        <button class="mitem" id="hideArrowsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Show the arrows<small>Jump, previous, next</small></span><i class="sw" aria-hidden="true"></i></button>
+        <button class="mitem" id="hideToolsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Tools<small>Edit, Style, Search</small></span><i class="sw" aria-hidden="true"></i></button>
+        <button class="mitem" id="hideArrowsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Navigation<small>Jump, previous, next</small></span><i class="sw" aria-hidden="true"></i></button>
       </div>
     </div>
   </header>
@@ -743,7 +749,7 @@ Do this for the full conversation history of this chat.</code></pre>
       <button class="fabbtn" id="nextMsgBtn" type="button" aria-label="Next message" title="Next message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-6l-3 2.5V11.5H6a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z"/><path d="M8 17l4 4 4-4"/></svg></button>
     </div>
   </div>
-  <button class="fab" id="navToggle" type="button" aria-controls="navMenu" aria-expanded="true" aria-label="Hide the arrows" title="Hide the arrows"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button>
+  <button class="fab" id="navToggle" type="button" aria-controls="navMenu" aria-expanded="true" aria-label="Hide navigation" title="Hide navigation"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button>
 </div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
@@ -1197,7 +1203,8 @@ function render() {
     chat.appendChild(d);
   }
   syncMore();
-  metaEl.textContent = metaEl.title = doc.msgs.length + (doc.msgs.length === 1 ? ' message · ' : ' messages · ') + u + ' you · ' + a + ' AI' + (dirty ? ' · edited' : '');
+  metaEl.innerHTML = doc.msgs.length + (doc.msgs.length === 1 ? ' message' : ' messages') + ' · ' + u + ' <i class="dot you"></i><span class="vh">from you</span> · ' + a + ' <i class="dot ai"></i><span class="vh">from AI</span>' + (dirty ? ' · edited' : '');
+  metaEl.title = u + ' from you, ' + a + ' from AI';
   decorateCode(chat);
   applyClip(chat, true);
   $('editedBanner').hidden = !isModified();
@@ -2068,12 +2075,12 @@ function syncFabToggle() {
   t.title = (open ? 'Hide the tools' : 'Show the tools') + '. Drag to move.';
 }
 syncFabToggle();
-// The arrows in the bottom corner fold the same way, and the choice is remembered on this device.
+// The navigation buttons in the bottom corner fold the same way, and the choice is remembered on this device.
 try { if (localStorage.getItem('cr-nav') === 'collapsed') document.documentElement.setAttribute('data-nav', 'collapsed'); } catch (e) { /* storage blocked: they start unfolded */ }
 function syncNavToggle() {
   var open = !document.documentElement.hasAttribute('data-nav'), t = $('navToggle');
   t.setAttribute('aria-expanded', String(open));
-  t.setAttribute('aria-label', open ? 'Hide the arrows' : 'Show the arrows');
+  t.setAttribute('aria-label', open ? 'Hide navigation' : 'Show navigation');
   t.title = t.getAttribute('aria-label') + '. Drag to move.';
 }
 $('navToggle').addEventListener('click', function () {
@@ -2085,7 +2092,7 @@ $('navToggle').addEventListener('click', function () {
 });
 syncNavToggle();
 
-/* ---- drag the arrows' round button to move them on their own; the spot is remembered on this device ---- */
+/* ---- drag the navigation buttons' round button to move them on their own; the spot is remembered on this device ---- */
 var navPos = null, navDrag = null, navJustDragged = false; // navPos: where that button's centre sits, as fractions of the window
 try {
   var navSaved = (localStorage.getItem('cr-navpos') || '').split(',').map(parseFloat);
