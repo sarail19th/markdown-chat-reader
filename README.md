@@ -2,49 +2,44 @@
 
 # Markdown Chat Reader
 
-Read an exported AI chat as a phone-style chat. Your messages sit on the right and the AI's on the left. It is a single-file web app that runs in your browser, also offline, and installs on your phone like an app.
+Read your exported AI chats as a phone-style chat, keep them sorted in folders, and back them up as plain Markdown files. It runs in your browser, works offline, and installs on your phone like an app.
 
 **Live site:** https://sarail19th.github.io/markdown-chat-reader/
 
-## Your chat stays with you
+<p align="center">
+  <img src=".github/screenshots/chat.png" width="250" alt="The guide chat in Lavender: your messages on the right, the AI's on the left">
+  <img src=".github/screenshots/export-list.png" width="250" alt="The list of chats from an export, sorted into folders such as Recipes, Study and Travel">
+  <img src=".github/screenshots/style-dark.png" width="250" alt="The Style panel in Dark mode with the Mint colour">
+</p>
 
-- The file is read inside your browser, and that includes a whole ChatGPT or Claude export. It is never uploaded, and the page has no server that could receive it.
-- Chats are never saved or tracked. Reload or close the tab and the chat is gone.
-- The only things remembered on your device are your display choices (style, mode, background tint, text size, spacing, font, long-message collapsing, where you moved the buttons and whether you hid the editing tips). A font file you add stays on your device and is never uploaded. If you turn on **Remember my folders** in the list of chats, it also keeps each chat's ID code from the export and the folder you put it in, never titles or messages; turning it off (or Reset all settings) forgets them.
-- After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.
+## Why this exists
 
-## How to use it
+I wanted a backup of my ChatGPT chats that I could read on Google Drive. The export turned out to be one huge file: every chat from every project mixed together by date, with no project names. Asking another AI to sort it out meant uploading all my chats, running into free-plan limits, and hoping nothing got shortened along the way.
 
-1. **Export from your AI app.** Most apps have a data export in Settings. The app usually emails you a download link. The in-app Help panel lists the steps for ChatGPT, Claude, Grok and Copilot, and has a one-chat prompt that makes any AI (useful for Grok inside X, Gemini, or any app without a per-chat export) write the chat out as numbered `.md` files. The AI rewrites the chat from memory, so check the result against the original.
-2. **Open the export here (ChatGPT and Claude).** Tap **Open** and pick the export as you downloaded it (the `.zip`, or `conversations.json`). A list of its chats appears: tap one to read it, tick chats and use **Move to folder** to sort them into projects (titles that start with `[Name]` go into the folder Name), and **Download .zip** to save one `.md` file per chat, in folders, as a backup for Google Drive. Chrome and Edge on a computer can also **Save into a folder** directly. Everything happens in the browser, with no AI and nothing uploaded, and every message is kept word for word.
+So I made this. It opens the export on my own phone, lets me put chats back into folders, and saves them as `.md` files that Google Drive shows as plain text and this app shows as a chat. Nothing leaves the device.
 
-   **Other apps:** upload the export to an AI assistant you trust and paste the prompt from the in-app Help panel. This sends your export to that assistant.
-3. **Read here any time.** Open a `.md` file, or the backup `.zip` to get its list of chats back without unzipping. You can also drop a file on the page or use **Paste**. If a chat came in several `.md` parts, select them all at once (or drop them together): a window lets you drag them into reading order and name the merged chat, and **Download** saves them as a single `.md` file.
+## How it works
+
+1. **Export** your chats from ChatGPT, Claude or another AI app (Help in the app lists the steps).
+2. **Open the export here** (ChatGPT and Claude). Tap a chat to read it, use **Move to folder** to sort chats into projects (titles that start with `[Name]` go into the folder Name), and **Download .zip** for one `.md` file per chat, in folders. For other apps, Help has a prompt that asks an AI to do the conversion.
+3. **Read any time.** Open a `.md` file, or the backup `.zip` to get its list back.
+
+## Your chats stay with you
+
+- Files and exports are read inside your browser. Nothing is uploaded, and there is no server that could receive them.
+- Chats are never saved. Only display choices are remembered on your device, plus chat ID codes and folder names if you turn on **Remember my folders** (turning it off, or Reset all settings, forgets them).
+- The app's own files are cached so it works offline. Your chats never are.
 
 ## Features
 
-- Detects speakers in many export formats, including custom names. If it finds no speakers, it shows the whole file as one message with a notice.
-- Phone-fit layout with Classic, White and seven soft colours (Lavender by default), Auto, Light, Dark and Green Read modes, an optional tinted background in Light mode, and a text size slider. Long messages can be collapsed to 12 lines with a **Show more** button (off by default, set in Style).
-- A floating menu at the bottom right, folded to one round button until you tap it (drag that button to move the menu anywhere on screen), with Open, Paste (or press Ctrl+V), Search, a previous and next message pair (speech-bubble icons), a jump arrow (down to the end, or back up to the start), Edit, Style and Help. A copy button on every code block.
-- On touch screens, a draggable scroll handle appears on the right edge while you scroll (like the Google Docs app) with a message counter, so you can move through a long chat fast. Desktop browsers get a wide, high-contrast scrollbar.
-- Tap-to-edit: turn on **Edit**, tap a message, then edit its text (with **B**, **I**, **S**, **H** and **Clear style** buttons to fix wrong bold, italic, strikethrough or headings), swap its speaker, split it between both speakers (for a message that mixes two speakers) or delete it. **Split after this** cuts a long chat right after the message you tapped (that message ends part 1, the next one starts part 2) and saves it as two `.md` files (part 1 and part 2, each marked as a split copy) that merge back when opened together. In the same window, **Excerpt only** saves just the messages you choose (from message A to message B; the end defaults to your prompt and its reply, and a list lets you pick the next scene's prompt as the end) as one `.md` file with a name you pick, marked as an excerpt and with nothing to merge. A pencil beside the title renames the chat, and Download asks what to call the saved copy. Undo and redo, then download or copy a new `.md` file with the icons at the bottom, and tap **Exit editing** when you are done. Your original file is never changed.
-- Installable and works offline (PWA). On Android, open the page in Chrome and choose **Install app**. On iPhone, open it in Safari, tap **Share**, then **Add to Home Screen**. The installed app opens full screen, in portrait or landscape; swipe in from an edge to show the system bars. On Android, once the app is installed, **Share** a `.md` file (from Files, Drive or an email) to **Chat Reader** to open it straight away. Android does not let a web app be the default viewer for `.md` files, so this is a Share action, not a default. If the app is missing from the Share list, remove it and install it again once. The shared file is passed to the page through the service worker in memory only and is never uploaded or saved.
+- Detects speakers in many Markdown formats, including custom names.
+- Classic, White and seven soft colours, Auto, Light, Dark and Green Read modes, an optional tinted background, text size, spacing and font settings.
+- Search, previous and next message, jump to start or end, and a drag handle for long chats on touch screens.
+- Edit: fix text and formatting, swap or split speakers, delete messages, split a long chat into two files or save an excerpt. Your original file never changes, and saved copies say they were edited.
+- Export converter for ChatGPT and Claude: follows the version of each chat you last saw, leaves out hidden thinking, and keeps every message word for word. Converted files re-open exactly, even when a story contains dialogue such as `**Name:**`.
+- Installs as an app (PWA). On Android, **Share** a `.md` file or an export to it.
 
-- Export converter for ChatGPT and Claude. ChatGPT chats follow the version you last saw (alternative replies, system and tool messages and the model's hidden thinking are left out, web-search citation marks are removed, and images become a named placeholder). Converted files start with a line saying so; in those files only exact `**You:**` and `**AI:**` lines count as speakers, so story dialogue such as `**Name:**` stays in its message and a backup re-opens exactly. The unzip and zip use the browser's own compression, with no extra library.
-
-## Edited chats are labeled
-
-Edits are meant for tidying your own chats, for example removing private details. To keep edited chats from passing as originals:
-
-- Edited messages show an "edited" tag, and the page shows an "Edited copy" banner.
-- A saved copy starts with a notice and a short summary of what changed.
-- The page always shows that it is an unofficial viewer, not an export or screen from any AI company.
-
-Please only edit your own chats, and do not present an edited chat as a real, original conversation.
-
-## What it understands
-
-Speaker lines such as `**You:**`, `**AI:**`, `**Grok:**`, `### User`, `### Assistant`, `You said:` or `Prompt:` / `Response:`, with an optional time or model name after them. A rare extra label inside a long two-speaker chat, such as an in-story line, is treated as part of the message before it.
+Edited chats are labelled, and the page always shows that it is an unofficial viewer, not a screen from any AI company. Please only edit your own chats.
 
 ## Run it locally
 
@@ -67,6 +62,7 @@ Then open `http://localhost:8000`. Service workers need `localhost` or HTTPS.
 | `vendor/` | [marked](https://github.com/markedjs/marked) and [DOMPurify](https://github.com/cure53/DOMPurify), bundled so the app works offline |
 | `fonts/` | Figtree and JetBrains Mono (woff2) with their SIL Open Font Licence files |
 | `.github/workflows/pages.yml` | Deploys to GitHub Pages on every push to `main` |
+| `.github/screenshots/`, `.github/social-preview.png` | README screenshots (made with sample data) and the repository's social preview image |
 
 ## Third-party licences
 

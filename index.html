@@ -557,20 +557,22 @@ body.searching .fabs { display: none; }
     <div class="sheethead"><h2>How it works</h2><button class="sheetx" type="button" data-close="info" aria-label="Close help"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <h2>The flow</h2>
     <ol>
-      <li><strong>Export from your AI app.</strong> The app emails you a download link or gives you a file, usually a .zip, .json or .csv. Links often expire after about a day. Menu names change from time to time.
+      <li><strong>Export from your AI app.</strong> You usually get an email with a download link, which often expires after about a day.
         <ul>
-          <li><strong>ChatGPT:</strong> profile icon or name, then Settings, Data controls, Export data. <a href="https://chatgpt.com/settings/data-controls" target="_blank" rel="noopener noreferrer">Open data controls</a></li>
-          <li><strong>Claude:</strong> on the web app or Claude Desktop (not the phone apps), click your initials at the bottom left, then Settings, Privacy, <strong>Export data</strong>. The download link is emailed to you and expires after 24 hours. <a href="https://support.claude.com/en/articles/9450526-export-your-claude-data" target="_blank" rel="noopener noreferrer">Claude's steps</a></li>
-          <li><strong>Grok:</strong> profile icon or name, then Data &amp; Information, Data controls, Export account data (<a href="https://grok.com/?_s=data" target="_blank" rel="noopener noreferrer">open</a>). That takes you to your x.ai account page, where you choose <strong>Download account data</strong>. The file is sent by email. <a href="https://accounts.x.ai/account?redirect=grok-com&amp;theme=light#data" target="_blank" rel="noopener noreferrer">Open account page</a> This covers chats made in the Grok app, not Grok inside X. For one chat, or Grok in X, use the one-chat prompt below.</li>
-          <li><strong>Copilot:</strong> sign in to your Microsoft account privacy dashboard, open Copilot, Your Copilot activity history, then <strong>Export all activity history</strong>. You get a .csv file. <a href="https://support.microsoft.com/en-us/privacy/manage-your-copilot-activity-history-in-the-privacy-dashboard" target="_blank" rel="noopener noreferrer">Microsoft's steps</a></li>
-          <li><strong>Gemini:</strong> its chat menu (the three dots at the top right of a chat) only saves a chat as a PDF or Google Doc. This reader does not open those. Use the one-chat prompt below instead.</li>
+          <li><strong>ChatGPT:</strong> Settings, Data controls, Export data. <a href="https://chatgpt.com/settings/data-controls" target="_blank" rel="noopener noreferrer">Open data controls</a></li>
+          <li><strong>Claude:</strong> on the web or desktop app (not the phone apps), Settings, Privacy, <strong>Export data</strong>. <a href="https://support.claude.com/en/articles/9450526-export-your-claude-data" target="_blank" rel="noopener noreferrer">Claude's steps</a></li>
+          <li><strong>Grok:</strong> Settings, Data controls, Export account data, then <strong>Download account data</strong> on your x.ai account page. <a href="https://accounts.x.ai/account?redirect=grok-com&amp;theme=light#data" target="_blank" rel="noopener noreferrer">Open account page</a> For Grok inside X, use the one-chat prompt below.</li>
+          <li><strong>Copilot:</strong> Microsoft privacy dashboard, Copilot, <strong>Export all activity history</strong> (a .csv). <a href="https://support.microsoft.com/en-us/privacy/manage-your-copilot-activity-history-in-the-privacy-dashboard" target="_blank" rel="noopener noreferrer">Microsoft's steps</a></li>
+          <li><strong>Gemini:</strong> no export this reader opens. Use the one-chat prompt below.</li>
         </ul>
       </li>
-      <li><strong>Open the export here.</strong> For ChatGPT or Claude, tap <strong>Open</strong> and pick the export as you downloaded it (the .zip, or the conversations.json inside it). A list of its chats appears: tap one to read it, tick chats and use <strong>Move to folder</strong> to sort them into projects, and <strong>Download .zip</strong> to save one .md file per chat, in folders, for a backup on Google Drive. On a computer, Chrome and Edge can also <strong>Save into a folder</strong> directly. It all happens in your browser: no AI, nothing uploaded, every word kept.</li>
-      <li><strong>Read here any time.</strong> Open a single .md file, or the backup .zip to get the list back. If a chat came in several .md parts, select them all at once (or drop them together), put them in reading order by dragging, and they are merged into one chat.</li>
+      <li><strong>ChatGPT or Claude: open the export here.</strong> Tap <strong>Open</strong> and pick the .zip as you downloaded it (or the conversations.json inside). Tap a chat to read it, <strong>Move to folder</strong> to sort, and <strong>Download .zip</strong> for one .md file per chat, in folders. No AI, nothing uploaded, every word kept.</li>
+      <li><strong>Read here any time.</strong> Open a .md file, or the backup .zip to get its list back. Select several .md parts at once to merge them into one chat.</li>
     </ol>
+    <h2>Chats in projects</h2>
+    <p>ChatGPT's export leaves out project names. Before you export, start each chat's title with its project, like <em>[Travel] Packing list</em>, and it lands in the folder Travel here. Or sort chats with <strong>Move to folder</strong>, and turn on <strong>Remember my folders</strong> so your next export opens sorted.</p>
     <h2>Other apps: convert with an AI</h2>
-    <p>For Grok, Copilot and other exports this reader cannot open yet, upload the export to an AI assistant you trust, such as Claude, and paste this prompt. It gives you Markdown files, one per chat, in project folders if you list your projects. This sends your export to that assistant.</p>
+    <p>Upload the export to an AI assistant you trust and paste this prompt. This sends your export to that assistant.</p>
     <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-03-14 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
 
 The export may not say which project a chat was in. If I list projects below, put each chat in a folder named after its project, and the rest in a folder called No project. If I do not, suggest folders from the chat titles and show me the list before you convert.
@@ -579,24 +581,9 @@ Give me all files in one zip. If the export is too large for one reply, first li
 
 Projects (optional, delete if not needed):
 - Project name: chat titles, or words that appear in them</code></pre>
-    <p class="hint">The AI has to type out every message again, so a large export can use up a free plan before it is done, or come back shortened. Converting 10 chats at a time helps. Check that a few long chats have all their messages.</p>
-    <h2>Why Markdown?</h2>
-    <ul>
-      <li><strong>Readable anywhere.</strong> A .md file is plain text, so Google Drive, your Files app or any notes app shows it as it is. An export file is data for computers: one long file with every chat mixed together.</li>
-      <li><strong>One chat per file, in folders you choose.</strong> Easy to back up, find and share, instead of one huge file.</li>
-      <li><strong>The same for every AI.</strong> Each app exports in its own way. Markdown gives this reader one simple shape to open, whichever AI the chat came from.</li>
-      <li><strong>Small and easy to fix.</strong> You can rename, trim or remove private details in any text editor, or with Edit here.</li>
-    </ul>
-    <h2>Chats in projects</h2>
-    <p>ChatGPT's export puts every chat into one file, ordered by date, and leaves out the project names. Other apps may do the same, so check your export before you delete anything.</p>
-    <ul>
-      <li><strong>Before you export, put the project in the title.</strong> Rename each chat to start with its project, for example <em>[Travel] Packing list</em>. Titles are kept in the export, so when you open it here the chat goes straight into the folder Travel.</li>
-      <li><strong>Or sort them here.</strong> In the list of chats, tick the chats of one project and use <strong>Move to folder</strong>. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which. Turn on <strong>Remember my folders</strong> and your next export opens already sorted.</li>
-      <li><strong>Only need one project?</strong> Use the one-chat prompt below in each of its chats instead of exporting everything.</li>
-      <li><strong>Converting with an AI on a free plan?</strong> Ask for the list of chats first, then convert only the ones you need, 10 at a time. Opening a ChatGPT or Claude export here has no such limit.</li>
-    </ul>
+    <p class="hint">On a free plan, convert 10 chats at a time, and check that long chats came back whole.</p>
     <h2>Export one chat from any AI</h2>
-    <p>For an app with no export, one that only exports your whole account, or a chat you want on its own. Open the chat, paste this prompt, and save what the AI gives you. Select all the parts at once with <strong>Open</strong> (or paste one part at a time with <strong>Paste</strong>) to read them as one chat.</p>
+    <p>Open the chat, paste this prompt, and save what you get. Open all the parts at once to read them as one chat.</p>
     <pre><code class="language-prompt">Export this entire conversation into sequential .md files for an AI chat reader.
 
 Start the first file with the chat title as a # heading. Then format every message exactly like this, with a blank line between messages:
@@ -618,23 +605,22 @@ Rules:
 - If one reply is not enough for all the parts, give part 1 and wait until I say next.
 
 Do this for the full conversation history of this chat.</code></pre>
-    <p class="hint">The AI rewrites the chat from memory, so it is not a true export. Long chats can still come back shortened. Skim the result against the original.</p>
+    <p class="hint">The AI rewrites the chat from memory, so skim it against the original.</p>
+    <h2>Why Markdown?</h2>
+    <p>An export is data for computers, with every chat in one file. A .md file is plain text: Google Drive or any notes app shows it as it is, one chat per file, in folders you choose.</p>
     <h2>Your chat stays with you</h2>
     <ul>
-      <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
-      <li>An export you open here stays in your browser too. Converting with an AI assistant instead sends your export to that service. This reader never does.</li>
-      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font, where you moved the buttons and whether you hid the editing tips) are remembered, on this device. A font file you add stays on this device too. If you turn on <strong>Remember my folders</strong>, it also keeps each chat's ID code from the export and its folder name, never titles or messages.</li>
-      <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
+      <li>Files and exports are read inside your browser. Nothing is uploaded, and this page has no server.</li>
+      <li>Chats are never saved. Only your display choices are remembered on this device, plus chat ID codes and folder names if you turn on <strong>Remember my folders</strong>.</li>
+      <li>The app's own files stay on your device so it works offline. Your chats never do.</li>
     </ul>
     <h2>Install it on your phone</h2>
     <ul>
-      <li><strong>Android:</strong> open this page in Chrome, tap the menu (&#8942;), then <strong>Install app</strong>. It opens full screen, in portrait or landscape. Swipe in from an edge to show the system bars for a moment. Once it is installed, you can also open a <code>.md</code> file from your Files app: tap the file, choose <strong>Share</strong>, then <strong>Chat Reader</strong>. If it is not in the Share list, remove the app and install it again once.</li>
-      <li><strong>iPhone:</strong> open this page in Safari, tap <strong>Share</strong> (the square with an arrow pointing up), then <strong>Add to Home Screen</strong> and <strong>Add</strong>. If you see an <strong>Open as Web App</strong> switch, leave it on.</li>
-      <li>Either way it then opens from its own icon with no address bar, and works without internet after your first visit.</li>
+      <li><strong>Android:</strong> in Chrome, menu (&#8942;), <strong>Install app</strong>. Then <strong>Share</strong> a .md file or an export to <strong>Chat Reader</strong> from your Files app. Not in the list? Reinstall once.</li>
+      <li><strong>iPhone:</strong> in Safari, <strong>Share</strong>, <strong>Add to Home Screen</strong>, <strong>Add</strong>. Leave <strong>Open as Web App</strong> on.</li>
     </ul>
     <h2>New here?</h2>
-    <p>The guide chat walks through search, editing, styles, installing the app and what to do if the speakers do not split.</p>
-    <p>Writing stories with AI? The guide chat also shows how to split a long chat into scenes and save each one as its own file.</p>
+    <p>The guide chat shows search, editing, styles, and how to split a long story chat into scenes.</p>
     <button class="btn" id="showGuide" type="button">Show the guide chat</button>
     <p class="hint">App version <span id="appVer">__VERSION__</span></p>
   </section>
