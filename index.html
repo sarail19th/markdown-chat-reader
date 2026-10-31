@@ -8,7 +8,7 @@
 (function () {
   try {
     var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
-    if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|white)$/.test(a)) r.setAttribute('data-accent', a);
+    if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|lavender|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
     [['cr-size', '--chat-fs', 14, 28, 'px'], ['cr-lh', '--chat-lh', 1.2, 2.2, ''], ['cr-ps', '--chat-ps', .2, 2, 'em']].forEach(function (d) {
@@ -257,6 +257,14 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 :root[data-accent="pink"] { --user: #fa70ab; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="magenta"] { --user: #dc6adc; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="purple"] { --user: #a25bff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="lavender"] { --user: #a78bfa; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="periwinkle"] { --user: #818cf8; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="blush"] { --user: #f28ab2; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="rose"] { --user: #e879a9; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="iceblue"] { --user: #67c8ed; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="mint"] { --user: #5bc9b1; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="teal"] { --user: #16b9a5; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
+:root[data-accent="peach"] { --user: #f5a17d; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="white"] { --user: #ffffff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="white"] .user .bubble { border: 1px solid var(--line); }
 .panel { grid-template-columns: minmax(0, 1fr); }
@@ -2124,7 +2132,10 @@ document.addEventListener('keydown', function (e) {
 var ACCENT_LIST = [
   ['classic', 'Classic', '#ececec', 'Grey bubble, plain AI text'], ['blue', 'Blue', '#3566ef'], ['cyan', 'Cyan', '#00b1ff'],
   ['green', 'Green', '#04bb9f'], ['lime', 'Lime', '#b6d70a'], ['yellow', 'Yellow', '#ffcb37'], ['orange', 'Orange', '#ff8067'],
-  ['pink', 'Pink', '#fa70ab'], ['magenta', 'Magenta', '#dc6adc'], ['purple', 'Purple', '#a25bff'], ['white', 'White', '#ffffff']
+  ['pink', 'Pink', '#fa70ab'], ['magenta', 'Magenta', '#dc6adc'], ['purple', 'Purple', '#a25bff'],
+  ['lavender', 'Lavender', '#a78bfa'], ['periwinkle', 'Periwinkle', '#818cf8'], ['blush', 'Blush', '#f28ab2'], ['rose', 'Rose', '#e879a9'],
+  ['iceblue', 'Ice blue', '#67c8ed'], ['mint', 'Mint', '#5bc9b1'], ['teal', 'Teal', '#16b9a5'], ['peach', 'Peach', '#f5a17d'],
+  ['white', 'White', '#ffffff']
 ];
 var ACC = {}, ACC_KEYS = ACCENT_LIST.map(function (a) { ACC[a[0]] = a; return a[0]; });
 var accBtn = $('accentBtn'), accList = $('accentList'), accActive = 'green';
