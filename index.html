@@ -388,7 +388,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .nx { position: absolute; top: 2px; right: 2px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0; font: 400 1.5rem/1 var(--ff); color: inherit; opacity: .75; background: none; border: 0; border-radius: 8px; cursor: pointer; }
 .nx:hover { opacity: 1; background: rgba(128, 128, 128, .16); }
 .nx:focus-visible { opacity: 1; outline: 2px solid var(--focus); outline-offset: -2px; }
-.notice.collapsed { padding-top: 8px; padding-bottom: 8px; }
+.notice.collapsed { box-sizing: border-box; min-height: 44px; padding-top: 11px; padding-bottom: 11px; } /* tall enough to hold the 40px + button */
 .notice.collapsed .nbody { display: none; }
 .bchanges { display: block; margin-top: 6px; font-size: .9rem; color: var(--muted); overflow-wrap: anywhere; }
 /* Bottom sheets */

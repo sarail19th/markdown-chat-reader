@@ -394,3 +394,18 @@ test('the note after exiting Edit mode has a Save copy button that opens the sav
   await page.click('#doneBtn');
   assert.ok(await page.locator('#toast').isHidden(), 'no reminder when there is nothing unsaved');
 });
+
+test('the + and x buttons on a notice fit inside it, folded or open', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.evaluate(() => { mutate(function () { doc.msgs[0].text = 'Changed text'; }); });
+  const fits = () => page.evaluate(() => {
+    const n = document.getElementById('editedBanner').getBoundingClientRect(), b = document.querySelector('#editedBanner .nx').getBoundingClientRect();
+    return b.top >= n.top && b.bottom <= n.bottom && b.right <= n.right;
+  });
+  assert.ok(await fits(), 'the button fits in the open notice');
+  await page.click('#editedBanner .nx');
+  assert.ok(await page.evaluate(() => document.getElementById('editedBanner').classList.contains('collapsed')), 'the notice folds to one line');
+  assert.ok(await fits(), 'and the + still fits inside the folded notice');
+});
