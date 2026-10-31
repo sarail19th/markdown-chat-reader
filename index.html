@@ -412,7 +412,9 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .empty { margin: 24px 0; padding: 16px; text-align: center; color: var(--muted); }
 .more { display: grid; justify-items: center; gap: 6px; margin: 16px 0 8px; color: var(--muted); font-size: .85rem; }
 #search.panel { position: fixed; top: 0; left: 0; right: 0; z-index: 26; box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; gap: 4px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 12px; border-top: 0; border-radius: 0 0 14px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); }
-#search .count { margin-top: 0; }
+#search .count { margin: 0; }
+.countrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wholeword { margin: 0; min-height: 32px; flex: none; font-size: .85rem; }
 .fabs { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; }
 .fabs.moved { right: auto; bottom: auto; }
 .fabmenu { position: absolute; display: grid; justify-items: center; gap: 10px; }
@@ -530,7 +532,10 @@ body.searching .fabs, body.searching .navfabs { display: none; }
       <button class="btn" id="replaceOne" type="button" disabled>Replace</button>
       <button class="btn" id="replaceAll" type="button" disabled>Replace all</button>
     </div>
-    <p class="count" id="searchCount" aria-live="polite"></p>
+    <div class="countrow">
+      <p class="count" id="searchCount" aria-live="polite"></p>
+      <label class="libcheck wholeword"><input type="checkbox" id="wholeWord"> Whole word</label>
+    </div>
   </section>
   <section id="appearance" class="panel sheet" hidden role="dialog" aria-label="Appearance" tabindex="-1">
     <div class="sheethead"><h2>Appearance</h2><button class="sheetx" type="button" data-close="appearance" aria-label="Close appearance settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -3087,7 +3092,7 @@ function runSearch() {
   clearMarks();
   var q = $('searchInput').value.trim();
   if (!q) { updateCount(); return; }
-  var re = new RegExp(escapeRe(q), 'gi');
+  var re = queryRe();
   var walker = document.createTreeWalker(chat, NodeFilter.SHOW_TEXT, {
     acceptNode: function (n) {
       var p = n.parentNode;
@@ -3120,7 +3125,20 @@ function runSearch() {
   if (hits.length) goTo(0); else updateCount();
 }
 /* ---- replace (Edit mode only): works on each message's Markdown, so its own count can differ from the highlights ---- */
-function srcRe() { var q = $('searchInput').value.trim(); return q ? new RegExp(escapeRe(q), 'gi') : null; }
+// One pattern for the highlights and for Replace. "Whole word" asks for a break (not a letter, digit or _) on each side that begins or ends with a word character.
+function queryRe() {
+  var q = $('searchInput').value.trim();
+  if (!q) return null;
+  var src = escapeRe(q);
+  if (!$('wholeWord').checked) return new RegExp(src, 'gi');
+  try {
+    var w = '[\\p{L}\\p{N}_]';
+    if (new RegExp('^' + w, 'u').test(q)) src = '(?<!' + w + ')' + src;
+    if (new RegExp(w + '$', 'u').test(q)) src += '(?!' + w + ')';
+    return new RegExp(src, 'giu');
+  } catch (e) { return new RegExp('\\b' + escapeRe(q) + '\\b', 'gi'); } // older browsers
+}
+function srcRe() { return queryRe(); }
 function srcMatches() { // every match in the Markdown of every message: { i: message, start, len }
   var re = srcRe(), out = [];
   if (!re || !doc) return out;
@@ -3180,6 +3198,7 @@ function replaceAll() {
   mutate(function () { Object.keys(changes).forEach(function (i) { doc.msgs[i].text = changes[i]; }); },
     'Replaced ' + count + (count === 1 ? ' match' : ' matches') + ' in ' + msgs + (msgs === 1 ? ' message' : ' messages') + (skipped ? '. ' + skipped + ' left alone, as they would be empty' : ''));
 }
+$('wholeWord').addEventListener('change', function () { clearTimeout(searchTimer); runSearch(); });
 $('replaceOne').addEventListener('click', replaceOne);
 $('replaceAll').addEventListener('click', replaceAll);
 $('replaceInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); replaceOne(); } });

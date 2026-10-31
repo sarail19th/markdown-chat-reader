@@ -210,3 +210,25 @@ test('Replace never loops on text that contains what it searched for', async () 
   for (let k = 0; k < 3; k++) await page.click('#replaceOne');
   assert.equal(await have(), before + 3, 'three clicks replace three different matches');
 });
+
+test('Whole word leaves longer words alone, in the highlights and in Replace', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.click('[data-panel="search"]');
+  const count = (re) => page.evaluate((src) => doc.msgs.reduce((n, m) => n + (m.text.match(new RegExp(src, 'giu')) || []).length, 0), re);
+  const WORD = '(?<![\\p{L}\\p{N}_])export(?![\\p{L}\\p{N}_])';
+  const any = await count('export'), whole = await count(WORD);
+  assert.ok(whole > 0 && whole < any, 'the guide has "export" on its own and inside longer words');
+  await page.fill('#searchInput', 'export');
+  await page.waitForFunction((n) => document.getElementById('replaceAll').textContent === 'Replace all (' + n + ')', any);
+  await page.check('#wholeWord');
+  await page.waitForFunction((n) => document.getElementById('replaceAll').textContent === 'Replace all (' + n + ')', whole);
+  assert.equal(await page.locator('mark.hit').count(), whole, 'the highlights follow it too, when every match is on screen');
+  await page.fill('#replaceInput', 'ZZQRPLC');
+  await page.click('#replaceAll');
+  assert.equal(await count('ZZQRPLC'), whole);
+  assert.equal(await count('export'), any - whole, 'words such as exported are kept');
+  await page.uncheck('#wholeWord');
+  await page.waitForFunction((n) => document.getElementById('replaceAll').textContent === 'Replace all (' + n + ')', any - whole);
+});
