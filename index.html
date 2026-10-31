@@ -249,10 +249,13 @@ body.drag .chat { outline: 2px dashed var(--user); outline-offset: 6px; }
 .copybtn { font: 500 .8rem var(--ff); color: inherit; background: none; border: 0; border-radius: 8px; padding: 6px 10px; min-height: 36px; cursor: pointer; }
 .copybtn:hover, .copybtn[aria-pressed="true"] { background: rgba(128, 128, 128, .22); }
 .codeacts { display: flex; gap: 2px; }
-.copybtn:focus-visible, #searchInput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.copybtn:focus-visible, #searchInput:focus-visible, #replaceInput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .searchrow { display: flex; gap: 8px; }
-#searchInput { flex: 1 1 auto; min-width: 0; box-sizing: border-box; min-height: 44px; font: 400 16px var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+#searchInput, #replaceInput { flex: 1 1 auto; min-width: 0; box-sizing: border-box; min-height: 44px; font: 400 16px var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
 .searchrow .btn { padding-inline: 16px; }
+.replacerow { flex-wrap: wrap; margin-top: 6px; }
+#replaceInput { flex-basis: 160px; }
+.replacerow .btn:disabled { opacity: .5; cursor: not-allowed; }
 .count { min-height: 1.2em; font-size: .85rem; color: var(--muted); }
 mark.hit { background: var(--hit); color: var(--hit-fg); border-radius: 3px; padding: 0 1px; }
 mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
@@ -521,6 +524,11 @@ body.searching .fabs, body.searching .navfabs { display: none; }
       <button class="btn" id="searchPrev" type="button" aria-label="Previous match">&uarr;</button>
       <button class="btn" id="searchNext" type="button" aria-label="Next match">&darr;</button>
       <button class="sheetx" type="button" data-close="search" aria-label="Close search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="searchrow replacerow" id="replaceRow" hidden>
+      <input id="replaceInput" type="text" placeholder="Replace with" aria-label="Replace with" autocomplete="off" enterkeyhint="done">
+      <button class="btn" id="replaceOne" type="button" disabled>Replace</button>
+      <button class="btn" id="replaceAll" type="button" disabled>Replace all</button>
     </div>
     <p class="count" id="searchCount" aria-live="polite"></p>
   </section>
@@ -1190,6 +1198,8 @@ function setEdit(on, quiet) {
   editMode = on; editingIdx = -1; selIdx = -1;
   document.body.classList.toggle('editing', on);
   $('editbar').hidden = !on;
+  $('replaceRow').hidden = !on;
+  syncReplace();
   applyFabPos(); applyNavPos();
   $('editCaution').hidden = !on || tipsHidden;
   $('editBtn').setAttribute('aria-pressed', String(on));
@@ -3041,6 +3051,7 @@ function decorateCode(root) {
 /* ---- search in chat (runs in the page only; nothing is stored) ---- */
 var hits = [], hitIdx = -1, searchTimer = null;
 function updateCount() {
+  syncReplace();
   var q = $('searchInput').value.trim();
   $('searchCount').textContent = !q ? '' : (hits.length ? (hitIdx + 1) + ' of ' + hits.length : 'No matches');
 }
@@ -3057,6 +3068,7 @@ function resetSearch() {
   clearMarks();
   $('searchInput').value = '';
   $('searchCount').textContent = '';
+  syncReplace();
 }
 function goTo(i) {
   if (!hits.length) { updateCount(); return; }
@@ -3107,6 +3119,70 @@ function runSearch() {
   });
   if (hits.length) goTo(0); else updateCount();
 }
+/* ---- replace (Edit mode only): works on each message's Markdown, so its own count can differ from the highlights ---- */
+function srcRe() { var q = $('searchInput').value.trim(); return q ? new RegExp(escapeRe(q), 'gi') : null; }
+function srcMatches() { // every match in the Markdown of every message: { i: message, start, len }
+  var re = srcRe(), out = [];
+  if (!re || !doc) return out;
+  doc.msgs.forEach(function (m, i) {
+    var x; re.lastIndex = 0;
+    while ((x = re.exec(m.text)) !== null) { if (!x[0].length) { re.lastIndex++; continue; } out.push({ i: i, start: x.index, len: x[0].length }); }
+  });
+  return out;
+}
+function syncReplace() {
+  if (!editMode || $('replaceRow').hidden) return;
+  var n = srcMatches().length;
+  $('replaceAll').textContent = n ? 'Replace all (' + n + ')' : 'Replace all';
+  $('replaceOne').disabled = $('replaceAll').disabled = !n;
+}
+function replaceOne() {
+  if (!editMode || !commitEdit()) return;
+  if (doc && Math.min(shown, doc.msgs.length) < doc.msgs.length) { loadAll(replaceOne); return; }
+  var all = srcMatches();
+  if (!all.length) { syncReplace(); return; }
+  var cur = hits[hitIdx], target = all[0], ord = 0;
+  if (cur) { // the n-th highlight in a message is taken to be the n-th match in its Markdown
+    var row = cur.closest('.row'), mi = row ? +row.getAttribute('data-i') : -1;
+    var inMsg = all.filter(function (x) { return x.i === mi; });
+    if (inMsg.length) {
+      ord = Math.min(Math.max(hits.filter(function (h) { return h.closest('.row') === row; }).indexOf(cur), 0), inMsg.length - 1);
+      target = inMsg[ord];
+    } else { target = all.filter(function (x) { return x.i > mi; })[0] || all[0]; ord = 0; }
+  }
+  var to = $('replaceInput').value, i = target.i, t = doc.msgs[i].text;
+  var nt = t.slice(0, target.start) + to + t.slice(target.start + target.len);
+  if (!nt.trim()) { toast('A message cannot be empty. Use Delete to remove it.', false); return; }
+  var again = (to.match(srcRe()) || []).length; // matches inside the new text are skipped, so Replace never loops on itself
+  mutate(function () { doc.msgs[i].text = nt; }); // this redraws the chat and runs the search again
+  if (!hits.length) return;
+  var next = -1;
+  hits.forEach(function (h, k) {
+    if (next >= 0) return;
+    var r = h.closest('.row'), ri = r ? +r.getAttribute('data-i') : -1;
+    if (ri > i) { next = k; return; }
+    if (ri === i && hits.filter(function (x) { return x.closest('.row') === r; }).indexOf(h) >= (cur ? ord : 0) + again) next = k;
+  });
+  goTo(next < 0 ? 0 : next);
+}
+function replaceAll() {
+  if (!editMode || !commitEdit()) return;
+  var re = srcRe();
+  if (!re) return;
+  var to = $('replaceInput').value, count = 0, msgs = 0, skipped = 0, changes = {};
+  doc.msgs.forEach(function (m, i) {
+    var c = 0, nt = m.text.replace(re, function () { c++; return to; });
+    if (!c) return;
+    if (!nt.trim()) { skipped++; return; }
+    changes[i] = nt; count += c; msgs++;
+  });
+  if (!msgs) { toast(skipped ? 'A message cannot be empty, so nothing was replaced.' : 'No matches to replace', false); return; }
+  mutate(function () { Object.keys(changes).forEach(function (i) { doc.msgs[i].text = changes[i]; }); },
+    'Replaced ' + count + (count === 1 ? ' match' : ' matches') + ' in ' + msgs + (msgs === 1 ? ' message' : ' messages') + (skipped ? '. ' + skipped + ' left alone, as they would be empty' : ''));
+}
+$('replaceOne').addEventListener('click', replaceOne);
+$('replaceAll').addEventListener('click', replaceAll);
+$('replaceInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); replaceOne(); } });
 $('searchInput').addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 150); });
 $('searchInput').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') { e.preventDefault(); if (!hits.length) runSearch(); else goTo(hitIdx + (e.shiftKey ? -1 : 1)); }

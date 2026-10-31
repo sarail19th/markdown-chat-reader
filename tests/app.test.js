@@ -167,3 +167,46 @@ test('the arrows can be dragged on their own, and stay where you put them', asyn
   await page.click('#navToggle');
   assert.ok(await page.locator('#navMenu').isHidden(), 'a plain tap still folds them');
 });
+
+test('Replace and Replace all work on a chat in Edit mode, and one undo brings the text back', async () => {
+  const page = await openApp();
+  const countOf = (word) => page.evaluate((w) => doc.msgs.reduce((n, m) => n + (m.text.match(new RegExp(w, 'gi')) || []).length, 0), word);
+  await page.click('#fabToggle');
+  await page.click('[data-panel="search"]');
+  assert.ok(await page.locator('#replaceRow').isHidden(), 'no Replace while only reading');
+  await page.keyboard.press('Escape');
+  await page.click('#editBtn');
+  await page.click('[data-panel="search"]');
+  assert.ok(await page.locator('#replaceRow').isVisible(), 'Replace appears in Edit mode');
+  assert.ok(await page.locator('#replaceAll').isDisabled(), 'and waits for something to search for');
+  const total = await countOf('export');
+  assert.ok(total > 3, 'the guide mentions "export" several times');
+  await page.fill('#searchInput', 'export');
+  await page.waitForFunction((n) => document.getElementById('replaceAll').textContent === 'Replace all (' + n + ')', total);
+  await page.fill('#replaceInput', 'ZZQRPLC');
+  await page.click('#replaceOne');
+  assert.equal(await countOf('export'), total - 1, 'Replace changes one match');
+  assert.equal(await countOf('ZZQRPLC'), 1);
+  await page.click('#replaceAll');
+  assert.equal(await countOf('export'), 0, 'Replace all changes the rest, in any capital letters');
+  assert.equal(await countOf('ZZQRPLC'), total);
+  await page.click('#undoBtn');
+  assert.equal(await countOf('ZZQRPLC'), 1, 'one undo takes back all of Replace all');
+  await page.click('#undoBtn');
+  assert.equal(await countOf('ZZQRPLC'), 0, 'and one more takes back the single Replace');
+  assert.equal(await countOf('export'), total);
+});
+
+test('Replace never loops on text that contains what it searched for', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.click('[data-panel="search"]');
+  const have = () => page.evaluate(() => doc.msgs.reduce((n, m) => n + (m.text.match(/exports/gi) || []).length, 0));
+  const before = await have();
+  await page.fill('#searchInput', 'export');
+  await page.waitForFunction(() => /\(\d+\)/.test(document.getElementById('replaceAll').textContent));
+  await page.fill('#replaceInput', 'exports');
+  for (let k = 0; k < 3; k++) await page.click('#replaceOne');
+  assert.equal(await have(), before + 3, 'three clicks replace three different matches');
+});
