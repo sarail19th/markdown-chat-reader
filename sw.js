@@ -1,5 +1,6 @@
 // Offline support. This caches only the app's own files (page, icons, libraries).
-// Chats never pass through here: files you open are read inside the page and are never fetched or cached.
+// Chats are never fetched or cached: files you open are read inside the page. The one exception is a file shared
+// to the app from Android's Share menu: it is held in memory for a moment, handed to the page, and then dropped.
 const VERSION = '__VERSION__';
 const CACHE = 'chat-reader-' + VERSION;
 const FILES = [
@@ -25,8 +26,34 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// Files shared to the app (Android Share menu -> Chat Reader) wait here, in memory only, until the page collects them.
+let shared = [];
+let sharedAt = 0;
+
+self.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'take-shared' || !e.source) return;
+  const files = Date.now() - sharedAt < 60000 ? shared : [];
+  shared = [];
+  e.source.postMessage({ type: 'shared', files });
+});
+
+async function receiveShare(req) {
+  try {
+    const form = await req.formData();
+    shared = form.getAll('files').filter((f) => typeof f !== 'string');
+    sharedAt = Date.now();
+  } catch (err) {
+    shared = [];
+  }
+  return Response.redirect(new URL('./?shared=1', self.registration.scope).href, 303);
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-target')) {
+    e.respondWith(receiveShare(req));
+    return;
+  }
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== location.origin) return;
 

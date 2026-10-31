@@ -196,7 +196,7 @@ Can I install it on my phone?
 **AI:**
 Yes. It then opens from its own icon with no address bar, and it works without internet after your first visit.
 
-- **Android:** open this page in Chrome, choose the menu (⋮) and tap **Install app**. The installed app opens full screen with no bars, in portrait or landscape. Swipe in from the top or bottom edge to see the system bars for a moment.
+- **Android:** open this page in Chrome, choose the menu (⋮) and tap **Install app**. The installed app opens full screen with no bars, in portrait or landscape. Swipe in from the top or bottom edge to see the system bars for a moment. Once it is installed, a `.md` file can be opened from your Files app: tap the file, choose **Share**, then **Chat Reader**. If the app is not in the Share list, remove it and install it again once. Android does not let a web app be the default for `.md` files, so this takes one extra tap.
 - **iPhone:** open this page in Safari, tap the **Share** button (the square with an arrow pointing up), scroll down and tap **Add to Home Screen**, then tap **Add**. If you see an **Open as Web App** switch, leave it on.
 
 Your chats are still never saved. Installing only keeps the app's own files on your phone.

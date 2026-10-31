@@ -546,7 +546,7 @@ Do this for the full conversation history of this chat.</code></pre>
     </ul>
     <h2>Install it on your phone</h2>
     <ul>
-      <li><strong>Android:</strong> open this page in Chrome, tap the menu (&#8942;), then <strong>Install app</strong>. It opens full screen, in portrait or landscape. Swipe in from an edge to show the system bars for a moment.</li>
+      <li><strong>Android:</strong> open this page in Chrome, tap the menu (&#8942;), then <strong>Install app</strong>. It opens full screen, in portrait or landscape. Swipe in from an edge to show the system bars for a moment. Once it is installed, you can also open a <code>.md</code> file from your Files app: tap the file, choose <strong>Share</strong>, then <strong>Chat Reader</strong>. If it is not in the Share list, remove the app and install it again once.</li>
       <li><strong>iPhone:</strong> open this page in Safari, tap <strong>Share</strong> (the square with an arrow pointing up), then <strong>Add to Home Screen</strong> and <strong>Add</strong>. If you see an <strong>Open as Web App</strong> switch, leave it on.</li>
       <li>Either way it then opens from its own icon with no address bar, and works without internet after your first visit.</li>
     </ul>
@@ -2395,6 +2395,19 @@ $('showGuide').addEventListener('click', function () {
 });
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   navigator.serviceWorker.register('sw.js').catch(function () {});
+  // A file shared from Android's Share menu: the service worker holds it in memory and hands it over here. Nothing is stored.
+  if (/[?&]shared=1\b/.test(location.search)) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    navigator.serviceWorker.addEventListener('message', function (e) {
+      if (!e.data || e.data.type !== 'shared') return;
+      if (e.data.files && e.data.files.length) { loadFiles(e.data.files); return; }
+      toast('No shared file arrived. Tap Open in the menu and pick the .md file instead.', false);
+    });
+    navigator.serviceWorker.ready.then(function (reg) {
+      var sw = navigator.serviceWorker.controller || reg.active;
+      if (sw) sw.postMessage({ type: 'take-shared' });
+    });
+  }
 }
 </script>
 </body>
