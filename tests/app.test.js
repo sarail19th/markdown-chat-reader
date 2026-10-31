@@ -409,3 +409,24 @@ test('the + and x buttons on a notice fit inside it, folded or open', async () =
   assert.ok(await page.evaluate(() => document.getElementById('editedBanner').classList.contains('collapsed')), 'the notice folds to one line');
   assert.ok(await fits(), 'and the + still fits inside the folded notice');
 });
+
+test('Quote turns lines into a quote block and back, and Heading is spelled out', async () => {
+  const page = await openApp();
+  const q = (text, s, e) => page.evaluate(([t, a, b]) => { const r = toggleQuoteRange(t, a, b); return t.slice(0, r.start) + r.out + t.slice(r.end); }, [text, s, e]);
+  assert.equal(await q('Hello', 2, 2), '> Hello', 'the line with the cursor becomes a quote');
+  assert.equal(await q('> Hello', 3, 3), 'Hello', 'and goes back');
+  assert.equal(await q('one\n\ntwo', 0, 8), '> one\n>\n> two', 'several paragraphs stay one block');
+  assert.equal(await q('> one\n>\n> two', 0, 13), 'one\n\ntwo', 'and come back exactly');
+  assert.equal(await q('intro\nline a\nline b\noutro', 6, 19), 'intro\n> line a\n> line b\noutro', 'only the touched lines change');
+  assert.equal(await q('', 0, 0), '> ', 'an empty line starts a quote');
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.click('.row >> nth=0 >> .bubble');
+  await page.click('text=Edit text');
+  assert.equal(await page.textContent('.stylebtn[data-style="heading"]'), 'Heading', 'the heading button says what it is');
+  await page.fill('#editArea', 'A quoted line');
+  await page.click('.stylebtn[data-style="quote"]');
+  assert.equal(await page.inputValue('#editArea'), '> A quoted line');
+  await page.click('[data-act="save"]');
+  assert.equal(await page.locator('.row >> nth=0 >> blockquote').count(), 1, 'it shows as a quote with a bar at the side');
+});

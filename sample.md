@@ -156,7 +156,7 @@ Tell me more about Edit. Does it change my original file?
 **AI:**
 No, your original file never changes. Turn on **Edit** and tap a message to:
 
-- change its text, with **B**, **I**, **S**, **H** and **Clear style** to fix formatting,
+- change its text, with **B**, **I**, **S**, **Heading**, **Quote** (a block with a bar down its left side) and **Clear style** to fix formatting,
 - delete it, or **Swap side** if the speaker is wrong,
 - **Split speaker** when one message holds both speakers' words,
 - **Split after this** to save a long chat as two files, or **Excerpt only** to save just some messages.

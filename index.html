@@ -344,8 +344,8 @@ body.editing .titleedit { display: inline-flex; }
 .mvbtn { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 40px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
 .mvbtn:disabled { opacity: .35; cursor: default; }
 .stylebtn.clear { font-weight: 500; margin-left: auto; }
-.stylebtn.split { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
-.stylebtn.split svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.stylebtn.split, .stylebtn.blk { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.stylebtn.split svg, .stylebtn.blk svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .edithint { margin: 6px 0 0; font-size: .8rem; line-height: 1.35; color: var(--muted); }
 .editarea { display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: none; font: 400 max(16px, var(--chat-fs))/var(--chat-lh) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
 .editactions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
@@ -1289,7 +1289,7 @@ function selectRow(i) {
   row.parentNode.insertBefore(m, row.nextSibling);
   m.scrollIntoView({ block: 'nearest' });
 }
-/* ---- text style (bold, italic, strikethrough, heading): pure helpers that work on the Markdown text ---- */
+/* ---- text style (bold, italic, strikethrough, heading, quote): pure helpers that work on the Markdown text ---- */
 //#style-start
 var CODE_SPAN_RE = /^[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:\n[ \t]*\1[`~]*[ \t]*(?=\n|$)|$(?![\s\S]))|(`+)[^`\n]+?\2(?!`)|^[ \t]*([*_])(?:[ \t]*\3){2,}[ \t]*$/gm;
 function outsideCode(s, fn) {
@@ -1445,6 +1445,26 @@ function toggleHeadingRange(text, s, e) {
   var caret = Math.max(0, Math.min(out.length, s - ls + (out.length - (le - ls))));
   return { start: ls, end: le, out: out, selStart: caret, selEnd: caret };
 }
+// Quote on or off for the lines touched by [s, e): a block with a bar down its left side (a "> " in Markdown). Empty lines inside the selection get a bare ">" so it stays one block.
+function toggleQuoteRange(text, s, e) {
+  var ls = text.lastIndexOf('\n', s - 1) + 1;
+  var le = text.indexOf('\n', e > s && text.charAt(e - 1) === '\n' ? e - 1 : e);
+  if (le < 0) le = text.length;
+  var lines = text.slice(ls, le).split('\n'), QUOTE = /^[ \t]{0,3}>[ \t]?/;
+  var first = lines.filter(function (l) { return /\S/.test(l); })[0];
+  if (first === undefined) { // only empty lines: start a quote on the line the cursor is on
+    if (s !== e) return { start: s, end: e, out: text.slice(s, e), selStart: 0, selEnd: e - s };
+    return { start: ls, end: le, out: '> ', selStart: 2, selEnd: 2 };
+  }
+  var on = !QUOTE.test(first);
+  var out = lines.map(function (l) {
+    if (on) return /\S/.test(l) ? '> ' + l : '>';
+    return l.replace(QUOTE, '');
+  }).join('\n');
+  if (s !== e) return { start: ls, end: le, out: out, selStart: 0, selEnd: out.length };
+  var caret = Math.max(0, Math.min(out.length, s - ls + (out.length - (le - ls))));
+  return { start: ls, end: le, out: out, selStart: caret, selEnd: caret };
+}
 //#style-end
 
 function buildEditor(b, i) {
@@ -1482,6 +1502,8 @@ function buildEditor(b, i) {
       applyStyle(toggleStrikeRange(ta.value, ta.selectionStart, ta.selectionEnd));
     } else if (kind === 'heading') {
       applyStyle(toggleHeadingRange(ta.value, ta.selectionStart, ta.selectionEnd));
+    } else if (kind === 'quote') {
+      applyStyle(toggleQuoteRange(ta.value, ta.selectionStart, ta.selectionEnd));
     } else {
       applyStyle(toggleStyleRange(ta.value, ta.selectionStart, ta.selectionEnd, kind));
     }
@@ -1494,7 +1516,8 @@ function buildEditor(b, i) {
   tools.innerHTML = '<button class="stylebtn" type="button" data-style="bold" aria-label="Bold" title="Bold the selected text (Ctrl+B)"><b>B</b></button>' +
     '<button class="stylebtn" type="button" data-style="italic" aria-label="Italic" title="Italic the selected text (Ctrl+I)"><i>I</i></button>' +
     '<button class="stylebtn" type="button" data-style="strike" aria-label="Strikethrough" title="Strike through the selected text"><s>S</s></button>' +
-    '<button class="stylebtn" type="button" data-style="heading" aria-label="Heading" title="Turn the selected lines into a heading, or back into plain text">H</button>' +
+    '<button class="stylebtn blk" type="button" data-style="heading" aria-label="Heading" title="Turn the selected lines into a heading, or back into plain text"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 5v14M6 12h12"/></svg><span>Heading</span></button>' +
+    '<button class="stylebtn blk" type="button" data-style="quote" aria-label="Quote" title="Turn the selected lines into a quote, a block with a bar down its left side, or back into plain text"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14"/><path d="M10 8h9M10 12h9M10 16h5"/></svg><span>Quote</span></button>' +
     (doc.msgs[i].role === 'system' ? '' : '<button class="stylebtn split" type="button" data-style="split" aria-label="Split speaker" title="' + SPLIT_HINT + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + MENU_ICONS.split + '</svg><span>Split speaker</span></button>') +
     '<button class="stylebtn clear" type="button" data-style="clear" title="Remove bold, italic and strikethrough from the selected paragraphs, or from the whole message if nothing is selected">Clear style</button>';
   tools.addEventListener('mousedown', function (e) { e.preventDefault(); });
