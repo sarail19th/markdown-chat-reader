@@ -2638,11 +2638,20 @@ function isoDay(d) { return d && !isNaN(d) ? d.getFullYear() + '-' + ('0' + (d.g
 function titleFolder(t) { var m = /^\s*\[([^\]\n]{1,60})\]/.exec(t); return m ? m[1].trim() : ''; }
 // Reads one export, .json or .zip, into { from, items }. In a .zip, conversations.json comes first; otherwise every
 // .json or .jsonl inside is tried, so an export split into parts or renamed still opens.
+// Claude's export comes as several .zip files; only conversations-000.zip holds chats. The others are named here.
+function notChats(what, file) {
+  var e = new Error(file.name + ' is ' + what + ', not chats. For your chats, open conversations-000.zip.');
+  e.skip = file.name + ' (' + what.replace(/^your /, '') + ')';
+  return e;
+}
 function readArchive(file) {
   if (/\.json$/i.test(file.name)) return readText(file).then(function (t) { return fromExport(parseJson(t)); });
   return file.arrayBuffer().then(function (buf) {
     var ents = zipEntries(buf), find = function (re) { return ents.filter(function (x) { return re.test(x.name); })[0]; };
     var names = find(/(^|\/)conversation_asset_file_names\.json$/i), conv = find(/(^|\/)conversations\.json$/i);
+    if (!conv && find(/(^|\/)artifacts\/[^\/]+\/artifact\.json$/)) throw notChats('your Claude artifacts', file);
+    if (!conv && find(/(^|\/)claude_code_cloud\//)) throw notChats('your Claude Code settings', file);
+    if (!conv && /^light_metadata/i.test(file.name)) throw notChats('Claude account metadata', file);
     var jsons = conv ? [conv] : ents.filter(function (x) { return /\.jsonl?$/i.test(x.name) && !/(^|\/)(__MACOSX|\.)/.test(x.name); })
       .sort(function (a, b) { return /conversation/i.test(b.name) - /conversation/i.test(a.name); });
     if (jsons.length) {
@@ -2676,7 +2685,8 @@ function openArchives(files) {
     var ok = res.filter(function (x) { return !x.err; });
     if (!ok.length) throw res[0].err;
     var froms = ok.map(function (x) { return x.from; }).filter(function (f, k, a) { return a.indexOf(f) === k; });
-    return { from: froms.join(' and '), items: [].concat.apply([], ok.map(function (x) { return x.items; })), skipped: res.length - ok.length };
+    var known = res.filter(function (x) { return x.err && x.err.skip; }).map(function (x) { return x.err.skip; });
+    return { from: froms.join(' and '), items: [].concat.apply([], ok.map(function (x) { return x.items; })), skipped: res.length - ok.length - known.length, known: known };
   }).then(function (r) {
     var items = r.items.filter(function (it) { return it.msgs.length; });
     var map = folderMap(), kept = 0;
@@ -2691,7 +2701,7 @@ function openArchives(files) {
     $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'chat') + ' with no messages left out)' : '') + '. ' +
       (ghosts ? plural(ghosts, 'chat') + ' have no text at all in this export, so they are hidden and not saved unless you show them. ' : '') +
       (gaps ? 'In ' + plural(gaps, 'chat') + ' some messages have no text in this export; they are marked in the chat. For a full copy of one, use the one-chat prompt in Help. ' : '') +
-      (r.skipped ? plural(r.skipped, 'file') + ' could not be read. ' : '') + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
+      (r.known.length ? 'Not chats, so skipped: ' + r.known.join(', ') + '. ' : '') + (r.skipped ? plural(r.skipped, 'file') + ' could not be read. ' : '') + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
     // A backup .zip already has its folders in it, so the option shows only for exports.
     $('libKeep').hidden = !items.some(function (it) { return it.id; });
     $('libRemember').checked = !!map;
