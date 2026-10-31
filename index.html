@@ -14,10 +14,7 @@
     if (a && /^(classic|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     if (localStorage.getItem('cr-tint') === 'on') r.setAttribute('data-tint', 'on');
-    var labOn = /[?&]lab(=1)?(&|$)/.test(location.search), labOff = /[?&]lab=0(&|$)/.test(location.search);
-    if (labOn) localStorage.setItem('cr-lab', '1');
-    if (labOff) localStorage.removeItem('cr-lab');
-    if (labOn || (!labOff && localStorage.getItem('cr-lab') === '1')) r.setAttribute('data-lab', '');
+    localStorage.removeItem('cr-lab'); // left over from testing the export converter
     var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
     [['cr-size', '--chat-fs', 14, 28, 'px'], ['cr-lh', '--chat-lh', 1.2, 2.2, ''], ['cr-ps', '--chat-ps', .2, 2, 'em']].forEach(function (d) {
       var v = localStorage.getItem(d[0]);
@@ -567,9 +564,11 @@ body.searching .fabs { display: none; }
           <li><strong>Gemini:</strong> its chat menu (the three dots at the top right of a chat) only saves a chat as a PDF or Google Doc. This reader does not open those. Use the one-chat prompt below instead.</li>
         </ul>
       </li>
-      <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat, in project folders if you list your projects.</li>
-      <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. If the export came in several parts, select all the files at once (or drop them together), put them in reading order by dragging, and they are merged into one chat.</li>
+      <li><strong>Open the export here.</strong> For ChatGPT or Claude, tap <strong>Open</strong> and pick the export as you downloaded it (the .zip, or the conversations.json inside it). A list of its chats appears: tap one to read it, tick chats and use <strong>Move to folder</strong> to sort them into projects, and <strong>Download .zip</strong> to save one .md file per chat, in folders, for a backup on Google Drive. On a computer, Chrome and Edge can also <strong>Save into a folder</strong> directly. It all happens in your browser: no AI, nothing uploaded, every word kept.</li>
+      <li><strong>Read here any time.</strong> Open a single .md file, or the backup .zip to get the list back. If a chat came in several .md parts, select them all at once (or drop them together), put them in reading order by dragging, and they are merged into one chat.</li>
     </ol>
+    <h2>Other apps: convert with an AI</h2>
+    <p>For Grok, Copilot and other exports this reader cannot open yet, upload the export to an AI assistant you trust, such as Claude, and paste this prompt. It gives you Markdown files, one per chat, in project folders if you list your projects. This sends your export to that assistant.</p>
     <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-08-21 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
 
 The export may not say which project a chat was in. If I list projects below, put each chat in a folder named after its project, and the rest in a folder called No project. If I do not, suggest folders from the chat titles and show me the list before you convert.
@@ -589,10 +588,10 @@ Projects (optional, delete if not needed):
     <h2>Chats in projects</h2>
     <p>ChatGPT's export puts every chat into one file, ordered by date, and leaves out the project names. Other apps may do the same, so check your export before you delete anything.</p>
     <ul>
-      <li><strong>Before you export, put the project in the title.</strong> Rename each chat to start with its project, for example <em>[Travel] Packing list</em>. Titles are kept in the export, so the project comes along and the AI can sort by it.</li>
-      <li><strong>Or note your projects.</strong> Write down each project and a few of its chat titles from the sidebar, and add them under Projects at the end of the prompt.</li>
+      <li><strong>Before you export, put the project in the title.</strong> Rename each chat to start with its project, for example <em>[Travel] Packing list</em>. Titles are kept in the export, so when you open it here the chat goes straight into the folder Travel.</li>
+      <li><strong>Or sort them here.</strong> In the list of chats, tick the chats of one project and use <strong>Move to folder</strong>. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which.</li>
       <li><strong>Only need one project?</strong> Use the one-chat prompt below in each of its chats instead of exporting everything.</li>
-      <li><strong>On a free plan?</strong> Ask for the list of chats first, then convert only the ones you need, 10 at a time.</li>
+      <li><strong>Converting with an AI on a free plan?</strong> Ask for the list of chats first, then convert only the ones you need, 10 at a time. Opening a ChatGPT or Claude export here has no such limit.</li>
     </ul>
     <h2>Export one chat from any AI</h2>
     <p>For an app with no export, one that only exports your whole account, or a chat you want on its own. Open the chat, paste this prompt, and save what the AI gives you. Select all the parts at once with <strong>Open</strong> (or paste one part at a time with <strong>Paste</strong>) to read them as one chat.</p>
@@ -621,7 +620,7 @@ Do this for the full conversation history of this chat.</code></pre>
     <h2>Your chat stays with you</h2>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
-      <li>Step 2 above is separate: uploading your export to an AI assistant sends it to that service. This reader never does.</li>
+      <li>An export you open here stays in your browser too. Converting with an AI assistant instead sends your export to that service. This reader never does.</li>
       <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font, where you moved the buttons and whether you hid the editing tips) are remembered, on this device. A font file you add stays on this device too.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
@@ -647,7 +646,7 @@ Do this for the full conversation history of this chat.</code></pre>
     <p class="hint" id="libInfo"></p>
     <input type="search" id="libSearch" class="modalinput" placeholder="Search chat titles" aria-label="Search chat titles" autocomplete="off">
     <div id="libList"></div>
-    <p class="hint">Test feature. Everything happens in this browser: nothing is uploaded or saved, and folders last until you close the page. Titles that start with [Name] go into the folder Name.</p>
+    <p class="hint">Everything happens in this browser: nothing is uploaded or saved, and folders last until you close the page. Titles that start with [Name] go into the folder Name.</p>
     <div class="libbar">
       <button class="btn" id="libAll" type="button">Select all shown</button>
       <button class="btn" id="libMove" type="button" disabled>Move to folder</button>
@@ -676,7 +675,7 @@ Do this for the full conversation history of this chat.</code></pre>
 <div class="fabs" id="fabs" data-h="right" data-v="up">
   <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
-    <button class="fabbtn" id="openBtn" type="button" aria-label="Open a .md file" title="Open a .md file from your device, or select several parts to merge them into one chat. It is read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+    <button class="fabbtn" id="openBtn" type="button" aria-label="Open a file" title="Open a .md file, a backup .zip, or a ChatGPT or Claude export (.zip or .json). Select several .md parts to merge them into one chat. Files are read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
     <button class="fabbtn" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg></button>
     <button class="fabbtn" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
@@ -689,7 +688,7 @@ Do this for the full conversation history of this chat.</code></pre>
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg></button>
   </div>
-  <input type="file" id="file" multiple accept=".md,.markdown,.txt,text/markdown,text/plain">
+  <input type="file" id="file" multiple accept=".md,.markdown,.txt,.zip,.json,text/markdown,text/plain,application/zip,application/json">
 </div>
 <div class="editbar" id="editbar" hidden>
   <div class="inner">
@@ -1795,7 +1794,7 @@ function baseName(name) { return name.replace(/\.[^.]+$/, ''); }
 // Several files (an export split into parts) are merged into one chat, in natural file name order (part2 before part10).
 function loadFiles(list) {
   var files = Array.prototype.slice.call(list || []);
-  if (LAB && files.some(isArchive)) { closePanels(); openArchive(files.filter(isArchive)[0]); return; }
+  if (files.some(isArchive)) { closePanels(); openArchive(files.filter(isArchive)[0]); return; }
   if (!files.length || !guardDirty()) return;
   files.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }); });
   Promise.all(files.map(readText)).then(function (texts) {
@@ -2499,11 +2498,9 @@ setAccent(root.getAttribute('data-accent') || 'lavender');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
 setChecked($('tintGroup'), 'data-tint', root.getAttribute('data-tint') === 'on' ? 'on' : 'off');
-/* ---- Lab (only after opening the site with ?lab): open a ChatGPT or Claude export (.zip or .json), or a .zip of .md files,
-   list its chats, read any of them, sort them into folders and save them as .md files. It all happens in this browser. ---- */
-var LAB = root.hasAttribute('data-lab');
-var lib = null; // { items: [{ title, date, folder, msgs, md, fileBase }], sel: {} } while the page is open
-if (LAB) $('file').accept += ',.zip,.json,application/zip,application/json';
+/* ---- Exports: open a ChatGPT or Claude export (.zip or .json), or a .zip of .md files, list its chats,
+   read any of them, sort them into folders and save them as .md files. It all happens in this browser. ---- */
+var lib = null; // { items: [{ title, date, folder, msgs, md, fileBase }], sel: {}, from } while the page is open
 function isArchive(f) { return /\.(zip|json)$/i.test(f.name); }
 // Reads a .zip with the browser's own decompression, so no library is needed.
 function zipEntries(buf) {

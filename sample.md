@@ -9,8 +9,8 @@ How do I use this markdown reader?
 It turns an exported AI chat into a phone-style chat. Your messages sit on the **right** and the AI's on the **left**, like this one. There are three steps:
 
 1. **Export** your chats from your AI app.
-2. **Convert** the export to Markdown (`.md`) with an AI assistant.
-3. **Read** the `.md` file here.
+2. **Open** the export here (ChatGPT and Claude), or **convert** it to Markdown (`.md`) with an AI assistant (other apps).
+3. **Read** your chats here, and keep the `.md` files as a backup.
 
 Ask me about any step below.
 
@@ -38,7 +38,15 @@ I have the export file. What do I do with it?
 ---
 
 **AI:**
-Upload it to an AI assistant you trust, such as Claude, and paste the prompt below. You get Markdown files back, one per chat, in project folders if you list your projects at the end.
+**ChatGPT or Claude:** open it right here. Tap **Open** and pick the export as you downloaded it (the `.zip`, or the `conversations.json` inside it). A list of its chats appears:
+
+- Tap a title to read that chat.
+- Tick chats and tap **Move to folder** to sort them into projects.
+- Tap **Download .zip** to save one `.md` file per chat, in folders, ready for a backup on Google Drive. On a computer, Chrome and Edge can also **Save into a folder** directly.
+
+It all happens in your browser: no AI, nothing uploaded, and every word kept exactly. The books button in the menu brings the list back while the page is open.
+
+**Other apps** (Grok, Copilot and so on): upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. You get Markdown files back, one per chat, in project folders if you list your projects at the end.
 
 ```text
 Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-08-21 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
@@ -80,10 +88,10 @@ My chats were in projects. Why are they all mixed together?
 **AI:**
 ChatGPT's export puts every chat into one file, ordered by date, and leaves out the project names. Other apps may do the same, so check your export before you delete anything. Some ways to keep your projects:
 
-1. **Before you export, put the project in the title.** Rename each chat to start with its project, for example *[Travel] Packing list*. Titles are kept in the export, so the project comes along and the AI can sort by it.
-2. **Or note your projects.** Write down each project and a few of its chat titles from the sidebar, and add them under **Projects** at the end of the prompt above.
+1. **Before you export, put the project in the title.** Rename each chat to start with its project, for example *[Travel] Packing list*. Titles are kept in the export, so when you open it here the chat goes straight into the folder Travel.
+2. **Or sort them here.** In the list of chats, tick the chats of one project and tap **Move to folder**. Write down your projects and a few of their chat titles from the sidebar first, so you know which is which.
 3. **Only need one project?** Use the one-chat prompt below in each of its chats instead of exporting everything.
-4. **On a free plan?** Ask for the list of chats first, then convert only the ones you need, 10 at a time.
+4. **Converting with an AI on a free plan?** Ask for the list of chats first, then convert only the ones you need, 10 at a time. Opening a ChatGPT or Claude export here has no such limit.
 
 ---
 
@@ -129,7 +137,7 @@ Okay, I have the .md files on my phone. How do I open one?
 ---
 
 **AI:**
-Tap **Open** in the top bar and pick a file. You can also:
+Tap **Open** and pick a file. A backup `.zip` made here opens too, back into its list of chats, so you never need to unzip it to read. You can also:
 
 - tap **Paste** and paste the chat text,
 - or drop a `.md` file anywhere on the page on a computer.
@@ -146,7 +154,8 @@ What can I do once a chat is open?
 **AI:**
 | Floating button | What it does |
 |---|---|
-| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> **Open** | Opens a .md file from your device. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> **Open** | Opens a `.md` file, a backup `.zip`, or a ChatGPT or Claude export. |
+| <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg> **Chats in this export** | Appears after you open an export or a backup `.zip`, and brings its list of chats back. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg> **Paste** | Opens a box for pasted text. On a computer, pressing Ctrl+V anywhere on the page does the same. |
 | <svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg> **Search** | Finds text in the chat. Use the arrows to jump between matches. |
 | **Scroll handle** | On a touch screen, a handle appears on the right edge while you scroll. Drag it to move through a long chat quickly; a counter shows which message you are at. |
@@ -242,7 +251,7 @@ Is my chat uploaded or saved anywhere?
 ---
 
 **AI:**
-No. The file is read inside your browser and this page has no server that could receive it. Your chats are never saved or tracked, so reloading or closing the tab clears the chat.
+No. The file is read inside your browser and this page has no server that could receive it. That includes an export you open here. Your chats are never saved or tracked, so reloading or closing the tab clears the chat.
 
 Only your display choices are remembered, on this device. After your first visit the app's own files stay on your device, so it opens without internet. Your chats are never part of that.
 
