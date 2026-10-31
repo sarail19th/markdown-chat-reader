@@ -454,6 +454,10 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .mitem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; color: var(--fg); background: none; border: 0; border-radius: 10px; font: 600 1rem var(--ff); text-align: left; cursor: pointer; }
 .mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mitem:hover { background: var(--code); }
+.mitem span { display: grid; }
+.mitem small { font-weight: 400; font-size: .78rem; color: var(--muted); }
+.menusep { height: 1px; margin: 4px 8px; background: var(--line); }
+:root[data-hide-tools] .fabs, :root[data-hide-arrows] .navfabs { display: none; }
 .mitem:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 /* Second group: move around the chat. It starts in the opposite bottom corner from the tools (swapping sides if the tools are dragged across), and can be dragged by its round button. */
 .navfabs { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 18; width: 52px; height: 52px; }
@@ -517,6 +521,9 @@ body.searching .fabs, body.searching .navfabs { display: none; }
         <button class="mitem" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg><span>Chats in this export</span></button>
         <button class="mitem" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span>Paste text</span></button>
         <button class="mitem" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span>Help</span></button>
+        <div class="menusep" role="separator"></div>
+        <button class="mitem" id="hideToolsBtn" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span><b>Hide the tools</b><small>Edit, Style, Search</small></span></button>
+        <button class="mitem" id="hideArrowsBtn" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span><b>Hide the arrows</b><small>Jump, previous, next</small></span></button>
       </div>
     </div>
   </header>
@@ -2022,6 +2029,25 @@ $('openBtn').addEventListener('click', function () { $('file').click(); });
 function setTopMenu(open) { $('topMenu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
 $('menuBtn').addEventListener('click', function () { var open = $('topMenu').hidden; setTopMenu(open); if (open) $('openBtn').focus({ preventScroll: true }); });
 $('topMenu').addEventListener('click', function (e) { if (e.target.closest('.mitem')) setTopMenu(false); });
+// The menu can hide each floating group completely; the choice is remembered on this device and cleared by Reset all settings.
+var HIDES = [['hideToolsBtn', 'data-hide-tools', 'cr-hide-tools', 'the tools'], ['hideArrowsBtn', 'data-hide-arrows', 'cr-hide-arrows', 'the arrows']];
+function syncHides() {
+  HIDES.forEach(function (h) {
+    var hidden = document.documentElement.hasAttribute(h[1]), b = $(h[0]);
+    b.setAttribute('aria-pressed', String(hidden));
+    b.querySelector('b').textContent = (hidden ? 'Show ' : 'Hide ') + h[3];
+  });
+}
+HIDES.forEach(function (h) {
+  try { if (localStorage.getItem(h[2]) === '1') document.documentElement.setAttribute(h[1], ''); } catch (e) { /* storage blocked: both groups start shown */ }
+  $(h[0]).addEventListener('click', function () {
+    var hide = !document.documentElement.hasAttribute(h[1]);
+    if (hide) document.documentElement.setAttribute(h[1], ''); else document.documentElement.removeAttribute(h[1]);
+    savePref(h[2], hide ? '1' : null);
+    syncHides(); placeSheets();
+  });
+});
+syncHides();
 document.addEventListener('click', function (e) { if (!$('topMenu').hidden && !e.target.closest('#menuWrap')) setTopMenu(false); });
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape' || e.defaultPrevented || $('topMenu').hidden) return;
@@ -3010,6 +3036,7 @@ $('resetPrefs').addEventListener('click', function () {
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
   navPos = null; savePref('cr-navpos', null); applyNavPos();
   document.documentElement.removeAttribute('data-nav'); savePref('cr-nav', null); syncNavToggle();
+  HIDES.forEach(function (h) { document.documentElement.removeAttribute(h[1]); savePref(h[2], null); }); syncHides();
   setAccent('lavender');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();

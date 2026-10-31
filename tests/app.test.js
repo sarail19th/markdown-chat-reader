@@ -118,7 +118,7 @@ test('the buttons are in groups: Open, Paste and Help in a top-right menu, Edit,
   const before = await chatTop();
   await page.click('#menuBtn');
   assert.equal(await chatTop(), before, 'the list floats over the chat instead of pushing it down');
-  assert.deepEqual(await page.$$eval('#topMenu button', (bs) => bs.filter((b) => !b.hidden).map((b) => b.textContent)), ['Open a file', 'Paste text', 'Help']);
+  assert.deepEqual(await page.$$eval('#topMenu button:not(#hideToolsBtn):not(#hideArrowsBtn)', (bs) => bs.filter((b) => !b.hidden).map((b) => b.textContent)), ['Open a file', 'Paste text', 'Help']);
   await page.click('#pasteBtn');
   assert.ok(await page.locator('#topMenu').isHidden(), 'choosing an item closes the menu');
   assert.ok(await page.locator('#paste').isVisible(), 'and opens what was chosen');
@@ -310,4 +310,30 @@ test('the suggested file name follows the chat title, and a name you chose is ke
   assert.equal(await suggested(), 'rome-final', 'the name you chose is offered again for the same title');
   await page.evaluate(() => { doc.title = 'My Trip to Paris'; render(); });
   assert.equal(await suggested(), 'my-trip-to-paris-edited', 'but not after the title changes');
+});
+
+test('the top-right menu can hide and show the floating tools and arrows, and remembers it', async () => {
+  const page = await openApp();
+  const hidden = (sel) => page.evaluate((s) => getComputedStyle(document.querySelector(s)).display === 'none', sel);
+  assert.equal(await hidden('#fabs'), false);
+  assert.equal(await hidden('#navFabs'), false);
+  await page.click('#menuBtn');
+  assert.equal(await page.textContent('#hideToolsBtn b'), 'Hide the tools');
+  await page.click('#hideToolsBtn');
+  assert.equal(await hidden('#fabs'), true, 'the tools are gone');
+  assert.equal(await hidden('#navFabs'), false, 'the arrows stay');
+  await page.click('#menuBtn');
+  assert.equal(await page.textContent('#hideToolsBtn b'), 'Show the tools');
+  await page.click('#hideArrowsBtn');
+  assert.equal(await hidden('#navFabs'), true, 'now the arrows are gone too');
+  await page.reload();
+  await page.waitForFunction(() => window.doc && doc.msgs.length > 0);
+  assert.equal(await hidden('#fabs'), true, 'both stay hidden after a reload');
+  assert.equal(await hidden('#navFabs'), true);
+  await page.click('#menuBtn');
+  await page.click('#hideToolsBtn');
+  await page.click('#menuBtn');
+  await page.click('#hideArrowsBtn');
+  assert.equal(await hidden('#fabs'), false, 'and the menu brings them back');
+  assert.equal(await hidden('#navFabs'), false);
 });
