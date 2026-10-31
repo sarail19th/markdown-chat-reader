@@ -280,6 +280,16 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .btn[aria-pressed="true"] { background: var(--user); color: var(--user-fg); border-color: var(--user); }
 .row.tap .bubble { cursor: pointer; outline: 1px dashed rgba(128, 128, 128, .55); outline-offset: 2px; }
 .row.tap .bubble:focus-visible, .row.sel .bubble { outline: 2px solid var(--focus); outline-offset: 2px; }
+.row.pick .bubble:focus-visible, .row.picked .bubble { outline: 2px solid var(--focus); outline-offset: 2px; }
+.copytab { display: flex; margin: -2px 0 0; }
+.copytab.user { justify-content: flex-end; }
+.copytab.ai { justify-content: flex-start; }
+.copytab.sys { justify-content: center; }
+.copytab button { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 50%; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); cursor: pointer; }
+.copytab button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.copytab button .ic-done, .copytab button.done .ic-copy { display: none; }
+.copytab button.done .ic-done { display: block; }
+.copytab button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .msgmenu { display: flex; flex-direction: column; width: min(220px, 70%); margin-top: -4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .14); scroll-margin-bottom: 140px; }
 .msgmenu.user { margin-left: auto; }
 .msgmenu.ai { margin-right: auto; }
@@ -1072,6 +1082,7 @@ function buildRow(i) {
   if (editMode && i === editingIdx) { row.className += ' editing'; buildEditor(b, i); }
   else {
     if (editMode) { row.className += ' tap'; b.tabIndex = 0; }
+    else { row.className += ' pick'; b.tabIndex = 0; } // read mode: a tap shows a copy icon under the message
     b.innerHTML = md(m.text, m.role === 'user');
     if (openIds[m.id]) b.classList.add('open');
     var cl = changeLabel(m);
@@ -1197,7 +1208,7 @@ function render() {
   clearMarks();
   chat.innerHTML = '';
   moreEl = null;
-  selIdx = -1;
+  selIdx = -1; pickIdx = -1;
   titleEl.textContent = titleEl.title = doc.title;
   var u = 0, a = 0;
   doc.msgs.forEach(function (m) { if (m.role === 'user') u++; else if (m.role === 'assistant') a++; });
@@ -1247,6 +1258,7 @@ function syncEditUI() {
   if (!can && editMode) setEdit(false, true);
 }
 var MENU_ICONS = {
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   split: '<path d="M12 4v16M8 8l-4 4 4 4M16 8l4 4-4 4"/>',
   swap: '<path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',
@@ -1258,7 +1270,7 @@ function buildMenu(i, role) {
   t.className = 'msgmenu ' + (role === 'user' ? 'user' : role === 'system' ? 'sys' : 'ai');
   t.setAttribute('role', 'group');
   t.setAttribute('aria-label', 'Options for message ' + (i + 1));
-  var defs = [['edit', 'Edit text', 'Edit message ' + (i + 1)]];
+  var defs = [['copy', 'Copy', 'Copy message ' + (i + 1)], ['edit', 'Edit text', 'Edit message ' + (i + 1)]];
   if (role !== 'system') defs.push(['split', 'Split speaker', 'Split message ' + (i + 1) + ' between both speakers']);
   if (role !== 'system') defs.push(['swap', 'Swap side', 'Switch message ' + (i + 1) + ' to the other speaker']);
   if (i < doc.msgs.length - 1) defs.push(['cut', 'Split after this', 'Split the chat into two files, cutting right after message ' + (i + 1)]);
@@ -1288,6 +1300,35 @@ function selectRow(i) {
   var m = buildMenu(i, doc.msgs[i].role);
   row.parentNode.insertBefore(m, row.nextSibling);
   m.scrollIntoView({ block: 'nearest' });
+}
+// Read mode: tapping a message shows a round copy icon under it; tapping the icon copies the message.
+var pickIdx = -1, pickY = 0;
+function pickRow(i) {
+  var old = chat.querySelector('.copytab');
+  if (old) old.parentNode.removeChild(old);
+  var prev = chat.querySelector('.row.picked');
+  if (prev) prev.classList.remove('picked');
+  var same = i === pickIdx;
+  pickIdx = -1;
+  if (same || i < 0) return false;
+  var row = chat.querySelector('.row[data-i="' + i + '"]');
+  if (!row || !doc.msgs[i]) return false;
+  pickIdx = i; pickY = window.scrollY;
+  row.classList.add('picked');
+  var t = document.createElement('div');
+  t.className = 'copytab ' + (doc.msgs[i].role === 'user' ? 'user' : doc.msgs[i].role === 'system' ? 'sys' : 'ai');
+  t.innerHTML = '<button type="button" data-act="copy" data-i="' + i + '" aria-label="Copy message ' + (i + 1) + '" title="Copy this message"><svg class="ic-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><svg class="ic-done" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>';
+  row.parentNode.insertBefore(t, row.nextSibling);
+  return true;
+}
+// Copies a message as both formatted text (for Word, Docs, Notes) and its Markdown (for plain-text boxes); older browsers get the Markdown only.
+function copyMessage(i, btn) {
+  var m = doc.msgs[i];
+  if (!m) return;
+  writeClip(m.text, md(m.text, m.role === 'user'), function (ok) {
+    if (btn && ok) { btn.classList.add('done'); clearTimeout(btn._t); btn._t = setTimeout(function () { btn.classList.remove('done'); }, 1400); }
+    toast(ok ? 'Copied' : 'Copy failed. Select the text and copy it instead.', false);
+  });
 }
 /* ---- text style (bold, italic, strikethrough, heading, quote): pure helpers that work on the Markdown text ---- */
 //#style-start
@@ -1646,15 +1687,17 @@ chat.addEventListener('click', function (e) {
   if (!doc || !e.target.closest) return;
   var b = e.target.closest('[data-act]');
   if (!b) {
-    if (!editMode || e.target.closest('a, button, textarea, .msgmenu')) return;
+    if (e.target.closest('a, button, textarea, .msgmenu, .copytab')) return;
     var sel = window.getSelection && window.getSelection();
     if (sel && !sel.isCollapsed) return;
     var bub = e.target.closest('.bubble'), row = bub && bub.parentNode;
+    if (!editMode) { pickRow(row && row.classList.contains('pick') ? parseInt(row.getAttribute('data-i'), 10) : -1); return; }
     selectRow(row && row.classList.contains('tap') ? parseInt(row.getAttribute('data-i'), 10) : -1);
     return;
   }
   var act = b.getAttribute('data-act'), i = parseInt(b.getAttribute('data-i'), 10);
-  if (act === 'edit') { editingIdx = i; render(); }
+  if (act === 'copy') { copyMessage(i, b); }
+  else if (act === 'edit') { editingIdx = i; render(); }
   else if (act === 'cancel') { editingIdx = -1; render(); }
   else if (act === 'save') { saveEdit(i); }
   else if (act === 'split') { editingIdx = i; render(); toast(SPLIT_HINT, false); }
@@ -1663,14 +1706,23 @@ chat.addEventListener('click', function (e) {
   else if (act === 'del') { mutate(function () { doc.msgs.splice(i, 1); }, 'Message deleted'); }
 });
 chat.addEventListener('keydown', function (e) {
-  if (!editMode || (e.key !== 'Enter' && e.key !== ' ') || !e.target.classList || !e.target.classList.contains('bubble')) return;
+  if ((e.key !== 'Enter' && e.key !== ' ') || !e.target.classList || !e.target.classList.contains('bubble')) return;
   var row = e.target.parentNode;
-  if (!row.classList.contains('tap')) return;
-  e.preventDefault();
-  selectRow(parseInt(row.getAttribute('data-i'), 10));
+  if (editMode) {
+    if (!row.classList.contains('tap')) return;
+    e.preventDefault();
+    selectRow(parseInt(row.getAttribute('data-i'), 10));
+  } else if (row.classList.contains('pick')) {
+    e.preventDefault();
+    if (pickRow(parseInt(row.getAttribute('data-i'), 10))) { var cb = chat.querySelector('.copytab button'); if (cb) cb.focus(); }
+  }
 });
+// The copy icon goes away when you tap elsewhere, press Escape, or scroll well away.
+document.addEventListener('click', function (e) { if (pickIdx >= 0 && !e.target.closest('.copytab, .row.picked')) pickRow(-1); });
+window.addEventListener('scroll', function () { if (pickIdx >= 0 && Math.abs(window.scrollY - pickY) > 160) pickRow(-1); }, { passive: true });
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && editMode && selIdx >= 0 && e.target.tagName !== 'TEXTAREA') selectRow(-1);
+  else if (e.key === 'Escape' && pickIdx >= 0 && e.target.tagName !== 'TEXTAREA') pickRow(-1);
 });
 $('editBtn').addEventListener('click', function () { if (!this.disabled) setEdit(!editMode); });
 $('doneBtn').addEventListener('click', function () { setEdit(false); });
@@ -3105,6 +3157,28 @@ function flash(btn, label) {
   btn.textContent = label;
   clearTimeout(btn._t);
   btn._t = setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+}
+function writeClip(text, html, cb) {
+  function legacy() {
+    var ta = document.createElement('textarea'), ok = false;
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    cb(ok);
+  }
+  function plain() {
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { cb(true); }, legacy);
+    else legacy();
+  }
+  if (html && navigator.clipboard && navigator.clipboard.write && window.ClipboardItem && window.isSecureContext) {
+    try {
+      navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([text], { type: 'text/plain' }), 'text/html': new Blob([html], { type: 'text/html' }) })])
+        .then(function () { cb(true); }, plain);
+      return;
+    } catch (e) { /* fall through to plain text */ }
+  }
+  plain();
 }
 function copyText(t, btn) {
   function fallback() {

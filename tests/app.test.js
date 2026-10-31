@@ -430,3 +430,47 @@ test('Quote turns lines into a quote block and back, and Heading is spelled out'
   await page.click('[data-act="save"]');
   assert.equal(await page.locator('.row >> nth=0 >> blockquote').count(), 1, 'it shows as a quote with a bar at the side');
 });
+
+test('tapping a message shows a copy icon, and tapping the icon copies it as formatted text and as Markdown', async () => {
+  const context = await browser.newContext({ serviceWorkers: 'block', permissions: ['clipboard-read', 'clipboard-write'] });
+  const page = await context.newPage();
+  await page.goto(server.url);
+  await page.waitForFunction(() => window.doc && doc.msgs.length > 0);
+  const row = page.locator('.row[data-i="2"]');
+  assert.equal(await page.locator('.copytab').count(), 0, 'no icon until you tap');
+  await row.locator('.bubble').click({ position: { x: 20, y: 10 } });
+  assert.equal(await page.locator('.copytab').count(), 1, 'a tap shows one copy icon');
+  assert.ok(await page.locator('#toast').isHidden(), 'and nothing is copied yet');
+  await page.locator('.copytab button').click();
+  const clip = await page.evaluate(async () => {
+    const items = await navigator.clipboard.read(), out = {};
+    for (const t of items[0].types) out[t] = await (await items[0].getType(t)).text();
+    return out;
+  });
+  const md = await page.evaluate(() => doc.msgs[2].text);
+  assert.equal(clip['text/plain'], md, 'plain-text boxes get the Markdown');
+  assert.match(clip['text/html'], /<strong>Export<\/strong>|<li>|<p>/, 'Word, Docs and Notes get formatted text');
+  assert.equal(await page.textContent('#toastMsg'), 'Copied');
+  assert.ok(await page.locator('.copytab button.done').count() === 1, 'the icon turns into a tick');
+  await row.locator('.bubble').click({ position: { x: 20, y: 10 } });
+  assert.equal(await page.locator('.copytab').count(), 0, 'tapping the message again hides the icon');
+  await row.locator('.bubble').click({ position: { x: 20, y: 10 } });
+  await page.locator('h1').click();
+  assert.equal(await page.locator('.copytab').count(), 0, 'tapping elsewhere hides it too');
+  await row.locator('.bubble').click({ position: { x: 20, y: 10 } });
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.copytab').count(), 0, 'and so does Escape');
+  await context.close();
+});
+
+test('selecting text does not pop up the copy icon, and Edit mode has Copy in its message menu', async () => {
+  const page = await openApp();
+  await page.evaluate(() => { const b = document.querySelector('.row[data-i="2"] .bubble p'); const r = document.createRange(); r.selectNodeContents(b); const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+  await page.locator('.row[data-i="2"] .bubble').click({ position: { x: 20, y: 10 } });
+  assert.equal(await page.locator('.copytab').count(), 0, 'a selection is left alone so you can copy it your own way');
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.click('.row >> nth=0 >> .bubble');
+  assert.equal(await page.locator('.copytab').count(), 0, 'Edit mode keeps its own menu');
+  assert.equal(await page.textContent('.msgmenu button[data-act="copy"]'), 'Copy', 'with Copy at the top');
+});
