@@ -15,7 +15,7 @@
     "enctype": "multipart/form-data",
     "params": {
       "files": [
-        { "name": "files", "accept": ["text/markdown", "text/x-markdown", "text/plain", ".md", ".markdown", ".txt"] }
+        { "name": "files", "accept": ["text/markdown", "text/x-markdown", "text/plain", "text/*", "application/octet-stream", ".md", ".markdown", ".txt"] }
       ]
     }
   },
