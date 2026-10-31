@@ -106,3 +106,18 @@ test('Help panel has a "Why Markdown?" section', async () => {
   const names = await page.$$eval('#info h2', (headings) => headings.map((h) => h.textContent));
   assert.ok(names.includes('Why Markdown?'));
 });
+
+test('the floating buttons are two groups: tools nearest the round button, and moving around in the other corner', async () => {
+  const page = await openApp();
+  if (await page.evaluate(() => document.documentElement.hasAttribute('data-menu'))) await page.click('#fabToggle');
+  const tools = await page.$$eval('#fabMenu > button', (bs) => bs.filter((b) => !b.hidden).map((b) => ({ name: b.getAttribute('aria-label'), top: b.getBoundingClientRect().top })));
+  const nearestFirst = tools.sort((a, b) => b.top - a.top).map((b) => b.name);
+  assert.deepEqual(nearestFirst, ['Open a file', 'Paste .md text', 'Edit messages', 'Style', 'Search this chat', 'Help']);
+  const nav = await page.$$eval('#navFabs button', (bs) => bs.map((b) => b.id));
+  assert.deepEqual(nav, ['jumpBtn', 'prevMsgBtn', 'nextMsgBtn']);
+  assert.equal(await page.evaluate(() => document.getElementById('fabMenu').querySelector('#jumpBtn, #prevMsgBtn, #nextMsgBtn')), null, 'no moving-around buttons are left in the tools column');
+  const sides = await page.evaluate(() => ({ nav: document.getElementById('navFabs').getBoundingClientRect().left, fab: document.getElementById('fabToggle').getBoundingClientRect().left }));
+  assert.ok(sides.nav < sides.fab, 'the two groups are in opposite corners');
+  await page.click('#fabToggle');
+  assert.ok(await page.locator('#navFabs').isVisible(), 'hiding the tools leaves the moving-around buttons on screen');
+});
