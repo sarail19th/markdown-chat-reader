@@ -165,7 +165,7 @@ h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wra
 .bubble th, .bubble td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
 .bubble img { max-width: 100%; height: auto; }
 .bubble hr { border: 0; border-top: 1px solid var(--line); }
-.notice { position: relative; margin: 16px 0 0; padding: 10px 12px 10px 40px; border-left: 4px solid var(--note-bar); border-radius: 4px; background: var(--note-bg); font-size: .88rem; line-height: 1.5; color: var(--note-fg); }
+.notice { position: relative; margin: 16px 0 0; padding: 10px 44px 10px 40px; border-left: 4px solid var(--note-bar); border-radius: 4px; background: var(--note-bg); font-size: .88rem; line-height: 1.5; color: var(--note-fg); }
 .notice::before, .notice.warn::before { content: ''; position: absolute; left: 12px; top: 12px; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--note-ico) center / contain no-repeat; mask: var(--note-ico) center / contain no-repeat; }
 .notice { --note-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 8h.01'/%3E%3C/svg%3E"); }
 .notice.warn { --note-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 2.5 20h19z'/%3E%3Cpath d='M12 10v4.5M12 17.5h.01'/%3E%3C/svg%3E"); }
@@ -353,6 +353,11 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .logo { width: 36px; height: 36px; flex: none; color: var(--muted); }
 .heading { min-width: 0; }
+.nx { position: absolute; top: 2px; right: 2px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0; font: 400 1.5rem/1 var(--ff); color: inherit; opacity: .75; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+.nx:hover { opacity: 1; background: rgba(128, 128, 128, .16); }
+.nx:focus-visible { opacity: 1; outline: 2px solid var(--focus); outline-offset: -2px; }
+.notice.collapsed { padding-top: 8px; padding-bottom: 8px; }
+.notice.collapsed .nbody { display: none; }
 .bchanges { display: block; margin-top: 6px; font-size: .9rem; color: var(--muted); overflow-wrap: anywhere; }
 /* Bottom sheets */
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; max-height: 80vh; max-height: 80dvh; overflow-y: auto; overscroll-behavior: contain; border-radius: 18px 18px 0 0; border-bottom: 0; padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 28px rgba(0, 0, 0, .22); }
@@ -497,7 +502,7 @@ body.searching .fabs { display: none; }
     </div>
     <div>
       <button class="btn" id="resetPrefs" type="button">Reset all settings</button>
-      <p class="hint">Your style, mode, text size, spacing, font and button position are remembered on this device only. Nothing is sent anywhere.</p>
+      <p class="hint">Your style, mode, text size, spacing, font, button position and whether you hid the editing tips are remembered on this device only. Nothing is sent anywhere.</p>
     </div>
   </section>
   <section id="info" class="panel sheet" hidden role="dialog" aria-label="How it works" tabindex="-1">
@@ -545,7 +550,7 @@ Do this for the full conversation history of this chat.</code></pre>
     <ul>
       <li>The file is read inside your browser. It is never uploaded, and this page has no server that could receive it.</li>
       <li>Step 2 above is separate: uploading your export to an AI assistant sends it to that service. This reader never does.</li>
-      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font and where you moved the buttons) are remembered, on this device. A font file you add stays on this device too.</li>
+      <li>Your chats are never saved or tracked. Reload or close the tab and the chat is gone. Only your display choices (style, mode, text size, spacing, font, where you moved the buttons and whether you hid the editing tips) are remembered, on this device. A font file you add stays on this device too.</li>
       <li>After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.</li>
     </ul>
     <h2>Install it on your phone</h2>
@@ -565,9 +570,9 @@ Do this for the full conversation history of this chat.</code></pre>
     <textarea id="pasteText" placeholder="Paste the exported chat here" aria-label="Chat markdown"></textarea>
     <button class="btn primary" id="pasteGo" type="button">Show chat</button>
   </section>
-  <p class="notice" id="notice" hidden></p>
-  <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the chat into two files or save an excerpt, or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice" id="notice" hidden><span id="noticeText"></span><button class="nx" type="button" data-nx="notice" aria-label="Dismiss this notice" title="Dismiss">&times;</button></p>
+  <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> <span class="nbody">Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></span><button class="nx" type="button" data-nx="banner" aria-label="Hide the details of this notice" aria-expanded="true" title="Hide details">&times;</button></p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the chat into two files or save an excerpt, or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.<button class="nx" type="button" data-nx="tips" aria-label="Hide these editing tips" title="Hide these tips">&times;</button></p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved. <a href="https://github.com/sarail19th/markdown-chat-reader" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
@@ -823,6 +828,8 @@ function md(s, breaks) {
 
 /* ---- document model: the chat lives in memory only; nothing is stored ---- */
 var doc = null; // { title, msgs: [{role, label, text}], names: {user, assistant}, editable }
+var tipsHidden = false; // the "Before you edit" tips, hidden with their X; remembered on this device
+try { tipsHidden = localStorage.getItem('cr-notips') === '1'; } catch (e) { /* storage blocked: the tips show */ }
 var editMode = false, editingIdx = -1, selIdx = -1, dirty = false, undoStack = [], redoStack = [], toastTimer = null;
 
 function show(text, fallbackTitle, merged) {
@@ -834,6 +841,7 @@ function show(text, fallbackTitle, merged) {
   notice.hidden = true;
   $('unofficial').hidden = false;
   $('editedBanner').hidden = true;
+  setBannerCollapsed(false);
   document.title = 'Markdown Chat Reader';
   var names = { user: 'You', assistant: 'AI' }, gotU = false, gotA = false;
   parsed.msgs.forEach(function (m) {
@@ -856,7 +864,7 @@ function show(text, fallbackTitle, merged) {
     titleEl.textContent = doc.title;
     metaEl.textContent = 'No messages found';
     notice.hidden = false;
-    notice.textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**AI:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
+    $('noticeText').textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**AI:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
     chat.innerHTML = '';
     var row = document.createElement('div');
     row.className = 'row ai';
@@ -1044,7 +1052,7 @@ function setEdit(on, quiet) {
   document.body.classList.toggle('editing', on);
   $('editbar').hidden = !on;
   applyFabPos();
-  $('editCaution').hidden = !on;
+  $('editCaution').hidden = !on || tipsHidden;
   $('editBtn').setAttribute('aria-pressed', String(on));
   if (!quiet && doc) render();
 }
@@ -1685,7 +1693,7 @@ function loadFiles(list) {
     if (!items.some(function (it) { return it.parsed.msgs.length; })) { closePanels(); show(texts[0], baseName(files[0].name)); doc.fileBase = baseName(files[0].name); return; }
     closePanels();
     arrangeFiles(items);
-  }, function () { notice.hidden = false; notice.textContent = 'A file could not be read. Try opening it again.'; });
+  }, function () { notice.hidden = false; $('noticeText').textContent = 'A file could not be read. Try opening it again.'; });
 }
 // Lets people put the parts in order (drag the handle, or use the arrows) and name the merged chat before it opens.
 function arrangeFiles(items) {
@@ -1785,7 +1793,7 @@ function showMerged(items, title) {
     files: good.map(function (it) { return it.name; })
   });
   notice.hidden = false;
-  notice.textContent = 'Merged ' + good.length + ' files into one chat, in this order: ' + good.map(function (it) { return it.name; }).join(', ') + '.' +
+  $('noticeText').textContent = 'Merged ' + good.length + ' files into one chat, in this order: ' + good.map(function (it) { return it.name; }).join(', ') + '.' +
     (skipped.length ? ' Skipped (no messages found): ' + skipped.join(', ') + '.' : '');
 }
 
@@ -2335,7 +2343,25 @@ function savePref(k, v) {
 setAccent(root.getAttribute('data-accent') || 'green');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
+/* ---- the X on notices: info notices and the editing tips are dismissed; the Edited copy notice folds to one line and can be opened again ---- */
+function setBannerCollapsed(on) {
+  var b = $('editedBanner'), x = b.querySelector('.nx');
+  b.classList.toggle('collapsed', on);
+  x.innerHTML = on ? '+' : '&times;';
+  x.setAttribute('aria-expanded', String(!on));
+  x.setAttribute('aria-label', on ? 'Show the details of this notice' : 'Hide the details of this notice');
+  x.title = on ? 'Show details' : 'Hide details';
+}
+document.addEventListener('click', function (e) {
+  var x = e.target.closest && e.target.closest('[data-nx]');
+  if (!x) return;
+  var k = x.getAttribute('data-nx');
+  if (k === 'notice') notice.hidden = true;
+  else if (k === 'banner') setBannerCollapsed(!$('editedBanner').classList.contains('collapsed'));
+  else if (k === 'tips') { tipsHidden = true; savePref('cr-notips', '1'); $('editCaution').hidden = true; toast('Editing tips hidden. Reset in Style shows them again.', false); }
+});
 $('resetPrefs').addEventListener('click', function () {
+  tipsHidden = false; savePref('cr-notips', null); $('editCaution').hidden = !editMode;
   root.removeAttribute('data-accent'); root.removeAttribute('data-theme');
   SLIDERS.forEach(function (c) { c.reset(); });
   setFont('d');
@@ -2484,7 +2510,7 @@ var SAMPLE_NOTE = 'This is a sample chat showing how the reader works. You can t
 function showSample(text) {
   show(text || SAMPLE, 'How to use this reader (sample)');
   notice.hidden = false;
-  notice.textContent = SAMPLE_NOTE;
+  $('noticeText').textContent = SAMPLE_NOTE;
   state = 'sample';
   syncEditUI();
 }
