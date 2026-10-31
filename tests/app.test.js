@@ -340,3 +340,16 @@ test('the top-right menu has switches that hide and show the floating tools and 
   assert.equal(await hidden('#fabs'), false, 'switching them on brings them back');
   assert.equal(await hidden('#navFabs'), false);
 });
+
+test('the kebab menu button stays on screen while you read, and still opens the menu', async () => {
+  const page = await openApp();
+  const box = () => page.locator('#menuBtn').boundingBox();
+  const top = await box();
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  await page.waitForFunction(() => document.body.classList.contains('scrolled'));
+  const later = await box();
+  assert.deepEqual([Math.round(later.x), Math.round(later.y)], [Math.round(top.x), Math.round(top.y)], 'it has not moved, even far down the chat');
+  await page.click('#menuBtn');
+  assert.ok(await page.locator('#topMenu').isVisible(), 'and the menu opens from there');
+  assert.ok(await page.locator('#hideToolsBtn').isVisible());
+});

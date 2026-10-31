@@ -449,11 +449,14 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .fabpair .fabbtn:hover { background: var(--code); }
 .fabbtn:disabled { opacity: .45; cursor: not-allowed; }
 /* Top-right menu: Open, Chats, Paste and Help. The button is part of the header and scrolls away with it; the list floats over the page. */
-.menuwrap { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 0; z-index: 30; }
+.menuwrap { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px), calc((100% - 720px) / 2)); z-index: 30; }
+body.searching .menuwrap { display: none; }
 .menubtn { width: 44px; height: 44px; background: none; border: 0; box-shadow: none; }
+/* The button stays on screen while you read. Once the page has scrolled it gets a background, so the dots never sit bare on top of the text. */
+body.scrolled .menubtn { background: var(--surface); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(0, 0, 0, .18); }
 .menubtn svg { width: 22px; height: 22px; }
 .menubtn:hover { background: var(--code); }
-.menubtn[aria-expanded="true"], .menubtn:active { color: var(--user-fg); background: var(--user); box-shadow: none; }
+body .menubtn[aria-expanded="true"], body .menubtn:active { color: var(--user-fg); background: var(--user); box-shadow: none; }
 .topmenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 260px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
 .mitem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; color: var(--fg); background: none; border: 0; border-radius: 10px; font: 600 1rem var(--ff); text-align: left; cursor: pointer; }
 .mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -2038,6 +2041,7 @@ document.addEventListener('keydown', function (e) {
 
 $('file').addEventListener('change', function (e) { loadFiles(e.target.files); e.target.value = ''; });
 $('openBtn').addEventListener('click', function () { $('file').click(); });
+window.addEventListener('scroll', function () { document.body.classList.toggle('scrolled', window.scrollY > 8); }, { passive: true });
 function setTopMenu(open) { $('topMenu').hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
 $('menuBtn').addEventListener('click', function () { var open = $('topMenu').hidden; setTopMenu(open); if (open) $('openBtn').focus({ preventScroll: true }); });
 $('topMenu').addEventListener('click', function (e) { if (e.target.closest('.mitem:not([role="switch"])')) setTopMenu(false); }); // the switches stay open so both can be set
