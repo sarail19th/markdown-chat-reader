@@ -53,6 +53,18 @@ python3 -m http.server 8000
 
 Then open `http://localhost:8000`. Service workers need `localhost` or HTTPS.
 
+## Tests
+
+GitHub runs them on every push (see the **Actions** tab); the site only deploys when they pass. To run them on a computer with Node.js:
+
+```bash
+npm install
+npx playwright install chromium   # once, the browser the tests drive
+npm test
+```
+
+`tests/parser.test.js` checks how `.md` text is split into messages. `tests/app.test.js` opens the app in an invisible Chrome and uses the made-up files in `tests/fixtures` (rebuild them with `python3 tests/fixtures/make.py`).
+
 ## Files
 
 | Path | What it is |
@@ -64,7 +76,8 @@ Then open `http://localhost:8000`. Service workers need `localhost` or HTTPS.
 | `manifest.webmanifest`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png` | Install-as-app support (`icon-source.svg` is the editable source of the icon, not deployed) |
 | `vendor/` | [marked](https://github.com/markedjs/marked) and [DOMPurify](https://github.com/cure53/DOMPurify), bundled so the app works offline |
 | `fonts/` | Figtree and JetBrains Mono (woff2) with their SIL Open Font Licence files |
-| `.github/workflows/pages.yml` | Deploys to GitHub Pages on every push to `main` |
+| `.github/workflows/pages.yml` | Runs the tests on every push, and deploys to GitHub Pages from `main` when they pass |
+| `tests/`, `package.json` | Automated tests (see below); `tests/fixtures` holds made-up exports, never real chats |
 | `.github/screenshots/`, `.github/social-preview.png` | README screenshots (made with sample data) and the repository's social preview image |
 
 ## Licence

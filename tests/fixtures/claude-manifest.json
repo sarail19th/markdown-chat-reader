@@ -1,0 +1,15 @@
+{
+ "total_files": 2,
+ "data_files": [
+  {
+   "category": "frames",
+   "filename": "frames-000.zip",
+   "export_url": "https://example.invalid/1"
+  },
+  {
+   "category": "conversations",
+   "filename": "conversations-000.zip",
+   "export_url": "https://example.invalid/2"
+  }
+ ]
+}

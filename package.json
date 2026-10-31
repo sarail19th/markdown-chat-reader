@@ -1,0 +1,11 @@
+{
+  "name": "markdown-chat-reader",
+  "private": true,
+  "description": "Tests for Markdown Chat Reader. The app itself needs no build step.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
