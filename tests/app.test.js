@@ -118,7 +118,7 @@ test('the buttons are in groups: Open, Paste and Help in a top-right menu, Edit,
   const before = await chatTop();
   await page.click('#menuBtn');
   assert.equal(await chatTop(), before, 'the list floats over the chat instead of pushing it down');
-  assert.deepEqual(await page.$$eval('#topMenu button:not(#hideToolsBtn):not(#hideArrowsBtn)', (bs) => bs.filter((b) => !b.hidden).map((b) => b.textContent)), ['Open a file', 'Paste text', 'Help']);
+  assert.deepEqual(await page.$$eval('#topMenu button:not(#hideToolsBtn):not(#hideArrowsBtn):not(#saveCopyItem):not(#copyChatItem)', (bs) => bs.filter((b) => !b.hidden).map((b) => b.textContent)), ['Open a file', 'Paste text', 'Help']);
   await page.click('#pasteBtn');
   assert.ok(await page.locator('#topMenu').isHidden(), 'choosing an item closes the menu');
   assert.ok(await page.locator('#paste').isVisible(), 'and opens what was chosen');
@@ -474,4 +474,84 @@ test('selecting text does not pop up the copy icon, and Edit mode has Copy in it
   await page.click('.row >> nth=0 >> .bubble');
   assert.equal(await page.locator('.copytab').count(), 0, 'Edit mode keeps its own menu');
   assert.equal(await page.textContent('.msgmenu button[data-act="copy"]'), 'Copy', 'with Copy at the top');
+});
+
+async function openWithClipboard() {
+  const context = await browser.newContext({ serviceWorkers: 'block', acceptDownloads: true, permissions: ['clipboard-read', 'clipboard-write'] });
+  const page = await context.newPage();
+  await page.goto(server.url);
+  await page.waitForFunction(() => window.doc && doc.msgs.length > 0);
+  return { page, context };
+}
+const PASTED = '**You:**\nHello there\n\n---\n\n**AI:**\nHi! How can I help?\n';
+
+test('a pasted chat leaves by Copy and a chat from a file by Save, and the other is always in the kebab menu', async () => {
+  const { page, context } = await openWithClipboard();
+  const primary = (id) => page.evaluate((i) => document.getElementById(i).classList.contains('primary'), id);
+  const kind = () => page.getAttribute('#saveFabBtn', 'data-kind');
+  assert.equal(await page.evaluate(() => doc.origin), 'file');
+  assert.equal(await primary('dlBtn'), true, 'a chat from a file: Save is the main button');
+  assert.equal(await primary('copyMdBtn'), false);
+  await page.click('#fabToggle');
+  await page.click('[data-panel="paste"]').catch(() => {});
+  await page.evaluate(() => document.getElementById('pasteBtn').click());
+  await page.fill('#pasteText', PASTED);
+  await page.click('#pasteGo');
+  await page.waitForFunction(() => doc.msgs.length === 2);
+  assert.equal(await page.evaluate(() => doc.origin), 'paste');
+  assert.equal(await primary('copyMdBtn'), true, 'a pasted chat: Copy is the main button');
+  assert.equal(await primary('dlBtn'), false);
+  await page.click('#editBtn');
+  await page.evaluate(() => { mutate(function () { doc.msgs[0].text = 'Hello again'; }); });
+  assert.equal(await kind(), 'copy', 'the button in the tools is Copy for a pasted chat');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#saveFabBtn .ic-copy')).display), 'block');
+  await page.click('#menuBtn');
+  assert.equal(await page.isEnabled('#saveCopyItem'), true, 'both ways out are in the kebab menu');
+  assert.equal(await page.isEnabled('#copyChatItem'), true);
+  await page.click('#menuBtn');
+  await page.click('#saveFabBtn');
+  await page.waitForFunction(() => /Copied the whole chat/.test(document.getElementById('toastMsg').textContent));
+  const clip = await page.evaluate(() => navigator.clipboard.readText());
+  assert.equal(clip, await page.evaluate(() => toMarkdown()), 'the whole chat is on the clipboard as Markdown');
+  assert.match(clip, /Hello again/);
+  assert.equal(await page.evaluate(() => dirty), false, 'copying it out counts as saving, so the unsaved warnings stop');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('saveFabBtn')).display), 'none');
+  await context.close();
+});
+
+test('for a chat from a file the note and the tools offer Save, and the kebab menu can still copy the whole chat', async () => {
+  const { page, context } = await openWithClipboard();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.evaluate(() => { mutate(function () { doc.msgs[0].text = 'Changed'; }); });
+  assert.equal(await page.getAttribute('#saveFabBtn', 'data-kind'), 'save');
+  await page.click('#doneBtn');
+  assert.equal(await page.textContent('#toastAct'), 'Save copy');
+  await page.click('#menuBtn');
+  await page.click('#copyChatItem');
+  await page.waitForFunction(() => /Copied the whole chat/.test(document.getElementById('toastMsg').textContent));
+  assert.match(await page.evaluate(() => navigator.clipboard.readText()), /Changed/);
+  assert.equal(await page.evaluate(() => dirty), false, 'copying from the menu also counts as taking the edits out');
+  await page.click('#menuBtn');
+  await page.click('#saveCopyItem');
+  assert.ok(await page.locator('#modal input').isVisible(), 'and Save a copy opens the file name box');
+  await context.close();
+});
+
+test('a pasted chat gets a Copy chat button in the note after exiting Edit mode', async () => {
+  const { page, context } = await openWithClipboard();
+  await page.evaluate(() => document.getElementById('pasteBtn').click());
+  await page.fill('#pasteText', PASTED);
+  await page.click('#pasteGo');
+  await page.waitForFunction(() => doc.msgs.length === 2);
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.evaluate(() => { mutate(function () { doc.msgs[1].text = 'Changed reply'; }); });
+  await page.click('#doneBtn');
+  assert.equal(await page.textContent('#toastAct'), 'Copy chat');
+  assert.match(await page.textContent('#toastMsg'), /not copied out yet/);
+  await page.click('#toastAct');
+  await page.waitForFunction(() => /Copied the whole chat/.test(document.getElementById('toastMsg').textContent));
+  assert.match(await page.evaluate(() => navigator.clipboard.readText()), /Changed reply/);
+  await context.close();
 });

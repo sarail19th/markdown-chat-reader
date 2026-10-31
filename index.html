@@ -446,6 +446,8 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 .fab { position: relative; }
 .fab .badge { display: none; position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: var(--logo-user, var(--user)); border: 2px solid var(--bg); }
 :root[data-menu="collapsed"] body.unsaved #fabToggle .badge { display: block; }
+.savefab .ic-copy, .savefab[data-kind="copy"] .ic-save { display: none; }
+.savefab[data-kind="copy"] .ic-copy { display: block; }
 .fabbtn.savefab { color: var(--user-fg); background: var(--user); border-color: transparent; }
 .fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .fabs.dragging .fab { cursor: grabbing; box-shadow: 0 10px 26px rgba(0, 0, 0, .35); }
@@ -475,6 +477,7 @@ body .menubtn[aria-expanded="true"], body .menubtn:active { color: var(--user-fg
 .mitem { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; color: var(--fg); background: none; border: 0; border-radius: 10px; font: 600 1rem var(--ff); text-align: left; cursor: pointer; }
 .mitem svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .mitem:hover { background: var(--code); }
+.mitem:disabled { opacity: .5; cursor: not-allowed; }
 .mitem span { display: grid; }
 .mitem small { font-weight: 400; font-size: .78rem; color: var(--muted); }
 .mitem .sw { position: relative; flex: none; width: 74px; height: 30px; margin-left: auto; border-radius: 15px; background: rgba(128, 128, 128, .5); transition: background .15s; }
@@ -549,6 +552,9 @@ body.searching .fabs, body.searching .navfabs { display: none; }
         <button class="mitem" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg><span>Chats in this export</span></button>
         <button class="mitem" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span>Paste text</span></button>
         <button class="mitem" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span>Help</span></button>
+        <div class="menusep" role="separator"></div>
+        <button class="mitem" id="saveCopyItem" type="button" title="Save the chat as a new .md file. Your original is not changed."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span>Save a copy…</span></button>
+        <button class="mitem" id="copyChatItem" type="button" title="Copy the whole chat as Markdown"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><span>Copy chat as Markdown</span></button>
         <div class="menusep" role="separator"></div>
         <button class="mitem" id="hideToolsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Tools<small>Edit, Style, Search</small></span><i class="sw" aria-hidden="true"></i></button>
         <button class="mitem" id="hideArrowsBtn" type="button" role="switch" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Navigation<small>Jump, previous, next</small></span><i class="sw" aria-hidden="true"></i></button>
@@ -750,7 +756,7 @@ Do this for the full conversation history of this chat.</code></pre>
   <button class="fab" id="fabToggle" type="button" aria-controls="fabMenu" aria-expanded="true" aria-label="Hide the tools" title="Hide the tools"><i class="badge" aria-hidden="true"></i><svg class="ic-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><svg class="ic-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
   <div class="fabmenu" id="fabMenu" role="group" aria-label="Tools">
     <button class="fabbtn" id="editBtn" type="button" aria-pressed="false" aria-label="Edit messages" disabled title="Edit or delete messages, then download a new copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3"/></svg></button>
-    <button class="fabbtn savefab" id="saveFabBtn" type="button" hidden aria-label="Save a copy to your device" title="You have unsaved edits. Save them as a new .md file; your original is not changed."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></button>
+    <button class="fabbtn savefab" id="saveFabBtn" type="button" hidden aria-label="Save a copy to your device" title="You have unsaved edits. Save them as a new .md file; your original is not changed."><svg class="ic-save" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><svg class="ic-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
     <button class="fabbtn" type="button" data-panel="appearance" aria-expanded="false" aria-label="Style" title="Change chat colors and light or dark mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-1-.7-1.4-.7-2.2 0-.8.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.9 17 3 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg></button>
     <button class="fabbtn" type="button" data-panel="search" aria-expanded="false" aria-label="Search this chat" title="Find text in this chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button>
   </div>
@@ -1021,7 +1027,7 @@ var tipsHidden = false; // the "Before you edit" tips, hidden with their X; reme
 try { tipsHidden = localStorage.getItem('cr-notips') === '1'; } catch (e) { /* storage blocked: the tips show */ }
 var editMode = false, editingIdx = -1, selIdx = -1, dirty = false, undoStack = [], redoStack = [], toastTimer = null;
 
-function show(text, fallbackTitle, merged) {
+function show(text, fallbackTitle, merged, origin) { // origin: 'paste' for a pasted chat; anything else counts as a file
   var parsed = merged || parseChat(text);
   state = 'chat';
   dirty = false; undoStack = []; redoStack = []; openIds = {};
@@ -1048,6 +1054,7 @@ function show(text, fallbackTitle, merged) {
     mergedFrom: merged ? merged.files : null,
     saveName: '',
     saveTitle: '',
+    origin: origin === 'paste' ? 'paste' : 'file',
     loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
   };
   if (!doc.editable) {
@@ -1250,7 +1257,10 @@ function setEdit(on, quiet) {
   $('editCaution').hidden = !on || tipsHidden;
   $('editBtn').setAttribute('aria-pressed', String(on));
   if (!quiet && doc) render();
-  if (!on && !quiet && dirty) toast('Your edits are kept in this chat, but not saved yet.', false, { label: 'Save copy', fn: askSaveName });
+  if (!on && !quiet && dirty) {
+    if (doc && doc.origin === 'paste') toast('Your edits are kept in this chat, but not copied out yet.', false, { label: 'Copy chat', fn: copyChat });
+    else toast('Your edits are kept in this chat, but not saved yet.', false, { label: 'Save copy', fn: askSaveName });
+  }
 }
 function syncEditUI() {
   var can = !!doc && doc.editable;
@@ -1729,14 +1739,35 @@ $('doneBtn').addEventListener('click', function () { setEdit(false); });
 $('undoBtn').addEventListener('click', undo);
 $('redoBtn').addEventListener('click', redo);
 $('toastUndo').addEventListener('click', undo);
-$('copyMdBtn').addEventListener('click', function () { if (commitEdit()) copyText(toMarkdown(), this); });
+$('copyMdBtn').addEventListener('click', copyChat);
 $('dlBtn').addEventListener('click', function () { if (commitEdit()) askSaveName(); });
-$('saveFabBtn').addEventListener('click', function () { if (commitEdit()) askSaveName(); });
+$('saveFabBtn').addEventListener('click', function () { if (doc && doc.origin === 'paste') copyChat(); else if (commitEdit()) askSaveName(); });
+$('saveCopyItem').addEventListener('click', function () { if (commitEdit()) askSaveName(); });
+$('copyChatItem').addEventListener('click', copyChat);
 // Unsaved edits show a Save button in the tools, and a dot on the round tools button while the tools are folded.
 function syncSave() {
-  $('saveFabBtn').hidden = !dirty;
+  // A pasted chat leaves by copying, a chat from a file by saving; both stay available, and the one that fits where it came from is the main button.
+  var paste = !!doc && doc.origin === 'paste', f = $('saveFabBtn');
+  f.hidden = !dirty;
+  f.setAttribute('data-kind', paste ? 'copy' : 'save');
+  f.setAttribute('aria-label', paste ? 'Copy the chat as Markdown' : 'Save a copy to your device');
+  f.title = paste ? 'You have edits that are not copied out yet. Copy the whole chat as Markdown.' : 'You have unsaved edits. Save them as a new .md file; your original is not changed.';
+  $('dlBtn').classList.toggle('primary', !paste);
+  $('copyMdBtn').classList.toggle('primary', paste);
+  $('saveCopyItem').disabled = $('copyChatItem').disabled = !doc || !doc.msgs.length;
   document.body.classList.toggle('unsaved', !!dirty);
   syncFabToggle();
+}
+// Copies the whole chat as Markdown. Getting the edits out this way counts as saving them, so the unsaved warnings stop.
+function copyChat() {
+  if (!doc || !commitEdit()) return;
+  writeClip(toMarkdown(), '', function (ok) {
+    if (!ok) { toast('Copy failed. Use Save a copy instead.', false); return; }
+    var was = dirty;
+    dirty = false;
+    if (was) render();
+    toast('Copied the whole chat as Markdown', false);
+  });
 }
 $('renameBtn').addEventListener('click', function () {
   if (!doc || !commitEdit()) return;
@@ -2315,7 +2346,7 @@ document.addEventListener('paste', function (e) {
 });
 $('pasteGo').addEventListener('click', function () {
   var v = $('pasteText').value;
-  if (v.trim() && guardDirty()) { show(v, 'Pasted chat'); togglePanel('paste'); }
+  if (v.trim() && guardDirty()) { show(v, 'Pasted chat', null, 'paste'); togglePanel('paste'); }
 });
 
 var root = document.documentElement;
