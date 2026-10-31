@@ -1,3 +1,5 @@
+<p align="center"><img src="icon-512.png" width="128" height="128" alt="App icon: a lavender speech bubble above a small white robot"></p>
+
 # Markdown Chat Reader
 
 Read an exported AI chat as a phone-style chat. Your messages sit on the right and the AI's on the left. It is a single-file web app that runs in your browser, also offline, and installs on your phone like an app.
@@ -8,7 +10,7 @@ Read an exported AI chat as a phone-style chat. Your messages sit on the right a
 
 - The file is read inside your browser. It is never uploaded, and the page has no server that could receive it.
 - Chats are never saved or tracked. Reload or close the tab and the chat is gone.
-- The only things remembered on your device are your display choices (style, mode, text size, spacing, font, long-message collapsing, where you moved the buttons and whether you hid the editing tips). A font file you add stays on your device and is never uploaded.
+- The only things remembered on your device are your display choices (style, mode, background tint, text size, spacing, font, long-message collapsing, where you moved the buttons and whether you hid the editing tips). A font file you add stays on your device and is never uploaded.
 - After your first visit the app's own files (the page, icons, fonts and two small libraries) stay on your device so it opens without internet. Your chats are never part of that.
 
 ## How to use it
