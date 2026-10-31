@@ -631,6 +631,7 @@ Do this for the full conversation history of this chat.</code></pre>
   <section id="library" class="panel sheet" hidden role="dialog" aria-label="Chats in this export" tabindex="-1">
     <div class="sheethead"><h2>Chats in this export</h2><button class="sheetx" type="button" data-close="library" aria-label="Close the list of chats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <p class="hint" id="libInfo"></p>
+    <label class="libcheck" id="libGhostRow" hidden><input type="checkbox" id="libGhost"> <span id="libGhostTxt"></span></label>
     <input type="search" id="libSearch" class="modalinput" placeholder="Search chat titles" aria-label="Search chat titles" autocomplete="off">
     <div id="libList"></div>
     <p class="hint">Everything happens in this browser and nothing is uploaded. Titles that start with [Name] go into the folder Name.</p>
@@ -2685,15 +2686,19 @@ function openArchives(files) {
       else it.folder = titleFolder(it.title);
     });
     items.sort(function (a, b) { return (b.date || 0) - (a.date || 0); });
-    lib = { items: items, sel: {}, from: r.from };
-    var n = r.items.length - items.length, gaps = items.filter(function (it) { return it.lost; }).length;
+    lib = { items: items, sel: {}, from: r.from, ghosts: false };
+    var n = r.items.length - items.length, ghosts = items.filter(isGhost).length, gaps = items.filter(function (it) { return it.lost && !isGhost(it); }).length;
     $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'chat') + ' with no messages left out)' : '') + '. ' +
+      (ghosts ? plural(ghosts, 'chat') + ' have no text at all in this export, so they are hidden and not saved unless you show them. ' : '') +
       (gaps ? 'In ' + plural(gaps, 'chat') + ' some messages have no text in this export; they are marked in the chat. For a full copy of one, use the one-chat prompt in Help. ' : '') +
       (r.skipped ? plural(r.skipped, 'file') + ' could not be read. ' : '') + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
     // A backup .zip already has its folders in it, so the option shows only for exports.
     $('libKeep').hidden = !items.some(function (it) { return it.id; });
     $('libRemember').checked = !!map;
     $('libSearch').value = '';
+    $('libGhostRow').hidden = !ghosts;
+    $('libGhost').checked = false;
+    $('libGhostTxt').textContent = 'Show ' + plural(ghosts, 'chat') + ' with no text';
     $('libBtn').hidden = false;
     $('libDir').hidden = !window.showDirectoryPicker;
     renderLibrary();
@@ -2705,10 +2710,13 @@ function openArchives(files) {
     $('toast').hidden = true;
   });
 }
+// A chat whose every message came without text (for example an untitled chat Claude never listed) is hidden unless shown.
+function isGhost(it) { return !!it.lost && it.lost === it.msgs.length; }
+function libVisible(it) { return lib.ghosts || !isGhost(it); }
 function renderLibrary() {
   var q = $('libSearch').value.trim().toLowerCase(), box = $('libList'), groups = {};
   box.innerHTML = '';
-  lib.items.forEach(function (it, i) { if (!q || it.title.toLowerCase().indexOf(q) >= 0) (groups[it.folder] = groups[it.folder] || []).push(i); });
+  lib.items.forEach(function (it, i) { if (libVisible(it) && (!q || it.title.toLowerCase().indexOf(q) >= 0)) (groups[it.folder] = groups[it.folder] || []).push(i); });
   var names = Object.keys(groups).sort(function (a, b) { return !a ? 1 : !b ? -1 : a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }); });
   if (!names.length) box.innerHTML = '<p class="hint">No titles match.</p>';
   names.forEach(function (f) {
@@ -2739,6 +2747,11 @@ function syncLibBar() {
   $('libAll').textContent = all ? 'Clear selection' : 'Select all shown';
 }
 $('libSearch').addEventListener('input', function () { if (lib) renderLibrary(); });
+$('libGhost').addEventListener('change', function () {
+  lib.ghosts = this.checked;
+  if (!lib.ghosts) lib.items.forEach(function (it, i) { if (isGhost(it)) delete lib.sel[i]; });
+  renderLibrary();
+});
 $('libRemember').addEventListener('change', function () {
   if (this.checked) { saveFolderMap({}); rememberFolders(lib.items); toast('Your folders will be remembered on this device.', false); }
   else { saveFolderMap(null); toast('Saved folders forgotten.', false); }
@@ -2790,7 +2803,7 @@ function libMarkdown(it) {
 // One .md per chat, in a folder per project; names are made unique so nothing is overwritten.
 function libFiles() {
   var used = {};
-  return lib.items.map(function (it) {
+  return lib.items.filter(libVisible).map(function (it) {
     var dir = cleanFileName(it.folder || 'No project', 'No project').replace(/\.md$/, ''), base = it.fileBase || libFileBase(it), path = dir + '/' + base + '.md', k = 2;
     while (used[path.toLowerCase()]) path = dir + '/' + base + ' (' + k++ + ').md';
     used[path.toLowerCase()] = true;
