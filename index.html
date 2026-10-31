@@ -556,10 +556,33 @@ body.searching .fabs { display: none; }
           <li><strong>Gemini:</strong> its chat menu (the three dots at the top right of a chat) only saves a chat as a PDF or Google Doc. This reader does not open those. Use the one-chat prompt below instead.</li>
         </ul>
       </li>
-      <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat or per project, to download.</li>
+      <li><strong>Convert with an AI assistant.</strong> Upload the export to an AI assistant you trust, such as Claude, and paste the prompt below. It gives you Markdown files, one per chat, in project folders if you list your projects.</li>
       <li><strong>Read here.</strong> Save the .md files on your phone, tap <strong>Open</strong>, and pick one to read it as a chat. If the export came in several parts, select all the files at once (or drop them together), put them in reading order by dragging, and they are merged into one chat.</li>
     </ol>
-    <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Group chats by project if the export shows projects. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Keep code blocks and lists as they are. Give me all files in one zip. If the export is large, start with the 20 most recent chats.</code></pre>
+    <pre><code class="language-prompt">Convert this AI chat export into Markdown files, one .md file per chat. Name each file with the chat's date and title, for example 2025-08-21 Packing list.md. Start each file with the chat title as a # heading, then label every message on its own line as **You:** or **AI:**, with a blank line between messages. Copy every message word for word: do not summarize, shorten or skip anything, and leave out hidden reasoning or thinking notes. Keep code blocks, lists and tables as they are.
+
+The export may not say which project a chat was in. If I list projects below, put each chat in a folder named after its project, and the rest in a folder called No project. If I do not, suggest folders from the chat titles and show me the list before you convert.
+
+Give me all files in one zip. If the export is too large for one reply, first list every chat with its date and title, then convert 10 chats at a time and wait until I say next.
+
+Projects (optional, delete if not needed):
+- Project name: chat titles, or words that appear in them</code></pre>
+    <p class="hint">The AI has to type out every message again, so a large export can use up a free plan before it is done, or come back shortened. Converting 10 chats at a time helps. Check that a few long chats have all their messages.</p>
+    <h2>Why Markdown?</h2>
+    <ul>
+      <li><strong>Readable anywhere.</strong> A .md file is plain text, so Google Drive, your Files app or any notes app shows it as it is. An export file is data for computers: one long file with every chat mixed together.</li>
+      <li><strong>One chat per file, in folders you choose.</strong> Easy to back up, find and share, instead of one huge file.</li>
+      <li><strong>The same for every AI.</strong> Each app exports in its own way. Markdown gives this reader one simple shape to open, whichever AI the chat came from.</li>
+      <li><strong>Small and easy to fix.</strong> You can rename, trim or remove private details in any text editor, or with Edit here.</li>
+    </ul>
+    <h2>Chats in projects</h2>
+    <p>ChatGPT's export puts every chat into one file, ordered by date, and leaves out the project names. Other apps may do the same, so check your export before you delete anything.</p>
+    <ul>
+      <li><strong>Before you export, put the project in the title.</strong> Rename each chat to start with its project, for example <em>[Travel] Packing list</em>. Titles are kept in the export, so the project comes along and the AI can sort by it.</li>
+      <li><strong>Or note your projects.</strong> Write down each project and a few of its chat titles from the sidebar, and add them under Projects at the end of the prompt.</li>
+      <li><strong>Only need one project?</strong> Use the one-chat prompt below in each of its chats instead of exporting everything.</li>
+      <li><strong>On a free plan?</strong> Ask for the list of chats first, then convert only the ones you need, 10 at a time.</li>
+    </ul>
     <h2>Export one chat from any AI</h2>
     <p>For an app with no export, one that only exports your whole account, or a chat you want on its own. Open the chat, paste this prompt, and save what the AI gives you. Select all the parts at once with <strong>Open</strong> (or paste one part at a time with <strong>Paste</strong>) to read them as one chat.</p>
     <pre><code class="language-prompt">Export this entire conversation into sequential .md files for an AI chat reader.
