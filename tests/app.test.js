@@ -107,17 +107,31 @@ test('Help panel has a "Why Markdown?" section', async () => {
   assert.ok(names.includes('Why Markdown?'));
 });
 
-test('the floating buttons are two groups: tools nearest the round button, and moving around in the other corner', async () => {
+test('the buttons are in groups: Open, Paste and Help in the top-left menu, Edit, Style and Search near the round button, moving around in the other corner', async () => {
   const page = await openApp();
   if (await page.evaluate(() => document.documentElement.hasAttribute('data-menu'))) await page.click('#fabToggle');
   const tools = await page.$$eval('#fabMenu > button', (bs) => bs.filter((b) => !b.hidden).map((b) => ({ name: b.getAttribute('aria-label'), top: b.getBoundingClientRect().top })));
-  const nearestFirst = tools.sort((a, b) => b.top - a.top).map((b) => b.name);
-  assert.deepEqual(nearestFirst, ['Open a file', 'Paste .md text', 'Edit messages', 'Style', 'Search this chat', 'Help']);
-  const nav = await page.$$eval('#navFabs button', (bs) => bs.map((b) => b.id));
-  assert.deepEqual(nav, ['jumpBtn', 'prevMsgBtn', 'nextMsgBtn']);
-  assert.equal(await page.evaluate(() => document.getElementById('fabMenu').querySelector('#jumpBtn, #prevMsgBtn, #nextMsgBtn')), null, 'no moving-around buttons are left in the tools column');
+  assert.deepEqual(tools.sort((a, b) => b.top - a.top).map((b) => b.name), ['Edit messages', 'Style', 'Search this chat'], 'nearest the round button first');
+  assert.ok(await page.locator('#topMenu').isHidden(), 'the top-left menu starts closed');
+  await page.click('#menuBtn');
+  assert.deepEqual(await page.$$eval('#topMenu button', (bs) => bs.filter((b) => !b.hidden).map((b) => b.textContent)), ['Open a file', 'Paste text', 'Help']);
+  await page.click('#pasteBtn');
+  assert.ok(await page.locator('#topMenu').isHidden(), 'choosing an item closes the menu');
+  assert.ok(await page.locator('#paste').isVisible(), 'and opens what was chosen');
+  assert.deepEqual(await page.$$eval('#navFabs button', (bs) => bs.map((b) => b.id)), ['topBtn', 'jumpBtn', 'prevMsgBtn', 'nextMsgBtn'], 'top and bottom are both there');
   const sides = await page.evaluate(() => ({ nav: document.getElementById('navFabs').getBoundingClientRect().left, fab: document.getElementById('fabToggle').getBoundingClientRect().left }));
-  assert.ok(sides.nav < sides.fab, 'the two groups are in opposite corners');
+  assert.ok(sides.nav < sides.fab, 'the two floating groups are in opposite corners');
   await page.click('#fabToggle');
   assert.ok(await page.locator('#navFabs').isVisible(), 'hiding the tools leaves the moving-around buttons on screen');
+});
+
+test('the top and bottom buttons both work, wherever you are in the chat', async () => {
+  const page = await openApp();
+  await page.click('#jumpBtn');
+  await page.waitForFunction(() => window.scrollY > 200);
+  await page.click('#jumpBtn');
+  await page.waitForTimeout(300);
+  assert.ok(await page.evaluate(() => window.scrollY > 200), 'bottom stays at the bottom');
+  await page.click('#topBtn');
+  await page.waitForFunction(() => window.scrollY === 0);
 });
