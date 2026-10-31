@@ -120,7 +120,7 @@ body {
   padding: calc(12px + env(safe-area-inset-top, 0px)) 0 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
 }
 .heading { flex: 1 1 200px; min-width: 0; }
-h1 { margin: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; text-wrap: balance; overflow-wrap: anywhere; }
+h1 { margin: 0; min-width: 0; font-size: 1.2rem; line-height: 1.25; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .meta { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn {
@@ -362,6 +362,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   }
 }
 .notice strong { font-weight: 700; }
+.nbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .notice.warn { border-left-color: var(--warn-bar); background: var(--warn-bg); color: var(--warn-fg); }
 .etag { display: block; margin-top: 4px; font-size: .72rem; opacity: .7; text-align: right; }
 .unofficial { margin: 10px 0 0; padding: 6px 10px; border-left: 4px solid var(--warn-bar); border-radius: 4px; background: var(--warn-bg); font-size: .78rem; line-height: 1.45; color: var(--warn-fg); }
@@ -441,7 +442,7 @@ body.sheet-open { padding-bottom: 55vh; padding-bottom: 55dvh; }
 /* Top-right menu: Open, Chats, Paste and Help. The button is part of the header and scrolls away with it; the list floats over the page. */
 .menuwrap { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 0; z-index: 30; }
 .menubtn { width: 44px; height: 44px; background: none; border: 0; box-shadow: none; }
-.menubtn svg { width: 30px; height: 30px; }
+.menubtn svg { width: 22px; height: 22px; }
 .menubtn:hover { background: var(--code); }
 .menubtn[aria-expanded="true"], .menubtn:active { color: var(--user-fg); background: var(--user); box-shadow: none; }
 .topmenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 230px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, .2); }
@@ -505,7 +506,7 @@ body.searching .fabs, body.searching .navfabs { display: none; }
       </div>
     </div>
     <div class="menuwrap" id="menuWrap">
-      <button class="fabbtn menubtn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="topMenu" aria-label="Menu" title="Open a file, paste text, or read the help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="2.2" fill="currentColor" stroke="none"/></svg></button>
+      <button class="fabbtn menubtn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="topMenu" aria-label="Menu" title="Open a file, paste text, or read the help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.8" fill="currentColor" stroke="none"/></svg></button>
       <div class="topmenu" id="topMenu" role="group" aria-label="Open or paste" hidden>
         <button class="mitem" id="openBtn" type="button" aria-label="Open a file" title="Open a .md file, a backup .zip, or a ChatGPT or Claude export (.zip or .json). Select several .md parts to merge them into one chat. Files are read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open a file</span></button>
         <button class="mitem" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg><span>Chats in this export</span></button>
@@ -999,7 +1000,7 @@ function show(text, fallbackTitle, merged) {
     loadedEdited: /(^|\n)>\s*\*\*Edited copy\.\*\*/.test(parsed.pre || '')
   };
   if (!doc.editable) {
-    titleEl.textContent = doc.title;
+    titleEl.textContent = titleEl.title = doc.title;
     metaEl.textContent = 'No messages found';
     notice.hidden = false;
     $('noticeText').textContent = 'No speaker markers found. The reader looks for lines such as "**You:**", "**AI:**", "### User", "### Assistant", "You said:", or "Prompt:" / "Response:". The whole file is shown below as one message.';
@@ -1156,7 +1157,7 @@ function render() {
   chat.innerHTML = '';
   moreEl = null;
   selIdx = -1;
-  titleEl.textContent = doc.title;
+  titleEl.textContent = titleEl.title = doc.title;
   var u = 0, a = 0;
   doc.msgs.forEach(function (m) { if (m.role === 'user') u++; else if (m.role === 'assistant') a++; });
   if (shown < INITIAL) shown = INITIAL;
@@ -3121,15 +3122,19 @@ $('searchPrev').addEventListener('click', function () { if (!hits.length) runSea
 });
 window.addEventListener('drop', function (e) { loadFiles(e.dataTransfer && e.dataTransfer.files); });
 
-var SAMPLE_NOTE = 'This is a sample chat showing how the reader works. You can try Edit on it, and download a copy to see how that works. Open or paste your own chat to replace it, or drop a .md file on the page. Your own chat is never uploaded or saved.';
+var SAMPLE_NOTE = 'This is a sample chat. Try Edit on it, or open or paste your own. Nothing you open is uploaded or saved.';
 function showSample(text) {
   show(text || SAMPLE, 'How to use this reader (sample)');
   notice.hidden = false;
   $('noticeText').textContent = SAMPLE_NOTE;
-  var ob = document.createElement('button');
-  ob.className = 'btn'; ob.type = 'button'; ob.textContent = 'Open a file'; ob.style.cssText = 'display:block;margin-top:8px';
-  ob.addEventListener('click', function () { $('file').click(); });
-  $('noticeText').appendChild(ob);
+  var row = document.createElement('span');
+  row.className = 'nbtns';
+  [['Open a file', function () { $('file').click(); }], ['Paste text', function () { if ($('paste').hidden) togglePanel('paste'); }]].forEach(function (x) {
+    var bt = document.createElement('button');
+    bt.className = 'btn'; bt.type = 'button'; bt.textContent = x[0]; bt.addEventListener('click', x[1]);
+    row.appendChild(bt);
+  });
+  $('noticeText').appendChild(row);
   state = 'sample';
   syncEditUI();
 }
