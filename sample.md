@@ -173,8 +173,9 @@ Open **Style**:
 
 | Setting | Choices |
 |---|---|
-| Chat style | Classic plus ten colours, from Blue to Purple |
+| Chat style | Classic, White and eight soft colours, from Lavender (the default) to Peach |
 | Mode | Auto, Light, Dark or Green Read |
+| Background | Plain, or Tinted: a light wash of your chat colour (Light mode only) |
 | Text size | A slider from 14 to 28 px |
 | Line and paragraph spacing | Sliders |
 | Long messages | Show full (the default), or Collapse: messages longer than about 14 lines are shortened to 12 lines, and **Show more** opens one in full. Search opens any message that has a match. |

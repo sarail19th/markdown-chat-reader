@@ -8,7 +8,10 @@
 (function () {
   try {
     var a = localStorage.getItem('cr-accent'), m = localStorage.getItem('cr-mode'), r = document.documentElement;
-    if (a && /^(classic|blue|cyan|lime|yellow|orange|pink|magenta|purple|lavender|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
+    // The first colour set was replaced in 2026; a saved old colour moves to the nearest new one.
+    var MOVED = { blue: 'periwinkle', cyan: 'iceblue', green: 'teal', lime: 'mint', yellow: 'peach', orange: 'peach', pink: 'blush', magenta: 'rose', purple: null, lavender: null };
+    if (a && a in MOVED) { a = MOVED[a]; if (a) localStorage.setItem('cr-accent', a); else localStorage.removeItem('cr-accent'); }
+    if (a && /^(classic|periwinkle|blush|rose|iceblue|mint|teal|peach|white)$/.test(a)) r.setAttribute('data-accent', a);
     if (m === 'light' || m === 'dark' || m === 'green') r.setAttribute('data-theme', m);
     if (localStorage.getItem('cr-tint') === 'on') r.setAttribute('data-tint', 'on');
     var OLD = { 'cr-size': { s: 15, l: 20, xl: 24 }, 'cr-lh': { t: 1.35, r: 1.75, l: 1.95 }, 'cr-ps': { c: .4, r: 1, a: 1.4 } };
@@ -44,7 +47,7 @@
   --muted: #62706a;
   --surface: #ffffff;
   --line: #dce3df;
-  --user: #04bb9f;
+  --user: #a78bfa;
   --user-fg: #111111;
   --user-code: rgba(0, 0, 0, .12);
   --code: #e9efec;
@@ -62,7 +65,7 @@
   /* :where() keeps this rule's specificity at the level of :root, so the chat style colours below still win over it. */
   :root:where(:not([data-theme="light"]):not([data-theme="green"])) {
     --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
-    --surface: #1b2320; --line: #2b3632; --user: #04bb9f; --user-fg: #111111;
+    --surface: #1b2320; --line: #2b3632; --user: #a78bfa; --user-fg: #111111;
     --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
     --logo-base: #111715; --logo-tint: 0; --logo-ai: #515755; --logo-eye: #111715;
     color-scheme: dark;
@@ -70,7 +73,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #111715; --bar: #111715; --fg: #e6ece9; --muted: #93a29c;
-  --surface: #1b2320; --line: #2b3632; --user: #04bb9f; --user-fg: #111111;
+  --surface: #1b2320; --line: #2b3632; --user: #a78bfa; --user-fg: #111111;
   --code: #0d1210; --link: #7ab8e6; --focus: #7ab8e6;
   --logo-base: #111715; --logo-tint: 0; --logo-ai: #515755; --logo-eye: #111715;
   color-scheme: dark;
@@ -256,15 +259,6 @@ mark.hit.cur { background: var(--hit-cur); outline: 2px solid var(--fg); }
 .panel pre { margin: 0; padding: 10px 12px; font: 400 .8rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--code); border-radius: 10px; }
 .panel .codewrap pre { border-radius: 0 0 10px 10px; }
 .panel pre code { background: none; padding: 0; font-size: inherit; }
-:root[data-accent="blue"] { --user: #3566ef; --user-fg: #ffffff; --user-code: rgba(0, 0, 0, .28); }
-:root[data-accent="cyan"] { --user: #00b1ff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="lime"] { --user: #b6d70a; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="yellow"] { --user: #ffcb37; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="orange"] { --user: #ff8067; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="pink"] { --user: #fa70ab; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="magenta"] { --user: #dc6adc; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="purple"] { --user: #a25bff; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
-:root[data-accent="lavender"] { --user: #a78bfa; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="periwinkle"] { --user: #818cf8; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="blush"] { --user: #f28ab2; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
 :root[data-accent="rose"] { --user: #e879a9; --user-fg: #111111; --user-code: rgba(0, 0, 0, .12); }
@@ -492,7 +486,7 @@ body.searching .fabs { display: none; }
     <div id="styleRow">
       <span class="lbl" id="accentLbl">Chat style</span>
       <div class="dd" id="accentDd">
-        <button class="ddbtn" id="accentBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="accentList" aria-labelledby="accentLbl accentName"><i id="accentDot" aria-hidden="true"></i><span id="accentName">Green</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button class="ddbtn" id="accentBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="accentList" aria-labelledby="accentLbl accentName"><i id="accentDot" aria-hidden="true"></i><span id="accentName">Lavender</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
         <ul class="ddlist" id="accentList" role="listbox" aria-labelledby="accentLbl" tabindex="-1" hidden></ul>
       </div>
     </div>
@@ -2204,15 +2198,13 @@ document.addEventListener('keydown', function (e) {
   else if (!$('appearance').hidden && !(editMode && selIdx >= 0)) closeSheet('appearance');
 });
 var ACCENT_LIST = [
-  ['classic', 'Classic', '#ececec', 'Grey bubble, plain AI text'], ['blue', 'Blue', '#3566ef'], ['cyan', 'Cyan', '#00b1ff'],
-  ['green', 'Green', '#04bb9f'], ['lime', 'Lime', '#b6d70a'], ['yellow', 'Yellow', '#ffcb37'], ['orange', 'Orange', '#ff8067'],
-  ['pink', 'Pink', '#fa70ab'], ['magenta', 'Magenta', '#dc6adc'], ['purple', 'Purple', '#a25bff'],
+  ['classic', 'Classic', '#ececec', 'Grey bubble, plain AI text'],
   ['lavender', 'Lavender', '#a78bfa'], ['periwinkle', 'Periwinkle', '#818cf8'], ['blush', 'Blush', '#f28ab2'], ['rose', 'Rose', '#e879a9'],
   ['iceblue', 'Ice blue', '#67c8ed'], ['mint', 'Mint', '#5bc9b1'], ['teal', 'Teal', '#16b9a5'], ['peach', 'Peach', '#f5a17d'],
   ['white', 'White', '#ffffff']
 ];
 var ACC = {}, ACC_KEYS = ACCENT_LIST.map(function (a) { ACC[a[0]] = a; return a[0]; });
-var accBtn = $('accentBtn'), accList = $('accentList'), accActive = 'green';
+var accBtn = $('accentBtn'), accList = $('accentList'), accActive = 'lavender';
 ACCENT_LIST.forEach(function (a) {
   var li = document.createElement('li'), dot = document.createElement('i'), name = document.createElement('span');
   li.id = 'acc-' + a[0]; li.setAttribute('role', 'option'); li.setAttribute('data-accent', a[0]);
@@ -2222,7 +2214,7 @@ ACCENT_LIST.forEach(function (a) {
   accList.appendChild(li);
 });
 function setAccent(a) {
-  if (a === 'green') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
+  if (a === 'lavender') root.removeAttribute('data-accent'); else root.setAttribute('data-accent', a);
   $('accentDot').style.background = ACC[a][2];
   $('accentName').textContent = ACC[a][1];
   accList.querySelectorAll('[role="option"]').forEach(function (li) { li.setAttribute('aria-selected', String(li.getAttribute('data-accent') === a)); });
@@ -2248,7 +2240,7 @@ function openAccent() {
   accList.hidden = false;
   accBtn.setAttribute('aria-expanded', 'true');
   placeAccent();
-  markActive(root.getAttribute('data-accent') || 'green');
+  markActive(root.getAttribute('data-accent') || 'lavender');
   accList.focus({ preventScroll: true });
 }
 function closeAccent(refocus) {
@@ -2259,7 +2251,7 @@ function closeAccent(refocus) {
 }
 function pickAccent(a) {
   setAccent(a);
-  savePref('cr-accent', a === 'green' ? null : a);
+  savePref('cr-accent', a === 'lavender' ? null : a);
   syncThemeColor();
   closeAccent(true);
 }
@@ -2429,7 +2421,7 @@ if (window.matchMedia) {
 function savePref(k, v) {
   try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) { /* storage blocked */ }
 }
-setAccent(root.getAttribute('data-accent') || 'green');
+setAccent(root.getAttribute('data-accent') || 'lavender');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
 setChecked($('tintGroup'), 'data-tint', root.getAttribute('data-tint') === 'on' ? 'on' : 'off');
@@ -2459,7 +2451,7 @@ $('resetPrefs').addEventListener('click', function () {
   setTint('off');
   savePref('cr-accent', null); savePref('cr-mode', null);
   fabPos = null; savePref('cr-fab', null); applyFabPos(); placeSheets();
-  setAccent('green');
+  setAccent('lavender');
   setChecked($('modeGroup'), 'data-mode', 'auto');
   syncThemeColor();
 });
