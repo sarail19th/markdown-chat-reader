@@ -232,3 +232,61 @@ test('Whole word leaves longer words alone, in the highlights and in Replace', a
   await page.uncheck('#wholeWord');
   await page.waitForFunction((n) => document.getElementById('replaceAll').textContent === 'Replace all (' + n + ')', any - whole);
 });
+
+test('Search says so when a match is only in the Markdown text, such as **Export** with its bold marks', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.click('[data-panel="search"]');
+  await page.fill('#searchInput', '**Export**');
+  await page.waitForFunction(() => /Markdown text/.test(document.getElementById('searchCount').textContent));
+  assert.match(await page.textContent('#searchCount'), /^Nothing to highlight, but 1 in the Markdown text/);
+  assert.equal(await page.textContent('#replaceAll'), 'Replace all (1)');
+  await page.fill('#searchInput', '**--');
+  await page.waitForFunction(() => document.getElementById('searchCount').textContent === 'No matches');
+});
+
+test('a speaker name alone on a line is refused by Replace, Replace all and the message editor, and ordinary text still goes through', async () => {
+  const page = await openApp();
+  const ok = await page.evaluate(() => doc.msgs.every((m) => readsBackSame(m.text)));
+  assert.ok(ok, 'every message in the guide reads back correctly, so nothing is blocked by mistake');
+  assert.equal(await page.evaluate(() => wouldBreakSave('Zthx', '**You:**')), true);
+  assert.equal(await page.evaluate(() => wouldBreakSave('Zthx', 'Thanks **You:** hi there')), false, 'a name in the middle of a line is fine');
+  assert.equal(await page.evaluate(() => wouldBreakSave('Zthx', '**You:** hi')), true, 'but one at the start of a line is blocked, because the reader takes it for a new speaker');
+  assert.equal(await page.evaluate(() => wouldBreakSave('Zthx', 'Dear **bold** friend\n\n- one\n- two')), false);
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.evaluate(() => { doc.msgs[1].text = 'Zthx'; doc.msgs[3].text = 'Say Zthx please'; render(); });
+  await page.click('[data-panel="search"]');
+  await page.fill('#searchInput', 'Zthx');
+  await page.waitForFunction(() => document.getElementById('replaceAll').textContent === 'Replace all (2)');
+  await page.fill('#replaceInput', '**You:**');
+  await page.click('#replaceAll');
+  assert.equal(await page.evaluate(() => doc.msgs[1].text), 'Zthx', 'the one-word message is left alone');
+  assert.equal(await page.evaluate(() => doc.msgs[3].text), 'Say **You:** please', 'the other is changed, since the name is not at the start of a line');
+  assert.match(await page.textContent('#toastMsg'), /1 left alone/);
+  await page.click('#undoBtn');
+  await page.fill('#searchInput', 'Zthx');
+  await page.click('#replaceOne');
+  await page.click('#replaceOne');
+  assert.equal(await page.evaluate(() => doc.msgs[1].text), 'Zthx', 'Replace refuses it too');
+  assert.match(await page.textContent('#toastMsg'), /speaker name/);
+  const md = await page.evaluate(() => toMarkdown());
+  assert.equal(await page.evaluate((m) => parseChat(m).msgs.length, md), 30, 'so the saved copy still has all 30 messages');
+});
+
+test('the message editor keeps your text open and explains when it would leave a speaker name on a line of its own', async () => {
+  const page = await openApp();
+  await page.click('#fabToggle');
+  await page.click('#editBtn');
+  await page.click('.row >> nth=0 >> .bubble');
+  await page.click('text=Edit text');
+  await page.fill('#editArea', 'Hello\n**You:**\nthere');
+  await page.click('[data-act="save"]');
+  assert.ok(await page.locator('#editArea').isVisible(), 'the editor stays open, so nothing typed is lost');
+  assert.equal(await page.evaluate(() => doc.msgs[0].text), 'How do I use this markdown reader?', 'the message is unchanged');
+  assert.match(await page.textContent('#toastMsg'), /speaker name/);
+  await page.fill('#editArea', 'Hello **You:** there');
+  await page.click('[data-act="save"]');
+  assert.equal(await page.evaluate(() => doc.msgs[0].text), 'Hello **You:** there', 'a name inside a line is fine');
+});

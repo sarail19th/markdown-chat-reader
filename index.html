@@ -1511,9 +1511,18 @@ function saveEdit(i) {
   var v = $('editArea').value.replace(/\s+$/, '');
   if (!v.trim()) { toast('A message cannot be empty. Use Delete to remove it.', false); return false; }
   if (v === doc.msgs[i].text) { editingIdx = -1; render(); return true; }
+  if (wouldBreakSave(doc.msgs[i].text, v)) { toast(SPLIT_WARNING, false); return false; }
   mutate(function () { doc.msgs[i].text = v; });
   return true;
 }
+// A saved copy writes each message under a speaker line. If a message gets a speaker line of its own (such as **You:**), reopening the copy would split it or lose it.
+// This asks the parser what it would make of the message, and blocks only a change that turns a message that reads back correctly into one that does not.
+var SPLIT_WARNING = 'That would leave a speaker name like **You:** on a line of its own, so the saved copy would split this message. Nothing was changed.';
+function readsBackSame(text) {
+  var d = parseChat('**AI:**\n' + text + '\n'), want = text.replace(/^(?:[ \t]*\n)+/, '').replace(/\s+$/, '');
+  return d.msgs.length === 1 && d.msgs[0].text === want;
+}
+function wouldBreakSave(oldText, newText) { return readsBackSame(oldText) && !readsBackSame(newText); }
 // Keeps whatever is typed in an open editor, so Exit editing, Copy, Download, Undo and Redo never drop a pending change.
 function commitEdit() { return editingIdx < 0 || !$('editArea') || saveEdit(editingIdx); }
 function undo() {
@@ -3056,9 +3065,8 @@ function decorateCode(root) {
 /* ---- search in chat (runs in the page only; nothing is stored) ---- */
 var hits = [], hitIdx = -1, searchTimer = null;
 function updateCount() {
-  syncReplace();
-  var q = $('searchInput').value.trim();
-  $('searchCount').textContent = !q ? '' : (hits.length ? (hitIdx + 1) + ' of ' + hits.length : 'No matches');
+  var n = syncReplace(), q = $('searchInput').value.trim();
+  $('searchCount').textContent = !q ? '' : (hits.length ? (hitIdx + 1) + ' of ' + hits.length : n ? 'Nothing to highlight, but ' + n + ' in the Markdown text (formatting marks count)' : 'No matches');
 }
 function clearMarks() {
   chat.querySelectorAll('mark.hit').forEach(function (m) {
@@ -3149,10 +3157,11 @@ function srcMatches() { // every match in the Markdown of every message: { i: me
   return out;
 }
 function syncReplace() {
-  if (!editMode || $('replaceRow').hidden) return;
+  if (!editMode || $('replaceRow').hidden) return 0;
   var n = srcMatches().length;
   $('replaceAll').textContent = n ? 'Replace all (' + n + ')' : 'Replace all';
   $('replaceOne').disabled = $('replaceAll').disabled = !n;
+  return n;
 }
 function replaceOne() {
   if (!editMode || !commitEdit()) return;
@@ -3171,6 +3180,7 @@ function replaceOne() {
   var to = $('replaceInput').value, i = target.i, t = doc.msgs[i].text;
   var nt = t.slice(0, target.start) + to + t.slice(target.start + target.len);
   if (!nt.trim()) { toast('A message cannot be empty. Use Delete to remove it.', false); return; }
+  if (wouldBreakSave(t, nt)) { toast(SPLIT_WARNING, false); if (hits.length > 1) goTo(hitIdx + 1); return; }
   var again = (to.match(srcRe()) || []).length; // matches inside the new text are skipped, so Replace never loops on itself
   mutate(function () { doc.msgs[i].text = nt; }); // this redraws the chat and runs the search again
   if (!hits.length) return;
@@ -3191,12 +3201,12 @@ function replaceAll() {
   doc.msgs.forEach(function (m, i) {
     var c = 0, nt = m.text.replace(re, function () { c++; return to; });
     if (!c) return;
-    if (!nt.trim()) { skipped++; return; }
+    if (!nt.trim() || wouldBreakSave(m.text, nt)) { skipped++; return; }
     changes[i] = nt; count += c; msgs++;
   });
-  if (!msgs) { toast(skipped ? 'A message cannot be empty, so nothing was replaced.' : 'No matches to replace', false); return; }
+  if (!msgs) { toast(skipped ? 'Nothing was replaced: it would leave messages empty or break the saved copy.' : 'No matches to replace', false); return; }
   mutate(function () { Object.keys(changes).forEach(function (i) { doc.msgs[i].text = changes[i]; }); },
-    'Replaced ' + count + (count === 1 ? ' match' : ' matches') + ' in ' + msgs + (msgs === 1 ? ' message' : ' messages') + (skipped ? '. ' + skipped + ' left alone, as they would be empty' : ''));
+    'Replaced ' + count + (count === 1 ? ' match' : ' matches') + ' in ' + msgs + (msgs === 1 ? ' message' : ' messages') + (skipped ? '. ' + skipped + ' left alone: they would be empty or break the saved copy' : ''));
 }
 $('wholeWord').addEventListener('change', function () { clearTimeout(searchTimer); runSearch(); });
 $('replaceOne').addEventListener('click', replaceOne);
