@@ -298,6 +298,10 @@ body.editing .titleedit { display: inline-flex; }
 .fieldrow span { flex: none; color: var(--muted); }
 .modalinput { display: block; flex: 1; min-width: 0; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; font: 400 max(16px, 1rem) var(--ff); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
 .modalinput:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.splitmodes { display: flex; gap: 8px; margin: 0 0 14px; }
+.splitmodes .btn { flex: 1; justify-content: center; }
+.rangerow { display: flex; gap: 10px; margin: 0 0 6px; }
+.rangerow .modalfield { flex: 1; min-width: 0; margin: 0; }
 .splitpart { margin: 0 0 14px; }
 .splitnote { margin: 4px 0 6px; font-size: .85rem; line-height: 1.4; color: var(--fg); overflow-wrap: anywhere; }
 .splitpart .btn { margin-top: 8px; }
@@ -562,7 +566,7 @@ Do this for the full conversation history of this chat.</code></pre>
   </section>
   <p class="notice" id="notice" hidden></p>
   <p class="notice warn" id="editedBanner" role="note" hidden><strong>Edited copy.</strong> Some messages or the title were changed or removed, so this may not match the original conversation.<span class="bchanges" id="bannerChanges" hidden></span></p>
-  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the chat into two files after a message or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
+  <p class="notice warn" id="editCaution" role="note" hidden><strong>Before you edit:</strong> tap a message to edit it, switch its speaker, split it between both speakers, split the chat into two files or save an excerpt, or delete it. The pencil beside the title renames the chat. Changes are labeled as edited, and the saved file says it is an edited copy. Edit your own chats, for example to remove private details. Do not present an edited chat as a real, original conversation.</p>
   <p class="unofficial" id="unofficial">Unofficial viewer. Not an export or screen from any AI company.</p>
   <main class="chat" id="chat" aria-live="polite"></main>
   <p class="foot">Runs in your browser, also offline. Your chats are never uploaded or saved. <a href="https://github.com/sarail19th/markdown-chat-reader" target="_blank" rel="noopener noreferrer">Source on GitHub</a></p>
@@ -1471,7 +1475,7 @@ function toMarkdown(part) {
     out.push('');
   }
   if (doc.mergedFrom) out.push('> **Merged copy.** Made with Markdown Chat Reader from ' + doc.mergedFrom.length + ' files, in this order: ' + doc.mergedFrom.join(', ') + '.', '');
-  if (part) out.push('> **Split copy.** ' + part.note, '');
+  if (part) out.push('> **' + (part.tag || 'Split copy') + '.** ' + part.note, '');
   msgs.forEach(function (m, i) {
     if (i) out.push('---', '');
     var lab = m.role === 'user' ? doc.names.user : m.role === 'system' ? 'System' : doc.names.assistant;
@@ -1507,6 +1511,14 @@ function snippet(t) {
   var s = String(t).replace(/\s+/g, ' ').trim();
   return s.length > 60 ? s.slice(0, 60).replace(/\s+\S*$/, '') + '…' : s;
 }
+function numField(label, value, max) {
+  var box = document.createElement('label'), el = document.createElement('input');
+  box.className = 'modalfield'; box.textContent = label;
+  el.type = 'number'; el.inputMode = 'numeric'; el.min = '1'; el.max = String(max); el.value = String(value); el.className = 'modalinput';
+  el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('modalOk').click(); } });
+  box.appendChild(document.createElement('br')); box.appendChild(el);
+  return { box: box, el: el };
+}
 function splitChatAfter(i) {
   if (!doc || !commitEdit()) return;
   var total = doc.msgs.length;
@@ -1517,7 +1529,7 @@ function splitChatAfter(i) {
   var was = from.match(/^(.*?)\s*\(part (\d+(?:\.\d+)*)\)\s*$/), stem = was && was[1] ? was[1] : from, pre = was && was[1] ? was[2] + '.' : '';
   var base = cleanFileName(stem, 'chat').replace(/\.md$/, '');
   var parts = [{ n: 1, from: 0, to: i + 1 }, { n: 2, from: i + 1, to: total }];
-  var box = document.createElement('div');
+  var box = document.createElement('div'), partsBox = document.createElement('div'), mode = 'parts';
   parts.forEach(function (p) {
     p.label = pre + p.n;
     p.def = base + ' (part ' + p.label + ')';
@@ -1531,7 +1543,7 @@ function splitChatAfter(i) {
     p.btn.type = 'button'; p.btn.className = 'btn'; p.btn.textContent = 'Download part ' + p.label;
     p.btn.addEventListener('click', function () { savePart(p); p.btn.textContent = 'Saved. Download part ' + p.label + ' again'; });
     p.field.box.appendChild(p.btn);
-    box.appendChild(p.field.box);
+    partsBox.appendChild(p.field.box);
   });
   function savePart(p) {
     var name = cleanFileName(p.field.el.value, p.def);
@@ -1542,11 +1554,81 @@ function splitChatAfter(i) {
     }));
     return name;
   }
+
+  /* excerpt only: one range saved as one file, with no part number and nothing to merge */
+  var exBase = cleanFileName(from.replace(/\s*\((?:excerpt|part \d+(?:\.\d+)*)\)\s*$/, '') || doc.title, 'chat').replace(/\.md$/, '');
+  var exDef = exBase + ' (excerpt)';
+  var exBox = document.createElement('div'), row = document.createElement('div');
+  exBox.hidden = true; row.className = 'rangerow';
+  var fromF = numField('From message', i + 2, total), toF = numField('To message', total, total);
+  row.appendChild(fromF.box); row.appendChild(toF.box);
+  var exCount = document.createElement('p'), exStart = document.createElement('p'), exEnd = document.createElement('p'), exHint = document.createElement('p'), exMove = document.createElement('button');
+  exCount.className = exStart.className = exEnd.className = exHint.className = 'splitnote';
+  exMove.type = 'button'; exMove.className = 'btn'; exMove.textContent = 'Include the message before it';
+  exHint.appendChild(document.createTextNode('This starts on a reply, without the prompt before it. '));
+  exHint.appendChild(exMove);
+  var exName = textInput(exDef, 'File name', true, false);
+  exName.box.className = 'splitpart';
+  [row, exCount, exStart, exEnd, exHint, exName.box].forEach(function (el) { exBox.appendChild(el); });
+  function exRange() {
+    var a = parseInt(fromF.el.value, 10), z = parseInt(toF.el.value, 10);
+    return a >= 1 && z <= total && a <= z ? { from: a, to: z } : null;
+  }
+  function refresh() {
+    var r = exRange();
+    $('modalOk').disabled = mode === 'excerpt' && !r;
+    exHint.hidden = !r || r.from < 2 || doc.msgs[r.from - 1].role !== 'assistant';
+    if (!r) {
+      exCount.textContent = 'Pick numbers from 1 to ' + total + ', with the start before or at the end.';
+      exStart.textContent = exEnd.textContent = '';
+      return;
+    }
+    var first = doc.msgs[r.from - 1], last = doc.msgs[r.to - 1];
+    exCount.textContent = plural(r.to - r.from + 1, 'message') + ' (messages ' + r.from + ' to ' + r.to + ' of ' + total + ')';
+    exStart.textContent = 'Starts with ' + nameOf(first.role) + ': "' + snippet(first.text) + '"';
+    exEnd.textContent = 'Ends with ' + nameOf(last.role) + ': "' + snippet(last.text) + '"';
+  }
+  fromF.el.addEventListener('input', refresh); toF.el.addEventListener('input', refresh);
+  exMove.addEventListener('click', function () { fromF.el.value = String(parseInt(fromF.el.value, 10) - 1); refresh(); });
+
+  var modes = document.createElement('div');
+  modes.className = 'splitmodes';
+  function modeBtn(label, m) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn'; b.textContent = label;
+    b.addEventListener('click', function () { setMode(m); (m === 'excerpt' ? fromF.el : parts[0].field.el).focus(); });
+    modes.appendChild(b);
+    return b;
+  }
+  var partsBtn = modeBtn('Two parts', 'parts'), exBtn = modeBtn('Excerpt only', 'excerpt');
+  box.appendChild(modes); box.appendChild(partsBox); box.appendChild(exBox);
+  var PARTS_HELP = 'The cut is right after the message you tapped: it is the last message of the first file, and the next message starts the second file. To start the second file with a message instead, tap the message just above it. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.';
+  var EX_HELP = 'Save only the messages you choose as one new .md file, with no part number and nothing to merge. It is marked as an excerpt, so it cannot pass as the whole chat. Your open chat and original file are not changed.';
+  function setMode(m) {
+    mode = m;
+    partsBox.hidden = m !== 'parts'; exBox.hidden = m !== 'excerpt';
+    partsBtn.setAttribute('aria-pressed', String(m === 'parts')); exBtn.setAttribute('aria-pressed', String(m === 'excerpt'));
+    $('modalTitle').textContent = m === 'parts' ? 'Split chat after message ' + (i + 1) : 'Save an excerpt';
+    $('modalHelp').textContent = m === 'parts' ? PARTS_HELP : EX_HELP;
+    $('modalOk').textContent = m === 'parts' ? 'Download both' : 'Download excerpt';
+    refresh();
+  }
   openModal({
-    title: 'Split chat after message ' + (i + 1), cancel: 'Close',
-    help: 'The cut is right after the message you tapped: it is the last message of the first file, and the next message starts the second file. To start the second file with a message instead, tap the message just above it. Your open chat and original file are not changed. Some browsers ask before saving two files at once; the buttons save one at a time.',
-    body: box, ok: 'Download both', focus: parts[0].field.el,
+    title: '', cancel: 'Close', help: '',
+    body: box, ok: '', focus: parts[0].field.el,
     onOk: function () {
+      if (mode === 'excerpt') {
+        var r = exRange();
+        if (!r) return false;
+        var name = cleanFileName(exName.el.value, exDef);
+        saveFile(name, toMarkdown({
+          title: name.replace(/\.md$/, ''), tag: 'Excerpt',
+          msgs: doc.msgs.slice(r.from - 1, r.to),
+          note: 'Made with Markdown Chat Reader. Messages ' + r.from + ' to ' + r.to + ' of ' + total + ' from "' + exBase + '". The rest of the chat was left out, so this is not the whole conversation.'
+        }));
+        toast('Saving ' + name, false);
+        return;
+      }
       var a = cleanFileName(parts[0].field.el.value, parts[0].def), b = cleanFileName(parts[1].field.el.value, parts[1].def);
       if (a.toLowerCase() === b.toLowerCase()) { toast('Give the two parts different names.', false); parts[1].field.el.focus(); return false; }
       savePart(parts[0]);
@@ -1554,6 +1636,7 @@ function splitChatAfter(i) {
       toast('Saving 2 files: ' + a + ' and ' + b, false);
     }
   });
+  setMode('parts');
 }
 function downloadMd(name) {
   saveFile(name, toMarkdown());
@@ -1708,6 +1791,7 @@ function openModal(o) {
   $('modalBody').innerHTML = '';
   $('modalBody').appendChild(o.body);
   $('modalOk').textContent = o.ok;
+  $('modalOk').disabled = false;
   $('modalCancel').textContent = o.cancel || 'Cancel';
   modalOnOk = o.onOk;
   $('modal').hidden = false;
