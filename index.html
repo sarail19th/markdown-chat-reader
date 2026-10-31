@@ -559,7 +559,7 @@ body.searching .fabs { display: none; }
       <li><strong>Export from your AI app.</strong> You usually get an email with a download link, which often expires after about a day.
         <ul>
           <li><strong>ChatGPT:</strong> Settings, Data controls, Export data. <a href="https://chatgpt.com/settings/data-controls" target="_blank" rel="noopener noreferrer">Open data controls</a></li>
-          <li><strong>Claude:</strong> you can't request it in the Claude phone app. Use a browser on your computer or phone: Settings, Privacy, <strong>Export data</strong>. You get a second email when it is ready: open its link while logged in to the same account, and download <strong>conversations-000.zip</strong>, the file with your chats. <a href="https://support.claude.com/en/articles/9450526-export-your-claude-data" target="_blank" rel="noopener noreferrer">Claude's steps</a></li>
+          <li><strong>Claude:</strong> you can't request it in the Claude phone app. Use a browser on your computer or phone: Settings, Privacy, <strong>Export data</strong>. You get a second email when it is ready: open its link while logged in to the same account, and download <strong>conversations-000.zip</strong>, the file with your chats. Some Claude exports leave out the text of many messages; the reader marks those, and the one-chat prompt below gets a full copy. <a href="https://support.claude.com/en/articles/9450526-export-your-claude-data" target="_blank" rel="noopener noreferrer">Claude's steps</a></li>
           <li><strong>Grok:</strong> Settings, Data controls, Export account data, then <strong>Download account data</strong> on your x.ai account page. <a href="https://accounts.x.ai/account?redirect=grok-com&amp;theme=light#data" target="_blank" rel="noopener noreferrer">Open account page</a> For Grok inside X, use the one-chat prompt below.</li>
           <li><strong>Copilot:</strong> Microsoft privacy dashboard, Copilot, <strong>Export all activity history</strong> (a .csv). <a href="https://support.microsoft.com/en-us/privacy/manage-your-copilot-activity-history-in-the-privacy-dashboard" target="_blank" rel="noopener noreferrer">Microsoft's steps</a></li>
           <li><strong>Gemini:</strong> no export this reader opens. Use the one-chat prompt below.</li>
@@ -2688,7 +2688,7 @@ function openArchives(files) {
     lib = { items: items, sel: {}, from: r.from };
     var n = r.items.length - items.length, gaps = items.filter(function (it) { return it.lost; }).length;
     $('libInfo').textContent = plural(items.length, 'chat') + ' from ' + r.from + (n ? ' (' + plural(n, 'chat') + ' with no messages left out)' : '') + '. ' +
-      (gaps ? 'In ' + plural(gaps, 'chat') + ' some messages have no text in this export; they are marked in the chat. ' : '') +
+      (gaps ? 'In ' + plural(gaps, 'chat') + ' some messages have no text in this export; they are marked in the chat. For a full copy of one, use the one-chat prompt in Help. ' : '') +
       (r.skipped ? plural(r.skipped, 'file') + ' could not be read. ' : '') + (kept ? 'Your saved folders were used for ' + plural(kept, 'chat') + '. ' : '') + 'Tap a title to read it.';
     // A backup .zip already has its folders in it, so the option shows only for exports.
     $('libKeep').hidden = !items.some(function (it) { return it.id; });
