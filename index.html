@@ -384,6 +384,7 @@ body.editing .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .etag { display: block; margin-top: 4px; font-size: .72rem; opacity: .7; text-align: right; }
 .unofficial { margin: 10px 0 0; padding: 6px 10px; border-left: 4px solid var(--warn-bar); border-radius: 4px; background: var(--warn-bg); font-size: .78rem; line-height: 1.45; color: var(--warn-fg); }
 .hint { margin: 8px 0 0; font-size: .82rem; color: var(--muted); }
+.offl.ok, .offl.warn { color: var(--fg); font-weight: 600; }
 .bar { display: grid; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 52px; }
 .logo { width: 36px; height: 36px; flex: none; }
@@ -723,6 +724,7 @@ Do this for the full conversation history of this chat.</code></pre>
     <p>The guide chat shows search, editing, styles, and how to split a long story chat into scenes.</p>
     <button class="btn" id="showGuide" type="button">Show the guide chat</button>
     <p class="hint">App version <span id="appVer">__VERSION__</span></p>
+    <p class="hint offl" id="offl" role="status" aria-live="polite" hidden></p>
   </section>
   <section id="paste" class="panel sheet" hidden role="dialog" aria-label="Paste text" tabindex="-1">
     <div class="sheethead"><h2>Paste text</h2><button class="sheetx" type="button" data-close="paste" aria-label="Close paste form"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -3468,6 +3470,32 @@ $('showGuide').addEventListener('click', function () {
 });
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   navigator.serviceWorker.register('sw.js').catch(function () {});
+  // "Ready for offline" line in the help panel: asks the worker whether every file is saved (it re-saves missing ones online first).
+  var offState = '', offTimer = 0, offTries = 0;
+  var renderOffline = function () {
+    var el = $('offl'); if (!el) return;
+    el.hidden = !offState;
+    el.className = 'hint offl' + (offState === 'ok' ? ' ok' : offState === 'no' ? ' warn' : '');
+    el.textContent = offState === 'ok' ? '✓ Ready to read offline' : offState === 'no' ? '⚠ Not saved for offline yet. Stay online a moment.' : offState === 'wait' ? 'Saving for offline…' : '';
+  };
+  var checkOffline = function () {
+    if (!offState) { offState = 'wait'; renderOffline(); }
+    navigator.serviceWorker.ready.then(function (reg) {
+      var w = navigator.serviceWorker.controller || reg.active; if (!w) return;
+      clearTimeout(offTimer);
+      offTimer = setTimeout(function () { if (offState === 'wait') { offState = 'no'; renderOffline(); } }, 4000); // an old worker never answers
+      w.postMessage({ type: 'offline?' });
+    });
+  };
+  navigator.serviceWorker.addEventListener('message', function (e) {
+    if (!e.data || e.data.type !== 'offline') return;
+    clearTimeout(offTimer); offState = e.data.ok ? 'ok' : 'no'; renderOffline();
+    if (!e.data.ok && offTries++ < 3) setTimeout(checkOffline, 5000); // still downloading? ask again
+    else if (e.data.ok) offTries = 0;
+  });
+  window.addEventListener('online', function () { offTries = 0; checkOffline(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkOffline(); });
+  checkOffline();
   // A file shared from Android's Share menu: the service worker holds it in memory and hands it over here. Nothing is stored.
   if (/[?&]shared=1\b/.test(location.search)) {
     history.replaceState(null, '', location.pathname + location.hash);

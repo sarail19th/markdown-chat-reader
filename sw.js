@@ -31,6 +31,18 @@ let shared = [];
 let sharedAt = 0;
 
 self.addEventListener('message', (e) => {
+  // The page asks "is everything saved for offline?": re-save anything missing (online), then answer.
+  if (e.data && e.data.type === 'offline?' && e.source) {
+    const src = e.source;
+    e.waitUntil(
+      caches.open(CACHE)
+        .then((c) => Promise.all(FILES.map((u) => c.match(u).then((hit) => hit || fetch(new Request(u, { cache: 'reload' })).then((r) => { if (r.ok) return c.put(u, r); }).catch(() => {}))))
+          .then(() => Promise.all(FILES.map((u) => c.match(u).then(Boolean)))))
+        .then((all) => src.postMessage({ type: 'offline', ok: all.every(Boolean) }))
+        .catch(() => src.postMessage({ type: 'offline', ok: false }))
+    );
+    return;
+  }
   if (!e.data || e.data.type !== 'take-shared' || !e.source) return;
   const files = Date.now() - sharedAt < 60000 ? shared : [];
   shared = [];

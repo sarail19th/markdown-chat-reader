@@ -31,6 +31,13 @@ test('updating the service worker leaves other apps\' caches alone and removes o
     const names = () => page.evaluate(() => caches.keys().then((k) => k.sort()));
     assert.deepEqual(await names(), ['chat-reader-v1']);
 
+    // The "Ready for offline" line fills in once everything is saved, and a wiped cache is re-saved by the check.
+    await page.waitForFunction(() => /Ready/.test(document.getElementById('offl').textContent), null, { timeout: 15000 });
+    await page.evaluate(() => caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('chat-reader-')).map((k) => caches.delete(k)))));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await page.waitForFunction(() => caches.open('chat-reader-v1').then((c) => c.keys()).then((k) => k.length >= 10), null, { timeout: 15000 });
+    assert.deepEqual(await names(), ['chat-reader-v1']);
+
     // Another app on the same address saves its own offline copy.
     await page.evaluate(() => caches.open('other-app-1').then((c) => c.put('/other/', new Response('x'))));
 
