@@ -23,7 +23,7 @@ I built it with help from Claude (Claude Code), and I test each change on my own
 ## How it works
 
 1. **Export** your chats from ChatGPT, Claude or another AI app (Help in the app lists the steps).
-2. **Open the export here** (ChatGPT and Claude). Tap a chat to read it, use **Move to folder** to sort chats into projects (titles that start with `[Name]` go into the folder Name), and **Download .zip** for one `.md` file per chat, in folders. For other apps, Help has a prompt that asks an AI to do the conversion.
+2. **Open the export here** (ChatGPT, Claude and Grok). Tap a chat to read it, use **Move to folder** to sort chats into projects (titles that start with `[Name]` go into the folder Name), and **Download .zip** for one `.md` file per chat, in folders. For other apps, Help has a prompt that asks an AI to do the conversion.
 3. **Read any time.** Open a `.md` file, or the backup `.zip` to get its list back.
 
 ## Your chats stay with you
@@ -38,7 +38,7 @@ I built it with help from Claude (Claude Code), and I test each change on my own
 - Classic, White and seven soft colours, Auto, Light, Dark and Green Read modes, an optional tinted background, text size, spacing and font settings.
 - Search, previous and next message, jump to start or end, and a drag handle for long chats on touch screens.
 - Edit: fix text and formatting, swap or split speakers, delete messages, split a long chat into two files or save an excerpt. Your original file never changes, and saved copies say they were edited.
-- Export converter for ChatGPT and Claude: follows the version of each chat you last saw, leaves out hidden thinking, and keeps every message word for word. Converted files re-open exactly, even when a story contains dialogue such as `**Name:**`.
+- Export converter for ChatGPT, Claude and Grok: follows the version of each chat you last saw, leaves out hidden thinking, and keeps every message word for word. Converted files re-open exactly, even when a story contains dialogue such as `**Name:**`.
 - Installs as an app (PWA). On Android, **Share** a `.md` file or an export to it.
 
 Edited chats are labelled, and the page always shows that it is an unofficial viewer, not a screen from any AI company. Please only edit your own chats.

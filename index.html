@@ -562,7 +562,7 @@ body.searching .fabs, body.searching .navfabs { display: none; }
     <div class="menuwrap" id="menuWrap">
       <button class="fabbtn menubtn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="topMenu" aria-label="Menu" title="Open a file, paste text, or read the help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.8" fill="currentColor" stroke="none"/></svg></button>
       <div class="topmenu" id="topMenu" role="group" aria-label="Open or paste" hidden>
-        <button class="mitem" id="openBtn" type="button" aria-label="Open a file" title="Open a .md file, a backup .zip, or a ChatGPT or Claude export (.zip or .json). Select several .md parts to merge them into one chat. Files are read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open a file</span></button>
+        <button class="mitem" id="openBtn" type="button" aria-label="Open a file" title="Open a .md file, a backup .zip, or a ChatGPT, Claude or Grok export (.zip or .json). Select several .md parts to merge them into one chat. Files are read in your browser and never uploaded."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Open a file</span></button>
         <button class="mitem" id="libBtn" type="button" data-panel="library" aria-expanded="false" aria-label="Chats in this export" title="The chats in the export you opened" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4z"/><path d="M16.5 5.6l3.8-1 3.2 13.5-3.8 1z" transform="translate(-2.2 .6)"/></svg><span>Chats in this export</span></button>
         <button class="mitem" id="pasteBtn" type="button" data-panel="paste" aria-expanded="false" aria-label="Paste .md text" title="Paste .md text (Ctrl+V). It stays in this tab."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h4"/></svg><span>Paste text</span></button>
         <button class="mitem" type="button" data-panel="info" aria-expanded="false" aria-label="Help" title="How this reader works and what it does with your file"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.3c-.8.4-1.1 1-1.1 1.7"/><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none"/></svg><span>Help</span></button>
@@ -667,7 +667,7 @@ body.searching .fabs, body.searching .navfabs { display: none; }
           <li><strong>Gemini:</strong> no export this reader opens. Use the one-chat prompt below.</li>
         </ul>
       </li>
-      <li><strong>ChatGPT or Claude: open the export here.</strong> Tap <strong>Open</strong> and pick the .zip as you downloaded it (or the conversations.json inside). Tap a chat to read it, <strong>Move to folder</strong> to sort, and <strong>Download .zip</strong> for one .md file per chat, in folders. No AI, nothing uploaded, every word kept.</li>
+      <li><strong>ChatGPT, Claude or Grok: open the export here.</strong> Tap <strong>Open</strong> and pick the .zip as you downloaded it (or the conversations.json, or Grok's prod-grok-backend.json, inside). Tap a chat to read it, <strong>Move to folder</strong> to sort, and <strong>Download .zip</strong> for one .md file per chat, in folders. No AI, nothing uploaded, every word kept.</li>
       <li><strong>Read here any time.</strong> Open a .md file, or the backup .zip to get its list back. Select several .md parts at once to merge them into one chat.</li>
     </ol>
     <h2>Chats in projects</h2>
@@ -2811,7 +2811,7 @@ setAccent(root.getAttribute('data-accent') || 'lavender');
 setChecked($('modeGroup'), 'data-mode', root.getAttribute('data-theme') || 'auto');
 setChecked($('longGroup'), 'data-long', root.getAttribute('data-long') === 'clip' ? 'clip' : 'full');
 setChecked($('tintGroup'), 'data-tint', root.getAttribute('data-tint') === 'on' ? 'on' : 'off');
-/* ---- Exports: open a ChatGPT or Claude export (.zip or .json), or a .zip of .md files, list its chats,
+/* ---- Exports: open a ChatGPT, Claude or Grok export (.zip or .json), or a .zip of .md files, list its chats,
    read any of them, sort them into folders and save them as .md files. It all happens in this browser. ---- */
 var lib = null; // { items: [{ title, date, folder, msgs, md, fileBase }], sel: {}, from } while the page is open
 function isArchive(f) { return /\.(zip|json)$/i.test(f.name); }
@@ -2930,7 +2930,8 @@ function fromExport(data, assets) {
   var c = Array.isArray(data) && data[0];
   if (c && c.mapping) return { from: 'ChatGPT', items: fromChatGPT(data, assets || {}) };
   if (c && (Array.isArray(c.chat_messages) || (Array.isArray(c.messages) && c.messages[0] && (c.messages[0].sender || c.messages[0].role)))) return { from: 'Claude', items: fromClaude(data) };
-  throw new Error('This file is not a ChatGPT or Claude chat export. For other apps, use the AI prompt in Help.');
+  if (c && c.conversation && Array.isArray(c.responses)) return { from: 'Grok', items: fromGrok(data) };
+  throw new Error('This file is not a ChatGPT, Claude or Grok chat export. For other apps, use the AI prompt in Help.');
 }
 // One JSON value, or JSON Lines (one chat per line).
 function parseJson(t) {
@@ -2953,6 +2954,29 @@ function rememberFolders(items) {
   if (!map) return;
   items.forEach(function (it) { if (!it.id) return; if (it.folder === titleFolder(it.title)) delete map[it.id]; else map[it.id] = it.folder; });
   saveFolderMap(map);
+}
+// Grok: each chat is {conversation, responses}. Responses form a tree (regenerated replies are siblings), and
+// conversation.leaf_response_id is the version the person last saw, so only that path is read, oldest first.
+function grokDate(v) {
+  if (v && v.$date !== undefined) v = v.$date;
+  if (v && v.$numberLong !== undefined) v = Number(v.$numberLong);
+  return v ? new Date(v) : null;
+}
+function fromGrok(list) {
+  return list.map(function (c) {
+    var conv = c.conversation || {}, byId = {}, all = (c.responses || []).map(function (x) { return x && x.response || x; }).filter(Boolean);
+    all.forEach(function (r) { byId[r._id || r.response_id] = r; });
+    var path = [], cur = byId[conv.leaf_response_id], seen = {};
+    if (cur) { while (cur && !seen[cur._id || cur.response_id]) { seen[cur._id || cur.response_id] = 1; path.unshift(cur); cur = byId[cur.parent_response_id]; } }
+    else path = all.slice().sort(function (a, b) { return (grokDate(a.create_time) || 0) - (grokDate(b.create_time) || 0); });
+    var msgs = [];
+    path.forEach(function (r) {
+      var role = r.sender === 'human' || r.sender === 'user' ? 'user' : r.sender === 'assistant' ? 'assistant' : '';
+      var text = typeof r.message === 'string' ? r.message.trim() : '';
+      if (role && text) msgs.push({ role: role, label: role === 'user' ? 'You' : 'AI', text: text });
+    });
+    return { id: String(conv.id || ''), title: String(conv.title || 'Untitled chat').trim(), date: grokDate(conv.create_time) || (all[0] && grokDate(all[0].create_time)), msgs: msgs, lost: 0 };
+  });
 }
 function isoDay(d) { return d && !isNaN(d) ? d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) : ''; }
 function titleFolder(t) { var m = /^\s*\[([^\]\n]{1,60})\]/.exec(t); return m ? m[1].trim() : ''; }
