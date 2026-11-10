@@ -80,3 +80,25 @@ write_zip("frames-000.zip", {
     "artifacts/aaaa1111-2222-3333-4444-555566667777/versions/1-a1/index.html": "<h1>An artifact</h1>",
 })
 print("fixtures written")
+
+
+# Grok: {conversation, responses}; responses form a tree and leaf_response_id is the version last seen.
+def grok_resp(rid, parent, sender, text, ms):
+    return {"response": {"_id": rid, "parent_response_id": parent, "sender": sender, "message": text, "model": "grok-3",
+                         "create_time": {"$date": {"$numberLong": str(ms)}}}}
+
+
+write_zip("grok-export.zip", {
+    "ttl/30d/export_data/u1/prod-mc-billing.json": {"balance_map": {"team": 0}},
+    "ttl/30d/export_data/u1/prod-grok-backend.json": {
+        "conversations": [{
+            "conversation": {"id": "grok-0001", "title": "Fish tank help", "create_time": "2025-01-15T10:00:00Z", "leaf_response_id": "g4"},
+            "responses": [
+                grok_resp("g1", None, "human", "How often should I clean a fish tank?", 1736935200000),
+                grok_resp("g2", "g1", "assistant", "", 1736935201000),  # a failed attempt with no text
+                grok_resp("g2b", "g1", "assistant", "OLD REPLY", 1736935202000),  # regenerated reply that is not on the current path
+                grok_resp("g3", "g1", "assistant", "About 25 percent of the water every week.", 1736935300000),
+                grok_resp("g4", "g3", "human", "Thanks!", 1736935400000),
+            ]}],
+        "projects": [], "tasks": [], "media_posts": []},
+})
