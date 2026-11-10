@@ -579,3 +579,15 @@ test('a pasted chat gets a Copy chat button in the note after exiting Edit mode'
   assert.match(await page.evaluate(() => navigator.clipboard.readText()), /Changed reply/);
   await context.close();
 });
+
+test('a Grok export opens, follows the last-seen version and skips empty replies', async () => {
+  const page = await openApp();
+  await openFiles(page, 'grok-export.zip');
+  assert.match(await info(page), /1 chat from Grok/);
+  assert.equal(await rows(page), 1);
+  const text = await allText(page);
+  assert.match(text, /25 percent of the water/);
+  assert.doesNotMatch(text, /OLD REPLY/, 'a regenerated reply that is not on the current path stays out');
+  const roles = await page.evaluate(() => lib.items[0].msgs.map((m) => m.role));
+  assert.deepEqual(roles, ['user', 'assistant', 'user']);
+});
